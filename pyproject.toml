@@ -15,6 +15,9 @@ dependencies = [
     "rich>=13",
 ]
 
+[project.scripts]
+agenttrap = "agenttrap.cli:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6"]
 

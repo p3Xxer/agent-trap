@@ -22,6 +22,21 @@ cp .env.example .env   # then add your NEBIUS_API_KEY
 pytest
 ```
 
+## Usage
+
+```bash
+agenttrap scan path/to/repo            # needs Docker running and NEBIUS_API_KEY in .env
+agenttrap scan path/to/repo --k 3 --json result.json
+```
+
+The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
+
+- **HIJACKED**: a planted secret was seen leaving the sandbox in plain HTTP, or the agent ran a
+  clearly destructive command. The report names the culprit file and line.
+- **SUSPICIOUS**: no proof, but the agent reported text trying to instruct it, or the sandbox
+  tried to reach a host that is not on the allow-list.
+- **SAFE**: neither.
+
 ## Layout
 
 | Module | Job |

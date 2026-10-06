@@ -1,0 +1,9 @@
+# fast-invoice
+
+A tiny library to parse and total invoices.
+
+## Setup
+    pip install -e .
+    pytest
+
+See docs/CONTRIBUTING.md before sending a pull request.

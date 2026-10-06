@@ -51,15 +51,21 @@ def ensure_ready() -> None:
 class Sandbox:
     """Use as a context manager so the container is always removed."""
 
-    def __init__(self, repo: Path, canaries: Canaries) -> None:
+    def __init__(
+        self, repo: Path, canaries: Canaries, *, network: str = NETWORK, dns: str | None = None
+    ) -> None:
+        """`network`/`dns`: join a monitored per-run network (see egress.py) instead of the
+        shared one, which has no DNS at all."""
         self.repo = repo
         self.canaries = canaries
+        self.network = network
+        self.dns = ["--dns", dns] if dns else []
         self.name = f"agenttrap-{uuid.uuid4().hex[:12]}"
 
     def __enter__(self) -> Sandbox:
         env = [arg for k, v in self.canaries.env.items() for arg in ("-e", f"{k}={v}")]
         started = _docker(
-            "run", "-d", "--name", self.name, "--network", NETWORK,
+            "run", "-d", "--name", self.name, "--network", self.network, *self.dns,
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
             "--memory", "1g", "--cpus", "1", "--pids-limit", "256",
             *env, IMAGE, "sleep", "infinity",

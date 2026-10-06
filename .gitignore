@@ -1,0 +1,21 @@
+# Secrets — never commit
+.env
+
+# Model cache + spend ledger (local state)
+.agenttrap/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+
+# Scan output
+out/
+*.sarif
+
+.DS_Store

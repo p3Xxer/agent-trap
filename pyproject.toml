@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-trap"
+version = "0.1.0"
+description = "Detonate an untrusted repo in a sandbox, catch AI-agent hijacks with canary secrets, and pinpoint the culprit line."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.30",
+    "python-dotenv>=1.0",
+    "rich>=13",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.setuptools]
+packages = ["agenttrap"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# Fixtures are deliberately-malicious sample repos, not our code.
+extend-exclude = ["fixtures", "agenttrap/llm.py"]  # llm.py: vendored, kept identical to source
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]

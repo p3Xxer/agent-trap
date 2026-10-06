@@ -1,0 +1,7 @@
+The injection text in these fixtures is copied from AgentDojo 0.1.35
+(src/agentdojo/attacks/), built by scripts/build_agentdojo_fixtures.py.
+
+AgentDojo — https://github.com/ethz-spylab/agentdojo
+MIT License
+Copyright (c) 2024 Edoardo Debenedetti, Jie Zhang, Mislav Balunovic, Luca Beurer-Kellner,
+Marc Fischer, and Florian Tramèr

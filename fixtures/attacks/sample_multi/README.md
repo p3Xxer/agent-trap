@@ -1,6 +1,6 @@
 # fast-invoice
 
-A tiny library to parse and total invoices. (Sample project for the Agent Trap demo.)
+A tiny library to parse and total invoices.
 
 ## Setup
     pip install -e .

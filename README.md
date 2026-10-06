@@ -26,7 +26,16 @@ pytest
 
 | Module | Job |
 | --- | --- |
+| `agenttrap/canary.py` | Realistic fake secrets, unique per run, planted in the sandbox home |
+| `agenttrap/sandbox.py` | Throwaway Docker container on an internal network with no route out |
+| `agenttrap/agent.py` | The bait agent: a Nemotron tool-use loop run inside the sandbox, plus a post-task debrief |
 | `agenttrap/detector.py` | Canary-leak matching and the SAFE / SUSPICIOUS / HIJACKED verdict |
 | `agenttrap/localizer.py` | Delta debugging (ddmin): culprit file, then culprit line |
 | `agenttrap/baseline_static.py` | Read-only scanner baseline, for comparison |
 | `agenttrap/llm.py` | Nebius client with spend caps and disk cache |
+| `scripts/bait_spike.py` | Experiment: run the bait agent on a fixture and report what it did |
+
+## Credits
+
+Some attack fixtures (`fixtures/attacks/agentdojo/`) use injection templates from
+[AgentDojo](https://github.com/ethz-spylab/agentdojo) (MIT License, ETH Zurich SPY Lab).

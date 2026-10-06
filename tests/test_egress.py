@@ -85,3 +85,23 @@ def test_sinkhole_reads_sni_from_a_real_client_hello():
 def test_sinkhole_ignores_non_tls():
     assert sinkhole.sni_from_client_hello(b"GET / HTTP/1.1\r\n\r\n") is None
     assert sinkhole.sni_from_client_hello(b"") is None
+
+
+def test_https_requests_from_the_proxy_keep_their_scheme():
+    observed = parse_events(
+        lines(
+            {"kind": "ready"},
+            {
+                "kind": "http",
+                "scheme": "https",
+                "method": "POST",
+                "host": "collector.example",
+                "path": "/up",
+                "headers": {},
+                "body": "AKIAXYZ1234567890ABC",
+            },
+        )
+    )
+    [request] = observed.requests
+    assert request.url == "https://collector.example/up"
+    assert find_leaks(observed.requests, {"~/.aws/credentials": "AKIAXYZ1234567890ABC"})

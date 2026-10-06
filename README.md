@@ -43,7 +43,7 @@ The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 | --- | --- |
 | `agenttrap/canary.py` | Realistic fake secrets, unique per run, planted in the sandbox home |
 | `agenttrap/sandbox.py` | Throwaway Docker container on an internal network with no route out |
-| `agenttrap/egress.py`, `agenttrap/sinkhole.py` | Network monitor: a per-run private network whose only neighbour is a logging sinkhole (DNS + ports 80/443). Plain HTTP is read in full; HTTPS is **not** decrypted, only the host name is logged. Nothing is forwarded |
+| `agenttrap/egress.py`, `sinkhole.py`, `mitm_addon.py` | Network monitor: a per-run private network with a mitmproxy container (reads HTTP and HTTPS, answers every request itself) and a DNS/TCP sinkhole for anything that bypasses the proxy. Nothing is forwarded |
 | `agenttrap/agent.py` | The bait agent: a Nemotron tool-use loop run inside the sandbox, plus a post-task debrief |
 | `agenttrap/detector.py` | Canary-leak matching and the SAFE / SUSPICIOUS / HIJACKED verdict |
 | `agenttrap/localizer.py` | Delta debugging (ddmin): culprit file, then culprit line |
@@ -56,8 +56,15 @@ The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 Some attack fixtures (`fixtures/attacks/agentdojo/`) use injection templates from
 [AgentDojo](https://github.com/ethz-spylab/agentdojo) (MIT License, ETH Zurich SPY Lab).
 
-## Known limits of network monitoring
+## How HTTPS is handled, and its limits
 
-- HTTPS contents are not inspected, so a secret sent over HTTPS shows up only as a contact with an
-  unexpected host (SUSPICIOUS), not as proof (HIJACKED). Proof requires plain HTTP.
-- Fixture payloads can only be served over plain HTTP, so runtime-fetch fixtures use `http://`.
+Each run gets a mitmproxy container that reads the sandbox's HTTP **and HTTPS** requests and
+answers them itself, so a planted secret sent over HTTPS is caught as proof. To make that possible:
+
+- The sandbox trusts a private CA created once in `.agenttrap/mitm-ca/`. Only the CA's public
+  certificate is copied into sandboxes; the private key is mounted only into the proxy container.
+  **Never install this CA on your own machine.**
+- The proxy never contacts the real destination. There is no route out of the sandbox network.
+- Programs that ignore the proxy settings (raw sockets, custom TLS) can't complete a connection;
+  they show up as a contacted host only (SUSPICIOUS), not as proof.
+- Programs that pin certificates won't trust our CA and will fail, so they are not inspected.

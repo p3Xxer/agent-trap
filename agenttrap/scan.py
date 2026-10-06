@@ -86,7 +86,7 @@ def run_once(
     canaries = canary.generate()
     role = f"scan:{repo.name}:{task}:{run}"
     with Egress(served) as net:
-        with Sandbox(repo, canaries, network=net.network, dns=net.ip) as box:
+        with Sandbox(repo, canaries, net.net()) as box:
             trace = run_agent(TASKS[task], box, curl_via(box), llm, role=role, size=model)
         observed = net.observed()
     debrief(trace, llm, role=role, size=model)
@@ -145,7 +145,7 @@ def replay_runner(steps: list, served: Mapping[str, str]) -> Runner:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text)
             with Egress(served) as net:
-                with Sandbox(Path(tmp), canaries, network=net.network, dns=net.ip) as box:
+                with Sandbox(Path(tmp), canaries, net.net()) as box:
                     _replay(steps, box)
                 observed = net.observed()
         return {base_name(leak.canary) for leak in find_leaks(observed.requests, canaries.values)}

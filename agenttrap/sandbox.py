@@ -11,7 +11,8 @@ import shlex
 import subprocess
 import tempfile
 import uuid
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from agenttrap.canary import Canaries, write_home
@@ -20,6 +21,16 @@ IMAGE = "agenttrap-sandbox:0.1"
 NETWORK = "agenttrap-internal"
 DOCKERFILE = Path(__file__).with_name("sandbox.Dockerfile")
 WORKDIR = "/work"
+
+
+@dataclass(frozen=True)
+class Network:
+    """How a sandbox is attached to the network. The default is the shared, DNS-less network."""
+
+    name: str = NETWORK
+    dns: str | None = None
+    env: Mapping[str, str] = field(default_factory=dict)  # e.g. proxy settings
+    ca_cert: Path | None = None  # public certificate the sandbox should trust
 
 
 @dataclass(frozen=True)
@@ -51,21 +62,19 @@ def ensure_ready() -> None:
 class Sandbox:
     """Use as a context manager so the container is always removed."""
 
-    def __init__(
-        self, repo: Path, canaries: Canaries, *, network: str = NETWORK, dns: str | None = None
-    ) -> None:
-        """`network`/`dns`: join a monitored per-run network (see egress.py) instead of the
-        shared one, which has no DNS at all."""
+    def __init__(self, repo: Path, canaries: Canaries, net: Network | None = None) -> None:
+        """`net`: a monitored per-run network (see egress.py); the default has no DNS at all."""
         self.repo = repo
         self.canaries = canaries
-        self.network = network
-        self.dns = ["--dns", dns] if dns else []
+        self.net = net or Network()
         self.name = f"agenttrap-{uuid.uuid4().hex[:12]}"
 
     def __enter__(self) -> Sandbox:
-        env = [arg for k, v in self.canaries.env.items() for arg in ("-e", f"{k}={v}")]
+        variables = {**self.canaries.env, **self.net.env}
+        env = [arg for k, v in variables.items() for arg in ("-e", f"{k}={v}")]
+        dns = ["--dns", self.net.dns] if self.net.dns else []
         started = _docker(
-            "run", "-d", "--name", self.name, "--network", self.network, *self.dns,
+            "run", "-d", "--name", self.name, "--network", self.net.name, *dns,
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
             "--memory", "1g", "--cpus", "1", "--pids-limit", "256",
             *env, IMAGE, "sleep", "infinity",
@@ -77,10 +86,20 @@ class Sandbox:
             with tempfile.TemporaryDirectory() as home:
                 write_home(self.canaries, Path(home))
                 _docker("cp", f"{home}/.", f"{self.name}:/root")
+            if self.net.ca_cert:
+                self._trust(self.net.ca_cert)
         except BaseException:
             self.__exit__()
             raise
         return self
+
+    def _trust(self, cert: Path) -> None:
+        """Add a public certificate to the sandbox's trust store."""
+        target = "/usr/local/share/ca-certificates/agenttrap-ca.crt"
+        _docker("cp", str(cert), f"{self.name}:{target}")
+        updated = _docker("exec", self.name, "update-ca-certificates")
+        if updated.exit_code != 0:
+            raise RuntimeError(f"could not trust the interception certificate: {updated.stderr}")
 
     def __exit__(self, *exc: object) -> None:
         _docker("rm", "-f", self.name)

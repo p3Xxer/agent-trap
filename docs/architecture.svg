@@ -101,17 +101,19 @@
 <text x="1542" y="388.8" font-size="15" xml:space="preserve" fill="#1e1e1e">Result, for example: setup.py:10-11</text>
 <line x1="1472" y1="300" x2="1528" y2="300" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <text x="1530" y="501.0" font-size="20" xml:space="preserve" fill="#1e1e1e">5  OUTPUT</text>
-<rect x="1530" y="515" width="340" height="135" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+<rect x="1530" y="515" width="340" height="175" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
 <text x="1542" y="543.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Works today</text>
 <text x="1542" y="566.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• terminal report with file:line</text>
 <text x="1542" y="585.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• JSON file (--json)</text>
 <text x="1542" y="603.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• exit code 1 on HIJACKED, to gate CI</text>
-<rect x="1530" y="665" width="340" height="125" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2" stroke-dasharray="8 6"/>
-<text x="1542" y="693.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Planned</text>
-<text x="1542" y="716.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• SARIF: a warning on the exact line of</text>
-<text x="1542" y="735.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  a PR</text>
-<text x="1542" y="753.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• GitHub Action that fails the PR check</text>
-<text x="1542" y="772.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• cleaned repo that re-scans SAFE</text>
+<text x="1542" y="622.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• --clean: a copy without the culprit</text>
+<text x="1542" y="641.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  code, scanned again to prove it is</text>
+<text x="1542" y="660.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  SAFE</text>
+<rect x="1530" y="715" width="340" height="100" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="1542" y="743.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Planned</text>
+<text x="1542" y="766.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• SARIF: a warning on the exact line of</text>
+<text x="1542" y="785.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  a PR</text>
+<text x="1542" y="803.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• GitHub Action that fails the PR check</text>
 <line x1="1700" y1="462" x2="1700" y2="513" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <line x1="1472" y1="480" x2="1528" y2="560" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <line x1="1472" y1="620" x2="1528" y2="610" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>

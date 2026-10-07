@@ -19,10 +19,12 @@ from collections.abc import Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 from agenttrap import canary, sandbox
 from agenttrap.agent import TASKS, Http, Injection, Trace, debrief, run_agent
+from agenttrap.cleaner import Removal, clean, write_copy
 from agenttrap.detector import Flag, Leak, Request, Verdict, command_flags, find_leaks, judge
 from agenttrap.egress import Egress, Observed, contact_flags, unexpected_hosts
 from agenttrap.intel import HostIntel
@@ -49,6 +51,16 @@ class FoundInjection:
 
 
 @dataclass
+class CleanOutcome:
+    """A copy of the repo with the culprit code removed, and what a second scan of it found."""
+
+    out_dir: Path
+    removed: tuple[Removal, ...]
+    warnings: tuple[str, ...]
+    rescan: ScanResult
+
+
+@dataclass
 class ScanResult:
     repo: str
     verdict: Verdict
@@ -58,6 +70,7 @@ class ScanResult:
     unlocalized: dict[str, str] = field(default_factory=dict)  # canary -> why
     contacted: list[str] = field(default_factory=list)  # hosts contacted, not on the allow-list
     intel: dict[str, HostIntel] = field(default_factory=dict)  # filled in by an optional lookup
+    cleaned: CleanOutcome | None = None  # filled in by clean_and_rescan
     cost_usd: float = 0.0
     seconds: float = 0.0
 
@@ -246,6 +259,22 @@ def scan(
     return result
 
 
+def clean_and_rescan(
+    repo: Path, result: ScanResult, out_dir: Path, **scan_options: Any
+) -> CleanOutcome | None:
+    """Write a copy of `repo` without the culprit code to `out_dir`, then scan the copy.
+
+    Returns None when no culprit lines were found, because there is nothing to remove.
+    """
+    culprits = {(c.file, c.line): c for cs in result.culprits.values() for c in cs}
+    if not culprits:
+        return None
+    files = read_repo(repo)
+    cleaned = clean(files, culprits.values())
+    write_copy(repo, out_dir, {n: t for n, t in cleaned.files.items() if t != files[n]})
+    return CleanOutcome(out_dir, cleaned.removed, cleaned.warnings, scan(out_dir, **scan_options))
+
+
 def suspect_hosts(result: ScanResult) -> list[str]:
     """Hosts worth a lookup: where secrets were sent, then every other unexpected host."""
     hosts = [urlparse(leak.destination).hostname for leak in result.verdict.leaks]
@@ -277,6 +306,17 @@ def to_json(result: ScanResult) -> str:
             },
             "unlocalized": result.unlocalized,
             "contacted_hosts": result.contacted,
+            "cleaned": None
+            if result.cleaned is None
+            else {
+                "dir": str(result.cleaned.out_dir),
+                "removed": [str(r) for r in result.cleaned.removed],
+                "warnings": list(result.cleaned.warnings),
+                "rescan_status": result.cleaned.rescan.verdict.status.value,
+                "rescan_leaks": sorted(
+                    {base_name(x.canary) for x in result.cleaned.rescan.verdict.leaks}
+                ),
+            },
             "host_intel": {
                 host: {
                     "registered": intel.registered.isoformat() if intel.registered else None,

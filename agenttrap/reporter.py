@@ -11,7 +11,7 @@ from rich.panel import Panel
 from agenttrap.detector import Status
 from agenttrap.intel import HostIntel
 from agenttrap.localizer import Culprit
-from agenttrap.scan import ScanResult, base_name
+from agenttrap.scan import CleanOutcome, ScanResult, base_name
 
 STYLE = {Status.SAFE: "bold green", Status.SUSPICIOUS: "bold yellow", Status.HIJACKED: "bold red"}
 HEADLINE = {
@@ -65,6 +65,25 @@ def _registration(info: HostIntel) -> str:
     return f"{info.registered.isoformat()} ({info.age_days:,} days ago){recent}"
 
 
+def render_clean(cleaned: CleanOutcome, console: Console) -> None:
+    rescan = cleaned.rescan.verdict
+    still_leaking = sorted({base_name(x.canary) for x in rescan.leaks})
+    console.print(f"\n[bold]Cleaned copy[/] written to [cyan]{escape(str(cleaned.out_dir))}[/]")
+    console.print(f"    removed : {escape(', '.join(str(r) for r in cleaned.removed))}")
+    for warning in cleaned.warnings:
+        console.print(f"    [yellow]warning : {escape(warning)}[/]")
+    console.print(f"    re-scan : [{STYLE[rescan.status]}]{rescan.status.value}[/]", end="")
+    if still_leaking:
+        console.print(
+            f"  still leaks {escape(', '.join(still_leaking))}: those lines were not all of it"
+        )
+    elif rescan.status is Status.SAFE:
+        console.print("  the secret no longer leaves the sandbox")
+    else:
+        console.print("  no secret leaked, but there are still warnings")
+    console.print("    [dim]Removing code can change what the repo does. Review it before use.[/]")
+
+
 def render(result: ScanResult, console: Console | None = None) -> None:
     console = console or Console()
     status = result.verdict.status
@@ -107,4 +126,6 @@ def render(result: ScanResult, console: Console | None = None) -> None:
             console.print(f"    {escape(host)}")
     if result.intel:
         render_intel(result.intel, console)
+    if result.cleaned:
+        render_clean(result.cleaned, console)
     console.print(f"\n[dim]cost ${result.cost_usd:.4f}, {result.seconds:.0f}s[/]\n")

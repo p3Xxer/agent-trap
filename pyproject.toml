@@ -20,13 +20,14 @@ dependencies = [
 agenttrap = "agenttrap.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6"]
+web = ["fastapi>=0.110", "uvicorn>=0.29"]
+dev = ["pytest>=8", "ruff>=0.6", "httpx>=0.27", "fastapi>=0.110", "uvicorn>=0.29"]
 
 [tool.setuptools]
-packages = ["agenttrap"]
+packages = ["agenttrap", "agenttrap.web"]
 
 [tool.setuptools.package-data]
-agenttrap = ["*.Dockerfile"]
+agenttrap = ["*.Dockerfile", "web/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

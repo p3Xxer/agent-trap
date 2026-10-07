@@ -11,7 +11,6 @@ with files and lines blanked (no model calls) until the minimal culprit lines re
 
 from __future__ import annotations
 
-import json
 import shlex
 import tempfile
 import time
@@ -23,7 +22,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from agenttrap import canary, sandbox
-from agenttrap.agent import TASKS, Http, Injection, Trace, debrief, run_agent
+from agenttrap.agent import TASKS, Http, Injection, Step, Trace, debrief, run_agent
 from agenttrap.cleaner import Removal, clean, write_copy
 from agenttrap.detector import Flag, Leak, Request, Verdict, command_flags, find_leaks, judge
 from agenttrap.egress import Egress, Observed, contact_flags, unexpected_hosts
@@ -89,6 +88,26 @@ def curl_via(box: Sandbox) -> Http:
         return result.stdout + result.stderr
 
     return http
+
+
+# What every developer does with a Python project. Run without an AI, so that code which fires at
+# install or test time is found whether or not the agent happens to run these commands.
+BASELINE = ("pip install -e . 2>&1 | tail -n 20", "python -m pytest -q 2>&1 | tail -n 20")
+BASELINE_TIMEOUT = 120
+
+
+def run_baseline(repo: Path, *, served: Mapping[str, str]) -> RunResult:
+    canaries = canary.generate()
+    trace = Trace(task="baseline")
+    with Egress(served) as net:
+        with Sandbox(repo, canaries, net.net()) as box:
+            for command in BASELINE:
+                result = box.run(command, timeout=BASELINE_TIMEOUT)
+                trace.steps.append(Step("run_command", {"command": command}, result.stdout[-2000:]))
+        observed = net.observed()
+    trace.stopped = "finished"
+    leaks = tuple(find_leaks(observed.requests, canaries.values))
+    return RunResult("baseline", trace, observed, leaks)
 
 
 def run_once(
@@ -218,14 +237,15 @@ def scan(
     sandbox.ensure_ready()
     files = read_repo(repo)
 
-    jobs = [(task, run) for task in tasks for run in range(k)]
-    progress(f"detonating {len(jobs)} runs ({', '.join(tasks)} x {k})")
+    jobs: list[Callable[[], RunResult]] = [lambda: run_baseline(repo, served=served)]
+    jobs += [
+        lambda task=task, run=run: run_once(repo, task, run, llm=llm, model=model, served=served)
+        for task in tasks
+        for run in range(k)
+    ]
+    progress(f"detonating {len(jobs)} runs (install and test, then {', '.join(tasks)} x {k})")
     with ThreadPoolExecutor(workers) as pool:
-        runs = list(
-            pool.map(
-                lambda j: run_once(repo, j[0], j[1], llm=llm, model=model, served=served), jobs
-            )
-        )
+        runs = list(pool.map(lambda job: job(), jobs))
 
     leaks = [leak for r in runs for leak in r.leaks]
     commands = [
@@ -288,54 +308,3 @@ def _injections(runs: list[RunResult], files: Mapping[str, str]) -> list[FoundIn
             where = find_line(injection.quote, files)
             seen.setdefault(where or injection.quote[:60], FoundInjection(injection, where))
     return list(seen.values())
-
-
-def to_json(result: ScanResult) -> str:
-    """A compact machine-readable summary of the scan."""
-    return json.dumps(
-        {
-            "repo": result.repo,
-            "status": result.verdict.status.value,
-            "leaks": sorted({base_name(x.canary) for x in result.verdict.leaks}),
-            "flags": [
-                {"kind": f.kind, "detail": f.detail, "hard": f.hard} for f in result.verdict.flags
-            ],
-            "culprits": {
-                name: [{"file": c.file, "line": c.line, "text": c.text, "tag": c.tag} for c in cs]
-                for name, cs in result.culprits.items()
-            },
-            "unlocalized": result.unlocalized,
-            "contacted_hosts": result.contacted,
-            "cleaned": None
-            if result.cleaned is None
-            else {
-                "dir": str(result.cleaned.out_dir),
-                "removed": [str(r) for r in result.cleaned.removed],
-                "warnings": list(result.cleaned.warnings),
-                "rescan_status": result.cleaned.rescan.verdict.status.value,
-                "rescan_leaks": sorted(
-                    {base_name(x.canary) for x in result.cleaned.rescan.verdict.leaks}
-                ),
-            },
-            "host_intel": {
-                host: {
-                    "registered": intel.registered.isoformat() if intel.registered else None,
-                    "age_days": intel.age_days,
-                    "reports": None
-                    if intel.reports is None
-                    else [
-                        {"title": r.title, "url": r.url, "snippet": r.snippet}
-                        for r in intel.reports
-                    ],
-                }
-                for host, intel in result.intel.items()
-            },
-            "injections": [
-                {"where": i.where, "quote": i.injection.quote, "asked_for": i.injection.asked_for}
-                for i in result.injections
-            ],
-            "cost_usd": round(result.cost_usd, 5),
-            "seconds": round(result.seconds, 1),
-        },
-        indent=2,
-    )

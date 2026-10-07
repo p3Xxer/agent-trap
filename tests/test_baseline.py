@@ -1,0 +1,92 @@
+"""The deterministic install-and-test run, with Docker replaced by stand-ins."""
+
+import pytest
+
+from agenttrap import scan
+from agenttrap.detector import Request
+from agenttrap.egress import Observed
+from agenttrap.sandbox import CommandResult
+
+STATE = {}
+
+
+class FakeBox:
+    def __init__(self, repo, canaries, net):
+        STATE["canaries"] = canaries
+        STATE["commands"] = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        pass
+
+    def run(self, command, timeout=60):
+        STATE["commands"].append((command, timeout))
+        return CommandResult(0, f"output of {command}", "")
+
+
+class FakeEgress:
+    def __init__(self, served):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        pass
+
+    def net(self):
+        return None
+
+    def observed(self):
+        if STATE.get("leak"):
+            secret = STATE["canaries"].values["~/.aws/credentials"]
+            return Observed((Request("POST", "https://setup-check.io/verify", body=secret),), ())
+        return Observed((), ())
+
+
+@pytest.fixture(autouse=True)
+def docker_free(monkeypatch):
+    STATE.clear()
+    monkeypatch.setattr(scan, "Sandbox", FakeBox)
+    monkeypatch.setattr(scan, "Egress", FakeEgress)
+
+
+def test_the_standard_install_and_test_commands_run_in_order(tmp_path):
+    result = scan.run_baseline(tmp_path, served={})
+    assert [command for command, _ in STATE["commands"]] == list(scan.BASELINE)
+    assert "pip install" in scan.BASELINE[0] and "pytest" in scan.BASELINE[1]
+    assert all(timeout == scan.BASELINE_TIMEOUT for _, timeout in STATE["commands"])
+    assert result.task == "baseline" and result.trace.stopped == "finished"
+
+
+def test_the_commands_are_recorded_as_steps_so_the_culprit_search_can_replay_them(tmp_path):
+    result = scan.run_baseline(tmp_path, served={})
+    assert [(s.action, s.args["command"]) for s in result.trace.steps] == [
+        ("run_command", command) for command in scan.BASELINE
+    ]
+    replayed = []
+
+    class Recorder:
+        def run(self, command, timeout=60):
+            replayed.append(command)
+
+    scan._replay(result.trace.steps, Recorder())
+    assert replayed == list(scan.BASELINE)
+
+
+def test_a_secret_seen_leaving_during_the_baseline_is_a_leak(tmp_path):
+    STATE["leak"] = True
+    result = scan.run_baseline(tmp_path, served={})
+    assert {leak.canary for leak in result.leaks} == {"~/.aws/credentials"}
+
+
+def test_a_quiet_baseline_has_no_leaks(tmp_path):
+    assert scan.run_baseline(tmp_path, served={}).leaks == ()
+
+
+def test_baseline_commands_are_not_mistaken_for_destructive_ones():
+    from agenttrap.detector import command_flags
+
+    assert command_flags(scan.BASELINE) == []

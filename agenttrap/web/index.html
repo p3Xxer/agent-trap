@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Trap</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1b1f24; --muted: #5b6573; --border: #dde1e7;
+    --red: #c9272d; --red-bg: #fde8e8; --amber: #9a6700; --amber-bg: #fff4d6;
+    --green: #1a7f37; --green-bg: #dff5e3; --blue: #0b63ce; --blue-bg: #e3f0ff;
+    --code-bg: #f0f2f5; --hit: #ffd6d6; --rel: #fff0c2;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --panel: #181c22; --text: #e8ebf0; --muted: #9aa5b4; --border: #2b323c;
+      --red: #ff7b7f; --red-bg: #3a1a1c; --amber: #f0b429; --amber-bg: #3a2f10;
+      --green: #4cc26a; --green-bg: #12301b; --blue: #6cb2ff; --blue-bg: #14263d;
+      --code-bg: #12161b; --hit: #5a2326; --rel: #4a3c12;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); }
+  header { padding: 20px 16px 0; max-width: 1180px; margin: 0 auto; }
+  h1 { margin: 0; font-size: 24px; letter-spacing: -0.01em; }
+  .tagline { color: var(--muted); margin: 4px 0 0; max-width: 70ch; }
+  .mode { display: inline-block; margin-left: 10px; font-size: 12px; padding: 2px 8px;
+    border-radius: 999px; border: 1px solid var(--border); color: var(--muted); vertical-align: middle; }
+  nav { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid var(--border); }
+  nav button { background: none; border: 0; padding: 10px 14px; font: inherit; color: var(--muted);
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--blue); font-weight: 600; }
+  main { max-width: 1180px; margin: 0 auto; padding: 16px; }
+  [hidden] { display: none !important; }
+  .grid { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .card + .card { margin-top: 12px; }
+  .card h2 { margin: 0 0 8px; font-size: 15px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .03em;
+    padding: 2px 8px; border-radius: 6px; }
+  .HIJACKED { background: var(--red-bg); color: var(--red); }
+  .SUSPICIOUS { background: var(--amber-bg); color: var(--amber); }
+  .SAFE { background: var(--green-bg); color: var(--green); }
+  #list { padding: 6px; max-height: 75vh; overflow: auto; }
+  .item { display: block; width: 100%; text-align: left; background: none; border: 0; color: inherit;
+    font: inherit; padding: 10px; border-radius: 8px; cursor: pointer; }
+  .item:hover { background: var(--code-bg); }
+  .item[aria-current="true"] { background: var(--blue-bg); }
+  .item .name { display: block; font-weight: 600; margin: 4px 0 0; overflow-wrap: anywhere; }
+  .banner { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .banner .badge { font-size: 15px; padding: 6px 12px; }
+  .finding { border-left: 4px solid var(--border); padding: 4px 0 4px 12px; margin: 10px 0; }
+  .finding.error { border-color: var(--red); } .finding.warning { border-color: var(--amber); }
+  .finding.note { border-color: var(--blue); }
+  .finding .title { font-weight: 600; }
+  .chip { display: inline-block; font: 12px var(--mono); background: var(--code-bg);
+    border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; margin: 4px 6px 0 0; }
+  .code { font: 13px/1.5 var(--mono); background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 8px; overflow: auto; margin: 8px 0 0; }
+  .code .file { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--muted); }
+  .line { display: flex; white-space: pre; }
+  .line .no { flex: none; width: 48px; text-align: right; padding-right: 10px; color: var(--muted); user-select: none; }
+  .line .src { padding-right: 12px; }
+  .line.hit { background: var(--hit); } .line.rel { background: var(--rel); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 800px) { .compare { grid-template-columns: 1fr; } }
+  .compare > div { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .big { font-size: 22px; font-weight: 700; }
+  .quote { font: 13px var(--mono); background: var(--code-bg); border-radius: 6px; padding: 6px 8px; overflow-wrap: anywhere; }
+  form { display: flex; gap: 8px; flex-wrap: wrap; }
+  input[type=text] { flex: 1 1 320px; padding: 10px 12px; font: inherit; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+  button.primary { padding: 10px 18px; font: inherit; font-weight: 600; color: #fff; background: #0b63ce;
+    border: 0; border-radius: 8px; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .demos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .demos button { font: 12px var(--mono); padding: 4px 8px; border-radius: 6px; cursor: pointer;
+    background: var(--code-bg); color: var(--text); border: 1px solid var(--border); }
+  #log { font: 13px/1.6 var(--mono); margin: 0; padding: 0; list-style: none; }
+  #log li::before { content: "› "; color: var(--muted); }
+  .error-text { color: var(--red); margin-top: 8px; }
+  pre.cmd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; overflow: auto; }
+  footer { max-width: 1180px; margin: 0 auto; padding: 8px 16px 32px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Agent Trap <span class="mode" id="mode">loading</span></h1>
+  <p class="tagline">Run an untrusted repository in a locked room with fake secrets, watch what an AI agent
+    does with it, and point to the exact line behind any leak.</p>
+  <nav role="tablist">
+    <button role="tab" id="tab-results-btn" aria-selected="true" aria-controls="tab-results">Saved results</button>
+    <button role="tab" id="tab-scan-btn" aria-selected="false" aria-controls="tab-scan">Scan a repo</button>
+  </nav>
+</header>
+
+<main>
+  <section id="tab-results" role="tabpanel">
+    <div class="grid">
+      <div class="card" id="list" aria-label="Saved scans"></div>
+      <article id="detail"></article>
+    </div>
+  </section>
+
+  <section id="tab-scan" role="tabpanel" hidden>
+    <div class="card" id="scan-card"></div>
+    <div class="card" id="progress" hidden>
+      <h2>Progress</h2>
+      <ul id="log"></ul>
+      <div class="error-text" id="scan-error" role="alert"></div>
+    </div>
+  </section>
+</main>
+<footer>Every secret in a scan is a fake planted by Agent Trap. Text shown from scanned repositories is untrusted and displayed as plain text.</footer>
+
+<script>
+"use strict";
+
+// ---- helpers --------------------------------------------------------------------------------
+// Everything from a scan is untrusted. Elements are built from text nodes only, never from HTML.
+function h(tag, props = {}, ...kids) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(props)) {
+    if (value === false || value == null) continue;
+    if (key === "class") node.className = value;
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === false || kid == null) continue;
+    node.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  }
+  return node;
+}
+const $ = (id) => document.getElementById(id);
+const clear = (node) => { while (node.firstChild) node.removeChild(node.firstChild); };
+
+async function getJson(path) {
+  try {
+    const response = await fetch(path, { headers: { Accept: "application/json" } });
+    return response.ok ? await response.json() : null;
+  } catch { return null; }
+}
+
+const state = { live: false, demos: [], limits: null, results: [], current: null, busy: false };
+
+// ---- tabs --------------------------------------------------------------------------------------
+function showTab(name) {
+  for (const tab of ["results", "scan"]) {
+    $(`tab-${tab}`).hidden = tab !== name;
+    $(`tab-${tab}-btn`).setAttribute("aria-selected", String(tab === name));
+  }
+}
+$("tab-results-btn").addEventListener("click", () => showTab("results"));
+$("tab-scan-btn").addEventListener("click", () => showTab("scan"));
+
+// ---- saved results list -----------------------------------------------------------------------------
+function when(iso) {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleString();
+}
+
+function renderList() {
+  const list = $("list");
+  clear(list);
+  if (!state.results.length) {
+    list.append(h("p", { class: "muted small", style: "padding:8px" },
+      state.live ? "No saved results yet. Scan a repository, or run agenttrap scan <repo>."
+                 : "No saved results in this copy of the page."));
+    return;
+  }
+  for (const item of state.results) {
+    list.append(h("button", {
+      class: "item", "aria-current": String(state.current === item.id),
+      onclick: () => selectResult(item.id),
+    },
+      h("span", { class: `badge ${item.status}` }, item.status),
+      h("span", { class: "name" }, item.name),
+      h("span", { class: "muted small" }, when(item.created))));
+  }
+}
+
+async function selectResult(id) {
+  const doc = (await getJson(`api/results/${encodeURIComponent(id)}`))
+    || (await getJson(`results/${encodeURIComponent(id)}.json`));
+  if (!doc) return;
+  state.current = id;
+  history.replaceState(null, "", `#${encodeURIComponent(id)}`);
+  renderList();
+  renderDetail(doc);
+  showTab("results");
+}
+
+// ---- one result ---------------------------------------------------------------------------------------
+function chip(location) { return h("span", { class: "chip" }, `${location.file}:${location.line}`); }
+
+function codeBlock(file, excerpt, hits, related) {
+  const rows = excerpt.lines.map((text, index) => {
+    const number = excerpt.start + index;
+    const kind = hits.has(number) ? "hit" : related.has(number) ? "rel" : "";
+    return h("div", { class: `line ${kind}` },
+      h("span", { class: "no" }, number), h("span", { class: "src" }, text || " "));
+  });
+  const more = excerpt.start + excerpt.lines.length - 1 < excerpt.total_lines;
+  return h("div", { class: "code" }, h("div", { class: "file" }, file), rows,
+    more ? h("div", { class: "file small" }, "… rest of the file not shown") : null);
+}
+
+function linesOf(findings, file, key) {
+  const lines = new Set();
+  for (const f of findings) for (const l of f[key]) if (l.file === file) lines.add(l.line);
+  return lines;
+}
+
+const TAG_NOTES = {
+  "base64": "hidden as base64, so a text scanner sees only random characters",
+  "runtime-fetch": "a network call made by the repository's own code while it runs",
+  "unicode": "hidden with invisible unicode characters",
+};
+
+function renderDetail(doc) {
+  const out = $("detail");
+  clear(out);
+
+  out.append(h("div", { class: "card banner" },
+    h("span", { class: `badge ${doc.status}` }, doc.status),
+    h("div", {}, h("div", { style: "font-weight:600" }, doc.name),
+      h("div", { class: "muted small" }, doc.headline)),
+    h("div", { class: "muted small", style: "margin-left:auto" },
+      `${doc.runs} runs · ${doc.seconds}s · $${Number(doc.cost_usd).toFixed(3)} · ${when(doc.created)}`)));
+
+  // what was found
+  const findings = doc.findings || [];
+  const found = h("div", { class: "card" }, h("h2", {}, "What Agent Trap found"));
+  if (!findings.length) found.append(h("p", { class: "muted" }, "Nothing. No secret left the sandbox and no text tried to instruct the agent."));
+  for (const f of findings) {
+    found.append(h("div", { class: `finding ${f.level}` },
+      h("div", { class: "title" }, f.title), h("div", {}, f.message),
+      f.locations.map(chip)));
+  }
+  const notes = Object.values(doc.culprits || {}).flat().map((c) => TAG_NOTES[c.tag]).filter(Boolean);
+  for (const note of new Set(notes)) found.append(h("p", { class: "muted small" }, `Note: ${note}.`));
+  for (const [secret, why] of Object.entries(doc.unlocalized || {}))
+    found.append(h("p", { class: "muted small" }, `Could not pinpoint the line for ${secret}: ${why}`));
+  out.append(found);
+
+  // the code
+  const files = Object.entries(doc.files || {});
+  if (files.length) {
+    const code = h("div", { class: "card" }, h("h2", {}, "Where"),
+      h("p", { class: "muted small" }, "Red lines are the ones to look at; yellow lines are also needed for it to happen."));
+    for (const [file, excerpt] of files)
+      code.append(codeBlock(file, excerpt, linesOf(findings, file, "locations"), linesOf(findings, file, "related")));
+    out.append(code);
+  }
+
+  // comparison with a plain read-through
+  const flagged = doc.static_scan?.count ?? 0;
+  const detected = doc.status !== "SAFE";
+  out.append(h("div", { class: "card" }, h("h2", {}, "Versus just reading the files"),
+    h("div", { class: "compare" },
+      h("div", {}, h("div", { class: "muted small" }, "A plain text scan flagged"),
+        h("div", { class: "big" }, `${flagged} line${flagged === 1 ? "" : "s"}`)),
+      h("div", {}, h("div", { class: "muted small" }, "Agent Trap, by running the repo"),
+        h("div", { class: `big ${doc.status}`, style: "background:none" }, detected ? `${findings.length} finding${findings.length === 1 ? "" : "s"}` : "nothing found"))),
+    flagged === 0 && detected ? h("p", { class: "small" }, "Reading the files showed nothing wrong here. The problem only appears when the code runs.") : null,
+    (doc.static_scan?.flagged || []).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`)))));
+
+  // agent-reported text
+  if ((doc.injections || []).length) {
+    const card = h("div", { class: "card" }, h("h2", {}, "Text that tried to instruct the AI agent"),
+      h("p", { class: "muted small" }, "Reported by the agent itself, so this is a warning, not proof."));
+    for (const item of doc.injections)
+      card.append(h("div", { class: "finding warning" },
+        item.where ? chip({ file: item.where, line: "" }) : h("span", { class: "muted small" }, "quoted text not found in the repository"),
+        h("div", { class: "quote" }, item.quote), h("div", { class: "small" }, `Asked for: ${item.asked_for}`)));
+    out.append(card);
+  }
+
+  // hosts
+  const hosts = doc.contacted_hosts || [];
+  if (hosts.length) {
+    const table = h("table", {}, h("tr", {}, ["Host", "Registered", "Public reports"].map((t) => h("th", {}, t))));
+    for (const host of hosts) {
+      const info = (doc.host_intel || {})[host];
+      const reports = !info || info.reports == null ? "unknown (search did not run)"
+        : info.reports.length ? info.reports.map((r) => `${r.title} (${r.url})`).join("; ") : "none found";
+      const registered = info?.registered ? `${info.registered} (${info.age_days} days ago)` : "unknown";
+      table.append(h("tr", {}, h("td", {}, host), h("td", {}, registered), h("td", {}, reports)));
+    }
+    out.append(h("div", { class: "card" }, h("h2", {}, "Hosts the sandbox contacted"),
+      h("p", { class: "muted small" }, "These are not on the allow-list. A recent registration or a web report is context, not proof."), table));
+  }
+
+  // cleaned copy
+  if (doc.cleaned) {
+    const c = doc.cleaned;
+    out.append(h("div", { class: "card" }, h("h2", {}, "Cleaned copy"),
+      h("p", {}, "Removed: ", c.removed.map((r) => h("span", { class: "chip" }, r))),
+      h("p", {}, "Scanned again: ", h("span", { class: `badge ${c.rescan_status}` }, c.rescan_status),
+        c.rescan_leaks.length ? ` still leaks ${c.rescan_leaks.join(", ")}` : " the secret no longer leaves the sandbox"),
+      c.warnings.map((w) => h("p", { class: "small", style: "color:var(--amber)" }, w)),
+      h("p", { class: "muted small" }, "Removing code can change what the repository does. Review it before use.")));
+  }
+}
+
+// ---- live scanning ------------------------------------------------------------------------------------------
+function renderScanCard() {
+  const card = $("scan-card");
+  clear(card);
+  if (!state.live) {
+    card.append(h("h2", {}, "Scan a repository"),
+      h("p", {}, "Live scanning runs on your own machine, because it needs Docker and an API key. To try it:"),
+      h("pre", { class: "cmd" }, "pip install 'agent-trap[web]'\nagenttrap serve"));
+    return;
+  }
+  const input = h("input", { type: "text", id: "url", placeholder: "https://github.com/owner/repo", "aria-label": "GitHub repository URL", autocomplete: "off", spellcheck: "false" });
+  const form = h("form", { onsubmit: (event) => { event.preventDefault(); startScan({ url: input.value }); } },
+    input, h("button", { class: "primary", id: "go", type: "submit" }, "Scan"));
+  card.append(h("h2", {}, "Scan a public GitHub repository"), form,
+    h("p", { class: "muted small" }, `Public repositories only, up to ${state.limits?.max_repo_mb ?? 50} MB. Nothing from the repository runs outside the sandbox. A scan takes a few minutes.`));
+  if (state.demos.length) {
+    card.append(h("div", { class: "muted small", style: "margin-top:12px" }, "Or scan one of our own test repositories:"),
+      h("div", { class: "demos" }, state.demos.map((id) => h("button", { type: "button", class: "demo", onclick: () => startScan({ demo: id }) }, id))));
+  }
+}
+
+function setBusy(busy) {
+  state.busy = busy;
+  for (const control of document.querySelectorAll("#go, .demo, #url")) control.disabled = busy;
+}
+
+function startScan(body) {
+  if (state.busy) return;
+  const log = $("log"), errorBox = $("scan-error");
+  clear(log); errorBox.textContent = "";
+  $("progress").hidden = false;
+  setBusy(true);
+  fetch("api/scan", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Agenttrap": "1" },
+    body: JSON.stringify(body),
+  }).then(async (response) => {
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "The scan could not be started.");
+    follow(data.job);
+  }).catch((error) => { errorBox.textContent = error.message; setBusy(false); });
+}
+
+function follow(job) {
+  const log = $("log"), errorBox = $("scan-error");
+  const source = new EventSource(`api/jobs/${encodeURIComponent(job)}/events`);
+  let finished = false;
+  const stop = () => { finished = true; source.close(); setBusy(false); };
+  source.addEventListener("progress", (event) => log.append(h("li", {}, JSON.parse(event.data).message)));
+  source.addEventListener("error", (event) => {
+    if (event.data) { errorBox.textContent = JSON.parse(event.data).message; stop(); }
+    else if (!finished) { errorBox.textContent = "Lost the connection to the server."; stop(); }
+  });
+  source.addEventListener("done", async (event) => {
+    stop();
+    state.results = (await getJson("api/results")) || state.results;
+    await selectResult(JSON.parse(event.data).result);
+  });
+}
+
+// ---- start ---------------------------------------------------------------------------------------------------------
+async function init() {
+  const config = await getJson("api/config");
+  state.live = !!config?.live;
+  state.demos = config?.demos || [];
+  state.limits = config?.limits || null;
+  $("mode").textContent = state.live ? "live on this machine" : "saved results only";
+  state.results = (await getJson("api/results")) || (await getJson("results/index.json")) || [];
+  renderList();
+  renderScanCard();
+  const wanted = decodeURIComponent(location.hash.slice(1));
+  const first = state.results.find((r) => r.id === wanted) || state.results[0];
+  if (first) await selectResult(first.id);
+  else $("detail").append(h("div", { class: "card muted" }, "Pick a saved result on the left."));
+}
+init();
+</script>
+</body>
+</html>

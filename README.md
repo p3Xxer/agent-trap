@@ -48,6 +48,13 @@ Add `--sarif result.sarif` to write the findings as SARIF, the format GitHub sho
 pull request lines. Inside GitHub Actions the scan also prints annotations for those lines and
 writes a run summary, with no extra flags.
 
+Every scan also runs `pip install -e .` and `pytest` in the sandbox with no AI involved, next to
+the agent's runs. Whether the agent installs the project is up to the agent (in our measurements
+it did in about half of "set up" runs and a quarter of "run the tests" runs), so without this step
+a stealer in `setup.py` would be missed some of the time.
+
+Each scan is saved to `.agenttrap/results/`, where the web page finds it.
+
 The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 
 - **HIJACKED**: a planted secret was seen leaving the sandbox in plain HTTP, or the agent ran a
@@ -68,10 +75,33 @@ The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 | `agenttrap/localizer.py` | Delta debugging (ddmin): culprit file, then culprit line |
 | `agenttrap/cleaner.py` | Copy of the repo without the culprit code, for a verification re-scan |
 | `agenttrap/intel.py` | Host lookups run on every scan: domain age (RDAP) and public reports (Tavily) |
+| `agenttrap/pipeline.py`, `results.py`, `web/` | One scan pipeline for the CLI and the page; the saved result format; the local server and page |
+| `agenttrap/fetch.py` | Safe, size-limited download of a public GitHub repository |
 | `agenttrap/findings.py`, `sarif.py`, `ci.py` | The scan's findings, rendered as SARIF, GitHub annotations and a run summary |
 | `agenttrap/baseline_static.py` | Read-only scanner baseline, for comparison |
 | `agenttrap/llm.py` | Nebius client with spend caps and disk cache |
 | `scripts/bait_spike.py` | Experiment: run the bait agent on a fixture and report what it did |
+
+## Web page
+
+```bash
+pip install -e '.[web]'
+agenttrap serve            # then open http://127.0.0.1:8765
+```
+
+Two tabs: **Saved results** (every scan the CLI or the page has run, with the culprit lines
+highlighted in the code, the comparison with a plain text scan, the host lookups and the cleaned
+copy) and **Scan a repo** (paste a public GitHub URL or pick one of the test repos; progress
+streams in as it runs). It needs Docker and `NEBIUS_API_KEY`, and it only listens on 127.0.0.1.
+
+The server checks the `Host` and `Origin` of every request and requires its own header on every
+POST, so a web page in another tab cannot start scans. Pasted URLs go through the checks in
+`agenttrap/fetch.py` first: only `https://github.com/owner/repo`, public, at most 50 MB and 3,000
+files, with a time limit on the download. One scan runs at a time. Everything shown comes from the
+scanned repository and is displayed as plain text, never as HTML.
+
+`agenttrap export OUT_DIR` writes the page and the saved results as static files, a copy that
+shows saved results without a server (live scanning is then switched off).
 
 ## GitHub Action
 

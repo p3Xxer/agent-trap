@@ -15,7 +15,6 @@ import ipaddress
 import json
 import os
 import re
-import ssl
 import urllib.request
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
@@ -23,8 +22,9 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from urllib.parse import urlparse
 
-import certifi
 from dotenv import load_dotenv
+
+from agenttrap.net import TLS
 
 load_dotenv()
 
@@ -40,9 +40,6 @@ NEAR_CHARS = 150  # a malware word must be this close to the host name to count 
 _BAD_WORDS = re.compile(
     r"\b(malware|malicious|phishing|scam|botnet|ransomware|trojan|spyware|stealer|c2|exfiltrat\w*)\b"
 )
-
-# python.org builds of Python on macOS ship without root certificates, so use certifi's bundle.
-_TLS = ssl.create_default_context(cafile=certifi.where())
 
 # Names that only exist inside a private network. They are never sent to a public service.
 PRIVATE_SUFFIXES = (".local", ".internal", ".lan", ".corp", ".home", ".localdomain", ".intranet")
@@ -76,7 +73,7 @@ def api_key() -> str | None:
 def http_json(request: urllib.request.Request, timeout: float = TIMEOUT) -> dict | None:
     """Perform a request and parse a JSON object. Any network or parse failure gives None."""
     try:
-        with urllib.request.urlopen(request, timeout=timeout, context=_TLS) as response:
+        with urllib.request.urlopen(request, timeout=timeout, context=TLS) as response:
             data = json.load(response)
     except (OSError, ValueError):  # URLError, HTTPError and timeouts are OSError
         return None

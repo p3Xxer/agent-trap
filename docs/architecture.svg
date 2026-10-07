@@ -87,11 +87,12 @@
 <line x1="1082" y1="480" x2="1128" y2="480" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <line x1="1082" y1="620" x2="1128" y2="620" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <rect x="1130" y="688" width="340" height="130" rx="10" fill="#c5f6fa" stroke="#0c8599" stroke-width="2"/>
-<text x="1142" y="716.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Optional: who is behind a host?</text>
-<text x="1142" y="739.2" font-size="15" xml:space="preserve" fill="#1e1e1e">--lookup asks the public web when the</text>
-<text x="1142" y="758.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  domain was registered (RDAP) and</text>
-<text x="1142" y="776.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  whether pages report it (Tavily).</text>
-<text x="1142" y="795.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  Only host names are sent.</text>
+<text x="1142" y="716.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Who is behind a host?</text>
+<text x="1142" y="739.2" font-size="15" xml:space="preserve" fill="#1e1e1e">Every flagged host is looked up on the</text>
+<text x="1142" y="758.0" font-size="15" xml:space="preserve" fill="#1e1e1e">public web: when the domain was</text>
+<text x="1142" y="776.8" font-size="15" xml:space="preserve" fill="#1e1e1e">registered (RDAP) and whether pages</text>
+<text x="1142" y="795.5" font-size="15" xml:space="preserve" fill="#1e1e1e">report it (Tavily). Only host names are</text>
+<text x="1142" y="814.2" font-size="15" xml:space="preserve" fill="#1e1e1e">sent.</text>
 <text x="1530" y="169.0" font-size="20" xml:space="preserve" fill="#1e1e1e">4  PINPOINT THE LINE</text>
 <text x="1530" y="191.3" font-size="14" xml:space="preserve" fill="#1e1e1e">only when HIJACKED</text>
 <rect x="1530" y="225" width="340" height="235" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>

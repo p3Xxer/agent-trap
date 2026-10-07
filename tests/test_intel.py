@@ -147,6 +147,13 @@ def test_ip_addresses_and_dotless_names_are_skipped_and_the_list_is_capped():
     assert list(result) == [f"h{i}.example.com" for i in range(MAX_HOSTS)]
 
 
+def test_internal_looking_names_are_never_looked_up():
+    web = FakeWeb()
+    hosts = ["db.corp", "printer.local", "api.internal", "nas.home", "evil.com"]
+    assert list(lookup(hosts, key="k", fetch=web, today=TODAY)) == ["evil.com"]
+    assert not any("corp" in r.full_url or "local" in r.full_url for r in web.requests)
+
+
 def test_unexpected_hosts_respects_the_allow_list():
     observed = Observed((), ("pypi.org", "evil.com", "files.pythonhosted.org"))
     assert unexpected_hosts(observed, {"pypi.org", "files.pythonhosted.org"}) == ["evil.com"]

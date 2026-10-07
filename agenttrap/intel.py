@@ -3,10 +3,10 @@
 * RDAP (free, no key) says when the domain was registered.
 * Tavily web search says whether anyone publicly reports the domain as malicious.
 
-Only the host name is ever sent out: nothing from the repo, the run or the canaries. Everything
-that comes back is untrusted text from the internet. It is cleaned and shortened here, shown to
-the human as data, and never given to a model. A lookup that fails reports "unknown", which is
-different from "searched and found nothing".
+Only the host name is ever sent out, and never one that looks private: nothing from the repo, the
+run or the canaries. Everything that comes back is untrusted text from the internet. It is cleaned
+and shortened here, shown to the human as data, and never given to a model. A lookup that fails
+reports "unknown", which is different from "searched and found nothing".
 """
 
 from __future__ import annotations
@@ -43,6 +43,9 @@ _BAD_WORDS = re.compile(
 
 # python.org builds of Python on macOS ship without root certificates, so use certifi's bundle.
 _TLS = ssl.create_default_context(cafile=certifi.where())
+
+# Names that only exist inside a private network. They are never sent to a public service.
+PRIVATE_SUFFIXES = (".local", ".internal", ".lan", ".corp", ".home", ".localdomain", ".intranet")
 
 Fetch = Callable[[urllib.request.Request], dict | None]  # JSON object, or None on any failure
 
@@ -104,7 +107,7 @@ def _lookup_one(host: str, key: str | None, fetch: Fetch, today: date) -> HostIn
 
 
 def _is_domain(host: str) -> bool:
-    if "." not in host:
+    if "." not in host or host.endswith(PRIVATE_SUFFIXES):
         return False
     try:
         ipaddress.ip_address(host)

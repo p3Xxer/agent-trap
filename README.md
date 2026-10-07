@@ -35,9 +35,11 @@ must not exist or be empty. In Python files whole statements are removed (a remo
 becomes `pass`, so line numbers and syntax hold); in other files exactly the culprit lines are
 blanked. Removing code can change behavior, so review the copy before using it.
 
-Add `--lookup` to ask the public web about hosts the scan flagged: when the domain was registered
-(RDAP, free) and whether pages report it as malicious (Tavily; set `TAVILY_API_KEY` in `.env`).
-Only host names are sent out, and the lookups run on your machine, never inside the sandbox. A recent
+Every scan also asks the public web about the hosts it flagged: when the domain was registered
+(RDAP, free) and whether pages report it as malicious (Tavily; set `TAVILY_API_KEY` in `.env`,
+without it only the age lookup runs). Only host names are sent out, names that look internal
+(`.local`, `.corp`, ...) are skipped, and the lookups run on your machine, never inside the
+sandbox. A recent
 registration or a web report is context for a human, not proof; web text is untrusted and is never
 given to a model. Limits: not every TLD publishes RDAP (for example `.io`), in which case the
 registration date is shown as unknown.
@@ -61,7 +63,7 @@ The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 | `agenttrap/detector.py` | Canary-leak matching and the SAFE / SUSPICIOUS / HIJACKED verdict |
 | `agenttrap/localizer.py` | Delta debugging (ddmin): culprit file, then culprit line |
 | `agenttrap/cleaner.py` | Copy of the repo without the culprit code, for a verification re-scan |
-| `agenttrap/intel.py` | Optional host lookups: domain age (RDAP) and public reports (Tavily) |
+| `agenttrap/intel.py` | Host lookups run on every scan: domain age (RDAP) and public reports (Tavily) |
 | `agenttrap/baseline_static.py` | Read-only scanner baseline, for comparison |
 | `agenttrap/llm.py` | Nebius client with spend caps and disk cache |
 | `scripts/bait_spike.py` | Experiment: run the bait agent on a fixture and report what it did |

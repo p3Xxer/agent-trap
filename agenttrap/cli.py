@@ -38,11 +38,6 @@ def main(argv: list[str] | None = None) -> int:
         help="if HIJACKED, write a copy of the repo without the culprit code to OUT_DIR "
         "(must not exist or be empty) and scan the copy",
     )
-    p.add_argument(
-        "--lookup",
-        action="store_true",
-        help="look up flagged hosts on the public web (sends only host names; uses TAVILY_API_KEY)",
-    )
     args = parser.parse_args(argv)
 
     repo = args.repo.resolve()
@@ -56,9 +51,8 @@ def main(argv: list[str] | None = None) -> int:
     console = Console(stderr=True)
     with console.status("starting") as status:
         result = scan(repo, **options, progress=status.update)
-        if args.lookup:
-            status.update("looking up flagged hosts")
-            result.intel = lookup(suspect_hosts(result), key=api_key())
+        status.update("looking up flagged hosts")
+        result.intel = lookup(suspect_hosts(result), key=api_key())
         if args.clean and result.culprits:
             status.update("cleaning the repo and scanning the copy")
             result.cleaned = clean_and_rescan(repo, result, args.clean, **options)

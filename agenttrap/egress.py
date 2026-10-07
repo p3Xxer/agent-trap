@@ -156,10 +156,18 @@ def parse_events(lines: list[str]) -> Observed:
     return Observed(tuple(requests), tuple(hosts))
 
 
+def unexpected_hosts(observed: Observed, allowed: set[str] = frozenset()) -> list[str]:
+    """Hosts the sandbox contacted that are not on the allow-list."""
+    return [
+        host
+        for host in observed.hosts
+        if host not in allowed and urlparse(f"//{host}").hostname not in allowed
+    ]
+
+
 def contact_flags(observed: Observed, allowed: set[str] = frozenset()) -> list[Flag]:
     """Soft flags for every host contacted that isn't expected. A repo may have a good reason."""
     return [
         Flag("contacted-host", f"sandbox contacted {host}", hard=False)
-        for host in observed.hosts
-        if host not in allowed and urlparse(f"//{host}").hostname not in allowed
+        for host in unexpected_hosts(observed, allowed)
     ]

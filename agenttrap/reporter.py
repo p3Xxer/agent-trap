@@ -5,9 +5,11 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 
 from agenttrap.detector import Status
+from agenttrap.intel import HostIntel
 from agenttrap.localizer import Culprit
 from agenttrap.scan import ScanResult, base_name
 
@@ -38,6 +40,31 @@ def split_culprits(
     return key or culprits, [c for c in culprits if c not in key] if key else []
 
 
+def render_intel(intel: dict[str, HostIntel], console: Console) -> None:
+    """Public lookups on flagged hosts. All of this text came from the internet: it is shown as
+    data, escaped, and never acted on."""
+    console.print("\n[bold]Who is behind these hosts[/] [dim](public lookups, untrusted)[/]")
+    for host, info in intel.items():
+        console.print(f"    [bold]{escape(host)}[/]")
+        console.print(f"      registered : {_registration(info)}")
+        if info.reports is None:
+            console.print("      web reports: unknown (search did not run)")
+        elif not info.reports:
+            console.print("      web reports: none found")
+        else:
+            console.print(f"      web reports: {len(info.reports)} page(s) mention it")
+            for report in info.reports:
+                console.print(f"        - {escape(report.title)}  {escape(report.url)}")
+                console.print(f"          {escape(report.snippet)}")
+
+
+def _registration(info: HostIntel) -> str:
+    if info.registered is None or info.age_days is None:
+        return "unknown"
+    recent = "  [yellow](recent)[/]" if info.is_recent else ""
+    return f"{info.registered.isoformat()} ({info.age_days:,} days ago){recent}"
+
+
 def render(result: ScanResult, console: Console | None = None) -> None:
     console = console or Console()
     status = result.verdict.status
@@ -48,23 +75,22 @@ def render(result: ScanResult, console: Console | None = None) -> None:
 
     for leak in sorted({base_name(x.canary) for x in result.verdict.leaks}):
         evidence = next(x for x in result.verdict.leaks if base_name(x.canary) == leak)
-        console.print(f"\n[bold red]leaked[/] {leak}  ->  {evidence.destination}")
+        console.print(f"\n[bold red]leaked[/] {escape(leak)}  ->  {escape(evidence.destination)}")
         key, support = split_culprits(result.culprits.get(leak, []), leak, evidence.destination)
         for culprit in key:
-            console.print(f"    culprit : [bold]{culprit.file}:{culprit.line}[/]")
-            console.print(f"    line    : {culprit.text.strip()[:100]}")
+            console.print(f"    culprit : [bold]{escape(culprit.file)}:{culprit.line}[/]")
+            console.print(f"    line    : {escape(culprit.text.strip()[:100])}")
             if note := NOTES.get(culprit.tag):
                 console.print(f"    note    : {note}")
         if support:
             lines = ", ".join(f"{c.file}:{c.line}" for c in support)
-            console.print(f"    also needed for the leak: {lines}")
+            console.print(f"    also needed for the leak: {escape(lines)}")
         if leak in result.unlocalized:
-            console.print(f"    culprit : not pinpointed ({result.unlocalized[leak]})")
+            console.print(f"    culprit : not pinpointed ({escape(result.unlocalized[leak])})")
 
     hard = [f for f in result.verdict.flags if f.hard]
-    soft = [f for f in result.verdict.flags if not f.hard and f.kind != "injection-reported"]
     for flag in hard:
-        console.print(f"\n[bold red]{flag.kind}[/] {flag.detail}")
+        console.print(f"\n[bold red]{flag.kind}[/] {escape(flag.detail)}")
 
     if result.injections:
         console.print(
@@ -72,11 +98,13 @@ def render(result: ScanResult, console: Console | None = None) -> None:
         )
         for item in result.injections:
             where = item.where or "quoted text not found in repo"
-            console.print(f"    [bold]{where}[/]")
-            console.print(f'    "{item.injection.quote.strip()[:100]}"')
-            console.print(f"    asked for: {item.injection.asked_for.strip()[:100]}")
-    if soft:
+            console.print(f"    [bold]{escape(where)}[/]")
+            console.print(f'    "{escape(item.injection.quote.strip()[:100])}"')
+            console.print(f"    asked for: {escape(item.injection.asked_for.strip()[:100])}")
+    if result.contacted:
         console.print("\n[yellow]Hosts contacted that are not on the allow-list[/]")
-        for flag in soft:
-            console.print(f"    {flag.detail.removeprefix('sandbox contacted ')}")
+        for host in result.contacted:
+            console.print(f"    {escape(host)}")
+    if result.intel:
+        render_intel(result.intel, console)
     console.print(f"\n[dim]cost ${result.cost_usd:.4f}, {result.seconds:.0f}s[/]\n")

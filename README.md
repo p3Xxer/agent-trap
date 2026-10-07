@@ -29,6 +29,13 @@ agenttrap scan path/to/repo            # needs Docker running and NEBIUS_API_KEY
 agenttrap scan path/to/repo --k 3 --json result.json
 ```
 
+Add `--lookup` to ask the public web about hosts the scan flagged: when the domain was registered
+(RDAP, free) and whether pages report it as malicious (Tavily; set `TAVILY_API_KEY` in `.env`).
+Only host names are sent out, and the lookups run on your machine, never inside the sandbox. A recent
+registration or a web report is context for a human, not proof; web text is untrusted and is never
+given to a model. Limits: not every TLD publishes RDAP (for example `.io`), in which case the
+registration date is shown as unknown.
+
 The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 
 - **HIJACKED**: a planted secret was seen leaving the sandbox in plain HTTP, or the agent ran a
@@ -47,6 +54,7 @@ The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 | `agenttrap/agent.py` | The bait agent: a Nemotron tool-use loop run inside the sandbox, plus a post-task debrief |
 | `agenttrap/detector.py` | Canary-leak matching and the SAFE / SUSPICIOUS / HIJACKED verdict |
 | `agenttrap/localizer.py` | Delta debugging (ddmin): culprit file, then culprit line |
+| `agenttrap/intel.py` | Optional host lookups: domain age (RDAP) and public reports (Tavily) |
 | `agenttrap/baseline_static.py` | Read-only scanner baseline, for comparison |
 | `agenttrap/llm.py` | Nebius client with spend caps and disk cache |
 | `scripts/bait_spike.py` | Experiment: run the bait agent on a fixture and report what it did |

@@ -11,9 +11,10 @@ from rich.console import Console
 
 from agenttrap.agent import TASKS
 from agenttrap.detector import Status
+from agenttrap.intel import api_key, lookup
 from agenttrap.llm import LLM
 from agenttrap.reporter import render
-from agenttrap.scan import scan, to_json
+from agenttrap.scan import scan, suspect_hosts, to_json
 
 EXIT_CODE = {Status.SAFE: 0, Status.SUSPICIOUS: 0, Status.HIJACKED: 1}
 
@@ -30,6 +31,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--tasks", nargs="+", choices=list(TASKS), default=list(TASKS))
     p.add_argument("--served", type=Path, help="JSON file: http URL -> body the sinkhole serves")
     p.add_argument("--json", type=Path, dest="json_out", help="also write the result as JSON")
+    p.add_argument(
+        "--lookup",
+        action="store_true",
+        help="look up flagged hosts on the public web (sends only host names; uses TAVILY_API_KEY)",
+    )
     args = parser.parse_args(argv)
 
     repo = args.repo.resolve()
@@ -48,6 +54,9 @@ def main(argv: list[str] | None = None) -> int:
             served=served,
             progress=lambda message: status.update(message),
         )
+        if args.lookup:
+            status.update("looking up flagged hosts")
+            result.intel = lookup(suspect_hosts(result), key=api_key())
     render(result, Console())
     if args.json_out:
         args.json_out.write_text(to_json(result))

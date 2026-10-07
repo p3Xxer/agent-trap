@@ -19,11 +19,13 @@ from collections.abc import Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlparse
 
 from agenttrap import canary, sandbox
 from agenttrap.agent import TASKS, Http, Injection, Trace, debrief, run_agent
 from agenttrap.detector import Flag, Leak, Request, Verdict, command_flags, find_leaks, judge
-from agenttrap.egress import Egress, Observed, contact_flags
+from agenttrap.egress import Egress, Observed, contact_flags, unexpected_hosts
+from agenttrap.intel import HostIntel
 from agenttrap.llm import LLM
 from agenttrap.localizer import Culprit, Files, Runner, localize
 from agenttrap.sandbox import Sandbox
@@ -54,6 +56,8 @@ class ScanResult:
     injections: list[FoundInjection] = field(default_factory=list)
     culprits: dict[str, list[Culprit]] = field(default_factory=dict)  # canary -> culprit lines
     unlocalized: dict[str, str] = field(default_factory=dict)  # canary -> why
+    contacted: list[str] = field(default_factory=list)  # hosts contacted, not on the allow-list
+    intel: dict[str, HostIntel] = field(default_factory=dict)  # filled in by an optional lookup
     cost_usd: float = 0.0
     seconds: float = 0.0
 
@@ -226,6 +230,7 @@ def scan(
         for i in injections
     ]
     result = ScanResult(str(repo), judge(leaks, flags), runs, injections)
+    result.contacted = unexpected_hosts(hosts, allowed_hosts)
 
     for name in dict.fromkeys(base_name(leak.canary) for leak in leaks):
         leaking_run = next(r for r in runs if any(base_name(x.canary) == name for x in r.leaks))
@@ -239,6 +244,12 @@ def scan(
     result.cost_usd = llm.status()["cost_usd"]
     result.seconds = time.time() - started
     return result
+
+
+def suspect_hosts(result: ScanResult) -> list[str]:
+    """Hosts worth a lookup: where secrets were sent, then every other unexpected host."""
+    hosts = [urlparse(leak.destination).hostname for leak in result.verdict.leaks]
+    return list(dict.fromkeys(h for h in [*hosts, *result.contacted] if h))
 
 
 def _injections(runs: list[RunResult], files: Mapping[str, str]) -> list[FoundInjection]:
@@ -265,6 +276,20 @@ def to_json(result: ScanResult) -> str:
                 for name, cs in result.culprits.items()
             },
             "unlocalized": result.unlocalized,
+            "contacted_hosts": result.contacted,
+            "host_intel": {
+                host: {
+                    "registered": intel.registered.isoformat() if intel.registered else None,
+                    "age_days": intel.age_days,
+                    "reports": None
+                    if intel.reports is None
+                    else [
+                        {"title": r.title, "url": r.url, "snippet": r.snippet}
+                        for r in intel.reports
+                    ],
+                }
+                for host, intel in result.intel.items()
+            },
             "injections": [
                 {"where": i.where, "quote": i.injection.quote, "asked_for": i.injection.asked_for}
                 for i in result.injections

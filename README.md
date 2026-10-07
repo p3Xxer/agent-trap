@@ -44,6 +44,10 @@ registration or a web report is context for a human, not proof; web text is untr
 given to a model. Limits: not every TLD publishes RDAP (for example `.io`), in which case the
 registration date is shown as unknown.
 
+Add `--sarif result.sarif` to write the findings as SARIF, the format GitHub shows as warnings on
+pull request lines. Inside GitHub Actions the scan also prints annotations for those lines and
+writes a run summary, with no extra flags.
+
 The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 
 - **HIJACKED**: a planted secret was seen leaving the sandbox in plain HTTP, or the agent ran a
@@ -64,9 +68,22 @@ The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 | `agenttrap/localizer.py` | Delta debugging (ddmin): culprit file, then culprit line |
 | `agenttrap/cleaner.py` | Copy of the repo without the culprit code, for a verification re-scan |
 | `agenttrap/intel.py` | Host lookups run on every scan: domain age (RDAP) and public reports (Tavily) |
+| `agenttrap/findings.py`, `sarif.py`, `ci.py` | The scan's findings, rendered as SARIF, GitHub annotations and a run summary |
 | `agenttrap/baseline_static.py` | Read-only scanner baseline, for comparison |
 | `agenttrap/llm.py` | Nebius client with spend caps and disk cache |
 | `scripts/bait_spike.py` | Experiment: run the bait agent on a fixture and report what it did |
+
+## GitHub Action
+
+Scan every pull request automatically; a pull request that steals the planted secrets fails its
+check and gets warnings on the exact lines. See [docs/github-action.md](docs/github-action.md).
+
+```yaml
+- uses: actions/checkout@v4
+- uses: p3Xxer/agent-trap/action@main
+  with:
+    nebius-api-key: ${{ secrets.NEBIUS_API_KEY }}
+```
 
 ## Credits
 

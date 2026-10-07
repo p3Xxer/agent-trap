@@ -9,8 +9,9 @@
 <text x="72" y="275.0" font-size="15" xml:space="preserve" fill="#1e1e1e">or a pull request</text>
 <rect x="60" y="360" width="240" height="125" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
 <text x="72" y="388.1" font-size="19" xml:space="preserve" fill="#1e1e1e">agenttrap scan &lt;repo&gt;</text>
-<text x="72" y="411.2" font-size="15" xml:space="preserve" fill="#1e1e1e">run from the terminal</text>
-<text x="72" y="430.0" font-size="15" xml:space="preserve" fill="#1e1e1e">today; a GitHub Action next</text>
+<text x="72" y="411.2" font-size="15" xml:space="preserve" fill="#1e1e1e">from the terminal, or as a</text>
+<text x="72" y="430.0" font-size="15" xml:space="preserve" fill="#1e1e1e">GitHub Action on every pull</text>
+<text x="72" y="448.8" font-size="15" xml:space="preserve" fill="#1e1e1e">request</text>
 <line x1="180" y1="320" x2="180" y2="360" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <rect x="60" y="525" width="240" height="190" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
 <text x="72" y="553.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Safety rules</text>
@@ -86,7 +87,7 @@
 <line x1="1082" y1="300" x2="1128" y2="300" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <line x1="1082" y1="480" x2="1128" y2="480" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <line x1="1082" y1="620" x2="1128" y2="620" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<rect x="1130" y="688" width="340" height="130" rx="10" fill="#c5f6fa" stroke="#0c8599" stroke-width="2"/>
+<rect x="1130" y="688" width="340" height="150" rx="10" fill="#c5f6fa" stroke="#0c8599" stroke-width="2"/>
 <text x="1142" y="716.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Who is behind a host?</text>
 <text x="1142" y="739.2" font-size="15" xml:space="preserve" fill="#1e1e1e">Every flagged host is looked up on the</text>
 <text x="1142" y="758.0" font-size="15" xml:space="preserve" fill="#1e1e1e">public web: when the domain was</text>
@@ -106,7 +107,7 @@
 <text x="1542" y="388.8" font-size="15" xml:space="preserve" fill="#1e1e1e">Result, for example: setup.py:10-11</text>
 <line x1="1472" y1="300" x2="1528" y2="300" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <text x="1530" y="501.0" font-size="20" xml:space="preserve" fill="#1e1e1e">5  OUTPUT</text>
-<rect x="1530" y="515" width="340" height="175" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+<rect x="1530" y="515" width="340" height="255" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
 <text x="1542" y="543.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Works today</text>
 <text x="1542" y="566.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• terminal report with file:line</text>
 <text x="1542" y="585.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• JSON file (--json)</text>
@@ -114,11 +115,9 @@
 <text x="1542" y="622.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• --clean: a copy without the culprit</text>
 <text x="1542" y="641.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  code, scanned again to prove it is</text>
 <text x="1542" y="660.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  SAFE</text>
-<rect x="1530" y="715" width="340" height="100" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2" stroke-dasharray="8 6"/>
-<text x="1542" y="743.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Planned</text>
-<text x="1542" y="766.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• SARIF: a warning on the exact line of</text>
-<text x="1542" y="785.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  a PR</text>
-<text x="1542" y="803.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• GitHub Action that fails the PR check</text>
+<text x="1542" y="678.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• GitHub Action + SARIF: warnings on</text>
+<text x="1542" y="697.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  the exact lines of a pull request;</text>
+<text x="1542" y="716.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  the check fails on HIJACKED</text>
 <line x1="1700" y1="462" x2="1700" y2="513" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <line x1="1472" y1="480" x2="1528" y2="560" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <line x1="1472" y1="620" x2="1528" y2="610" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
@@ -127,9 +126,8 @@
 <text x="72" y="897.2" font-size="15" xml:space="preserve" fill="#1e1e1e">A static scanner (or asking ChatGPT to read it) caught 1 of 3 attacks in our first test. It cannot see instructions hidden as</text>
 <text x="72" y="916.0" font-size="15" xml:space="preserve" fill="#1e1e1e">base64 or a payload downloaded at runtime. Agent Trap runs the repo and sees what actually happens.</text>
 <text x="1130" y="871.1" font-size="17" xml:space="preserve" fill="#1e1e1e">Legend</text>
-<text x="1130" y="896.3" font-size="14" xml:space="preserve" fill="#1e1e1e">solid box = built and tested</text>
-<text x="1130" y="913.8" font-size="14" xml:space="preserve" fill="#1e1e1e">dashed box = planned</text>
-<text x="1130" y="931.3" font-size="14" xml:space="preserve" fill="#1e1e1e">red = proof</text>
-<text x="1130" y="948.8" font-size="14" xml:space="preserve" fill="#1e1e1e">yellow = warning</text>
-<text x="1130" y="966.3" font-size="14" xml:space="preserve" fill="#1e1e1e">green = safe, or works today</text>
+<text x="1130" y="896.3" font-size="14" xml:space="preserve" fill="#1e1e1e">red = proof</text>
+<text x="1130" y="913.8" font-size="14" xml:space="preserve" fill="#1e1e1e">yellow = warning</text>
+<text x="1130" y="931.3" font-size="14" xml:space="preserve" fill="#1e1e1e">green = safe, or works today</text>
+<text x="1130" y="948.8" font-size="14" xml:space="preserve" fill="#1e1e1e">dashed outline = the locked room</text>
 </svg>

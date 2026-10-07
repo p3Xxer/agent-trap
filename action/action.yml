@@ -1,0 +1,73 @@
+name: Agent Trap
+description: >-
+  Run a repository in a locked sandbox with fake secrets, and fail if its code steals them or
+  hijacks an AI agent. Findings appear as warnings on the lines of the pull request.
+author: Agent Trap contributors
+branding:
+  icon: shield
+  color: red
+
+inputs:
+  path:
+    description: Directory to scan, relative to the workspace.
+    default: "."
+  nebius-api-key:
+    description: Nebius Token Factory API key. Store it as a repository secret.
+    required: false
+  tavily-api-key:
+    description: Optional. Adds web reports about hosts the scan flags.
+    required: false
+  runs:
+    description: Runs per task. The agent is not deterministic, so more runs find more.
+    default: "2"
+  upload-sarif:
+    description: >-
+      Upload findings to GitHub code scanning (warnings on pull request lines and the Security
+      tab). Needs `security-events: write`. Private repositories need GitHub Advanced Security;
+      set this to "false" there, the annotations and run summary still work.
+    default: "true"
+
+outputs:
+  verdict:
+    description: HIJACKED, SUSPICIOUS, SAFE, or skipped when no API key was available.
+    value: ${{ steps.scan.outputs.verdict }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install Agent Trap
+      shell: bash
+      run: python -m pip install --quiet "${{ github.action_path }}/.."
+
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        NEBIUS_API_KEY: ${{ inputs.nebius-api-key }}
+        TAVILY_API_KEY: ${{ inputs.tavily-api-key }}
+        AGENTTRAP_STATE_DIR: ${{ runner.temp }}/agenttrap
+        SCAN_PATH: ${{ inputs.path }}
+        SCAN_RUNS: ${{ inputs.runs }}
+      run: |
+        if [ -z "$NEBIUS_API_KEY" ]; then
+          echo "::notice title=Agent Trap skipped::No API key is available. Repository secrets are not shared with pull requests from forks."
+          echo "verdict=skipped" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        set +e
+        agenttrap scan "$SCAN_PATH" --k "$SCAN_RUNS" --sarif agenttrap.sarif --json agenttrap.json
+        code=$?
+        verdict=$(python -c "import json; print(json.load(open('agenttrap.json'))['status'])" 2>/dev/null)
+        echo "verdict=${verdict:-error}" >> "$GITHUB_OUTPUT"
+        exit $code
+
+    - name: Upload findings to code scanning
+      if: always() && inputs.upload-sarif == 'true' && hashFiles('agenttrap.sarif') != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: agenttrap.sarif
+        category: agent-trap

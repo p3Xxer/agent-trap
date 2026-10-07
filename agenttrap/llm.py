@@ -31,7 +31,11 @@ try:  # load .env when python-dotenv is installed
 except ImportError:  # pragma: no cover
     pass
 
-STATE_DIR = Path(__file__).resolve().parent.parent / ".agenttrap"
+# Cache, spend ledger and interception CA. Defaults to the project folder; set AGENTTRAP_STATE_DIR
+# when the package is installed somewhere else (for example on a CI runner).
+STATE_DIR = Path(
+    os.environ.get("AGENTTRAP_STATE_DIR") or Path(__file__).resolve().parent.parent / ".agenttrap"
+)
 CACHE_DIR = STATE_DIR / "cache"
 # Recorded runs: cache files copied here (and committed) so the demo examples replay a
 # real earlier run exactly, even on a fresh server. Read-only.

@@ -25,6 +25,9 @@ dev = ["pytest>=8", "ruff>=0.6"]
 [tool.setuptools]
 packages = ["agenttrap"]
 
+[tool.setuptools.package-data]
+agenttrap = ["*.Dockerfile"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

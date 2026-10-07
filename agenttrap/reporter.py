@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from urllib.parse import urlparse
-
 from rich.console import Console
 from rich.markup import escape
 from rich.panel import Panel
 
 from agenttrap.detector import Status
+from agenttrap.findings import split_culprits
 from agenttrap.intel import HostIntel
-from agenttrap.localizer import Culprit
 from agenttrap.scan import CleanOutcome, ScanResult, base_name
 
 STYLE = {Status.SAFE: "bold green", Status.SUSPICIOUS: "bold yellow", Status.HIJACKED: "bold red"}
@@ -24,20 +22,6 @@ NOTES = {
     "runtime-fetch": "network call made by the repo's own code while it runs",
     "unicode": "hidden with invisible unicode characters",
 }
-
-
-def split_culprits(
-    culprits: list[Culprit], canary: str, destination: str
-) -> tuple[list[Culprit], list[Culprit]]:
-    """Separate the lines that touch the secret or the destination from supporting lines.
-
-    The localizer returns every line the leak needs (including `try:` and `pass`). Only some of
-    them are what a reviewer should look at; the rest are scaffolding around them.
-    """
-    host = urlparse(destination).hostname or destination
-    markers = [m for m in (host, canary.removeprefix("~/").removeprefix("$")) if m]
-    key = [c for c in culprits if any(m in c.text for m in markers)]
-    return key or culprits, [c for c in culprits if c not in key] if key else []
 
 
 def render_intel(intel: dict[str, HostIntel], console: Console) -> None:

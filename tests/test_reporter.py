@@ -1,5 +1,5 @@
+from agenttrap.findings import split_culprits
 from agenttrap.localizer import Culprit
-from agenttrap.reporter import split_culprits
 
 
 def culprit(line, text):

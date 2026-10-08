@@ -18,7 +18,7 @@ def make(root, *paths):
 # ---- finding the projects ---------------------------------------------------------------------
 
 
-def test_each_folder_is_one_project_found_at_its_own_root_or_a_few_levels_down(tmp_path):
+def test_projects_are_found_at_the_top_of_a_folder_or_a_few_levels_down(tmp_path):
     make(
         tmp_path,
         "a/setup.py",  # project at the top of its folder
@@ -28,6 +28,17 @@ def test_each_folder_is_one_project_found_at_its_own_root_or_a_few_levels_down(t
     )
     found = [p.relative_to(tmp_path).as_posix() for p in find_projects(tmp_path)]
     assert found == ["a", "b/b-1.0.0", "c/x/y", "d"]
+
+
+def test_a_folder_holding_several_projects_gives_all_of_them(tmp_path):
+    make(tmp_path, "tmp/t1/pkg/setup.py", "tmp/t2/pkg/setup.py", "tmp/t3/pkg/setup.py")
+    found = [p.relative_to(tmp_path).as_posix() for p in find_projects(tmp_path)]
+    assert found == ["tmp/t1/pkg", "tmp/t2/pkg", "tmp/t3/pkg"]
+
+
+def test_a_project_is_not_searched_for_projects_inside_itself(tmp_path):
+    make(tmp_path, "a/setup.py", "a/examples/demo/setup.py")
+    assert find_projects(tmp_path) == [tmp_path / "a"]
 
 
 def test_a_folder_that_is_itself_a_project_is_the_only_project(tmp_path):

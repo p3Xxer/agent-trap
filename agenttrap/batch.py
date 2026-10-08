@@ -38,23 +38,27 @@ def _subdirectories(directory: Path) -> list[Path]:
     return sorted(p for p in directory.iterdir() if p.is_dir() and not p.is_symlink())
 
 
-def _project_inside(candidate: Path) -> Path | None:
-    """The nearest directory at or below `candidate` that looks like a Python project."""
-    queue = [(candidate, 0)]
-    while queue:
-        directory, depth = queue.pop(0)
-        if _is_project(directory):
-            return directory
-        if depth < MAX_DEPTH:
-            queue += [(child, depth + 1) for child in _subdirectories(directory)]
-    return None
+def _projects_inside(directory: Path, depth: int = 0) -> list[Path]:
+    """Every directory at or below `directory` that looks like a Python project.
+
+    A project is not searched further, so its own sub-packages are not counted again.
+    """
+    if _is_project(directory):
+        return [directory]
+    if depth >= MAX_DEPTH:
+        return []
+    return [p for child in _subdirectories(directory) for p in _projects_inside(child, depth + 1)]
 
 
 def find_projects(root: Path) -> list[Path]:
-    """One project per folder inside `root` (or `root` itself if it is a project)."""
+    """The projects under `root`: all of them, in order. A folder with no recognizable project
+    in it is scanned as it is, so unusual layouts are not silently skipped."""
     if _is_project(root):
         return [root]
-    return [_project_inside(child) or child for child in _subdirectories(root)]
+    found = []
+    for child in _subdirectories(root):
+        found += _projects_inside(child) or [child]
+    return found
 
 
 def scan_project(

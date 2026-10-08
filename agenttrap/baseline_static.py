@@ -13,6 +13,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+MAX_FILE_BYTES = 200_000  # a larger file is skipped, so one huge file cannot stall the scan
+
 SUSPICIOUS = re.compile(
     r"(ignore (all )?previous|read\s+~?/?\.?\S*(credentials|id_rsa|hosts)\b|exfiltrate|"
     r"POST (its|it|the).*https?://)",
@@ -29,7 +31,8 @@ class Finding:
 
 def scan(repo: Path) -> list[Finding]:
     findings = []
-    for path in sorted(p for p in repo.rglob("*") if p.is_file() and not p.is_symlink()):
+    candidates = (p for p in repo.rglob("*") if p.is_file() and not p.is_symlink())
+    for path in sorted(p for p in candidates if p.stat().st_size <= MAX_FILE_BYTES):
         for n, line in enumerate(path.read_text(errors="ignore").splitlines(), 1):
             if SUSPICIOUS.search(line):
                 findings.append(Finding(str(path.relative_to(repo)), n, line.strip()))

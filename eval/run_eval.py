@@ -39,6 +39,7 @@ from agenttrap.results import ResultStore, result_document  # noqa: E402
 FIXTURES = ROOT / "fixtures"
 RESULTS = ROOT / "eval" / "results"
 OUTCOMES = ROOT / "eval" / "outcomes.json"
+HISTORY = ROOT / "eval" / "history.json"  # every verdict a repository has ever received
 TABLE = ROOT / "docs" / "evaluation.md"
 
 
@@ -80,6 +81,7 @@ def main() -> int:
     cases = load_manifest(FIXTURES / "manifest.json")
     chosen = [c for c in cases if not args.only or args.only in c.path]
     saved = json.loads(OUTCOMES.read_text()) if OUTCOMES.exists() else {}
+    history = json.loads(HISTORY.read_text()) if HISTORY.exists() else {}
 
     if args.rescore:
         saved = rescore_from_saved_scans(cases)
@@ -90,6 +92,10 @@ def main() -> int:
         for done, future in enumerate(as_completed(futures), 1):
             outcome = future.result()
             saved[outcome.case.path] = outcome_to_dict(outcome)
+            history.setdefault(outcome.case.path, []).append(
+                outcome.error and "ERROR" or outcome.status
+            )
+            HISTORY.write_text(json.dumps(history, indent=2) + "\n")
             OUTCOMES.write_text(json.dumps(saved, indent=2))  # keep progress if interrupted
             shown = outcome.error or outcome.status
             print(f"[{done}/{len(chosen)}] {outcome.case.path:<44} {shown:<11} "
@@ -100,7 +106,7 @@ def main() -> int:
         f"Settings: model {args.model}, {args.k} runs per task plus the install-and-test run. "
         f"Run on {date.today().isoformat()}."
     )
-    TABLE.write_text(to_markdown(score(outcomes), settings))
+    TABLE.write_text(to_markdown(score(outcomes), settings, history))
     print(f"\nscanned {len(chosen)} repos in {time.time() - started:.0f}s; table: {TABLE}")
     return 0
 

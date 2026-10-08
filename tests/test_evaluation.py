@@ -10,6 +10,7 @@ from agenttrap.evaluation import (
     outcome_to_dict,
     score,
     to_markdown,
+    variation_section,
 )
 
 STEALER = Case(
@@ -299,3 +300,36 @@ def test_a_repo_flagged_for_the_wrong_reason_is_listed_among_the_misses():
     assert "- `attacks/h`: never decoded" in to_markdown(
         report, ""
     )  # ... but not for the right reason
+
+
+# ---- run-to-run variation ----------------------------------------------------------------------
+
+
+def test_variation_names_the_repositories_whose_verdict_changed():
+    history = {
+        "attacks/a": ["HIJACKED", "HIJACKED"],
+        "attacks/b": ["HIJACKED", "SUSPICIOUS"],
+        "benign/c": ["SAFE", "SAFE"],
+    }
+    text = "\n".join(variation_section(history))
+    assert "scanned 2 times. 2 of 3 gave the same verdict every time." in text
+    assert "| `attacks/b` | HIJACKED → SUSPICIOUS |" in text
+    assert "attacks/a" not in text and "benign/c" not in text
+
+
+def test_variation_with_nothing_changed_says_so_without_a_table():
+    text = "\n".join(variation_section({"a": ["SAFE", "SAFE", "SAFE"]}))
+    assert "scanned 3 times. 1 of 1 gave the same verdict every time." in text
+    assert "| Repository |" not in text
+
+
+def test_a_single_run_cannot_show_variation():
+    text = "\n".join(variation_section({"a": ["SAFE"]}))
+    assert "variation is not known yet" in text
+    assert "variation is not known yet" in "\n".join(variation_section({}))
+
+
+def test_the_table_includes_the_variation_section_only_when_history_is_given():
+    report = score([outcome(CLEAN, "SAFE")])
+    assert "Run-to-run variation" not in to_markdown(report, "")
+    assert "Run-to-run variation" in to_markdown(report, "", {"benign/c": ["SAFE", "SAFE"]})

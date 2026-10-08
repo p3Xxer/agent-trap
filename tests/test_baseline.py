@@ -56,7 +56,9 @@ def docker_free(monkeypatch):
 def test_the_standard_install_and_test_commands_run_in_order(tmp_path):
     result = scan.run_baseline(tmp_path, served={})
     assert [command for command, _ in STATE["commands"]] == list(scan.BASELINE)
-    assert "pip install" in scan.BASELINE[0] and "pytest" in scan.BASELINE[1]
+    joined = " ".join(scan.BASELINE)
+    for route in ("pip install .", "pip install -e .", "setup.py install", "pytest"):
+        assert route in joined, route
     assert all(timeout == scan.BASELINE_TIMEOUT for _, timeout in STATE["commands"])
     assert result.task == "baseline" and result.trace.stopped == "finished"
 
@@ -116,3 +118,61 @@ def test_the_plain_text_scan_skips_a_huge_file_instead_of_reading_it(tmp_path):
     (tmp_path / "small.txt").write_text(line)
     (tmp_path / "huge.txt").write_text(line + "x" * (MAX_FILE_BYTES + 1))
     assert [f.file for f in plain_scan(tmp_path)] == ["small.txt"]
+
+
+# ---- the import step, run for real on harmless packages -----------------------------------------
+
+
+def run_import_all(directory):
+    import subprocess
+    import sys
+
+    return subprocess.run(
+        [sys.executable, "-c", scan.IMPORT_ALL], cwd=directory, capture_output=True, text=True
+    )
+
+
+def make_package(root, path, body):
+    target = root / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(body)
+
+
+MARK = "import pathlib\npathlib.Path(__file__).with_name('imported').write_text('yes')\n"
+
+
+def test_every_top_level_package_is_imported(tmp_path):
+    make_package(tmp_path, "alpha/__init__.py", MARK)
+    make_package(tmp_path, "src/beta/__init__.py", MARK)  # src layout
+    run_import_all(tmp_path)
+    assert (tmp_path / "alpha" / "imported").exists()
+    assert (tmp_path / "src" / "beta" / "imported").exists()
+
+
+def test_tests_and_sub_packages_are_not_imported_directly(tmp_path):
+    make_package(tmp_path, "tests/__init__.py", MARK)
+    make_package(tmp_path, "alpha/__init__.py", "")
+    make_package(tmp_path, "alpha/inner/__init__.py", MARK)  # only reached if alpha imports it
+    run_import_all(tmp_path)
+    assert not (tmp_path / "tests" / "imported").exists()
+    assert not (tmp_path / "alpha" / "inner" / "imported").exists()
+
+
+def test_a_package_that_fails_to_import_is_reported_and_the_rest_still_import(tmp_path):
+    make_package(tmp_path, "aaa/__init__.py", "raise RuntimeError('boom')")
+    make_package(tmp_path, "zzz/__init__.py", MARK)
+    result = run_import_all(tmp_path)
+    assert "import aaa failed: RuntimeError" in result.stdout
+    assert (tmp_path / "zzz" / "imported").exists()
+
+
+def test_a_package_that_exits_while_importing_does_not_stop_the_step(tmp_path):
+    make_package(tmp_path, "aaa/__init__.py", "import sys\nsys.exit(3)")
+    make_package(tmp_path, "zzz/__init__.py", MARK)
+    run_import_all(tmp_path)
+    assert (tmp_path / "zzz" / "imported").exists()
+
+
+def test_a_project_with_no_packages_imports_nothing_and_succeeds(tmp_path):
+    (tmp_path / "setup.py").write_text("")
+    assert run_import_all(tmp_path).returncode == 0

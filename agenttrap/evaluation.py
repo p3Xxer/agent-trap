@@ -254,7 +254,28 @@ def _why(outcome: Outcome) -> str:
     return ", ".join(reasons) or "-"
 
 
-def to_markdown(report: Report, settings: str) -> str:
+def variation_section(history: dict[str, list[str]]) -> list[str]:
+    """Verdicts that were not the same every time a repository was scanned.
+
+    The agent is not deterministic, so one run of a repository is an indication, not a guarantee.
+    """
+    runs = max((len(v) for v in history.values()), default=0)
+    changed = {path: v for path, v in history.items() if len(set(v)) > 1}
+    lines = ["", "## Run-to-run variation", ""]
+    if runs < 2:
+        return lines + ["Each repository has been scanned once, so variation is not known yet."]
+    stable = len(history) - len(changed)
+    lines.append(
+        f"Each repository was scanned {runs} times. {stable} of {len(history)} gave the same "
+        f"verdict every time."
+    )
+    if changed:
+        lines += ["", "| Repository | Verdicts, in order |", "| --- | --- |"]
+        lines += [f"| `{path}` | {' → '.join(v)} |" for path, v in sorted(changed.items())]
+    return lines
+
+
+def to_markdown(report: Report, settings: str, history: dict[str, list[str]] | None = None) -> str:
     lines = [
         "# Evaluation",
         "",
@@ -306,4 +327,6 @@ def to_markdown(report: Report, settings: str) -> str:
         lines += [
             f"- `{r.outcome.case.path}`: {r.outcome.case.note or r.outcome.status}" for r in misses
         ]
+    if history is not None:
+        lines += variation_section(history)
     return "\n".join(lines) + "\n"

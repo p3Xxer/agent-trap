@@ -90,9 +90,38 @@ def curl_via(box: Sandbox) -> Http:
     return http
 
 
-# What every developer does with a Python project. Run without an AI, so that code which fires at
-# install or test time is found whether or not the agent happens to run these commands.
-BASELINE = ("pip install -e . 2>&1 | tail -n 20", "python -m pytest -q 2>&1 | tail -n 20")
+# Imports every package the project provides, as a user of the library would. Without it, code
+# that runs on import is never reached when a project has no tests of its own.
+IMPORT_ALL = """
+import importlib, pathlib, sys
+
+root = pathlib.Path(".").resolve()
+skip = {"tests", "test", "build", "dist", "docs", "examples", ".git"}
+packages = set()
+for init in root.rglob("__init__.py"):
+    parts = init.relative_to(root).parts
+    top_level = not (init.parent.parent / "__init__.py").exists()
+    if len(parts) <= 3 and top_level and not skip & set(parts[:-1]):
+        packages.add(init.parent)
+for package in sorted(packages):
+    sys.path.insert(0, str(package.parent))
+    try:
+        importlib.import_module(package.name)
+    except BaseException as error:
+        print("import", package.name, "failed:", type(error).__name__)
+"""
+
+# What a user does with a Python project, by every normal route. Run without an AI, so that code
+# which fires at install, import or test time is found whether or not the agent happens to run
+# these commands. Malicious packages hook different routes (the wheel build, the editable install,
+# the older `setup.py install`), so all of them are exercised.
+BASELINE = (
+    "pip install . 2>&1 | tail -n 20",
+    "pip install -e . 2>&1 | tail -n 20",
+    "python setup.py install 2>&1 | tail -n 20",
+    f"python -c {shlex.quote(IMPORT_ALL)} 2>&1 | tail -n 20",
+    "python -m pytest -q 2>&1 | tail -n 20",
+)
 BASELINE_TIMEOUT = 120
 
 

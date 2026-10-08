@@ -2,7 +2,7 @@
 
 import json
 
-from agenttrap.agent import Trace, debrief, run_agent
+from agenttrap.agent import DEBRIEF, DEBRIEF_CODE, Trace, debrief, review_code, run_agent
 from agenttrap.sandbox import CommandResult
 
 
@@ -85,3 +85,36 @@ def test_debrief_collects_reported_injections():
 def test_debrief_tolerates_garbage():
     trace = Trace(task="t")
     assert debrief(trace, ScriptedLLM(["sorry, I can't"]), role="t") == []
+
+
+# ---- the second question: suspicious code --------------------------------------
+
+
+def test_review_code_collects_the_code_the_agent_reported():
+    reply = json.dumps({"found": True, "items": [
+        {"source": "setup.py", "quote": "requests.get(hook)", "behavior": "calls a webhook"},
+        {"source": "x", "quote": "   ", "behavior": "empty quotes are dropped"},
+    ]})  # fmt: skip
+    trace = Trace(task="t", messages=[{"role": "user", "content": "t"}])
+    [concern] = review_code(trace, ScriptedLLM([reply]), role="t")
+    assert (concern.source, concern.quote) == ("setup.py", "requests.get(hook)")
+    assert concern.behavior == "calls a webhook"
+    assert trace.concerns == [concern]
+
+
+def test_review_code_tolerates_garbage_and_a_failing_model():
+    assert review_code(Trace(task="t"), ScriptedLLM(["sorry, I can't"]), role="t") == []
+    assert review_code(Trace(task="t"), ScriptedLLM([json.dumps({"items": "no"})]), role="t") == []
+
+
+def test_the_two_questions_are_separate_calls_with_their_own_cache_keys():
+    llm = ScriptedLLM([json.dumps({"items": []}), json.dumps({"items": []})])
+    trace = Trace(task="t", messages=[{"role": "user", "content": "t"}])
+    debrief(trace, llm, role="run")
+    review_code(trace, llm, role="run")
+    assert llm.roles == ["run:debrief", "run:code"]
+
+
+def test_each_question_stays_in_its_lane():
+    assert "Do not report program code" in DEBRIEF
+    assert "program code" in DEBRIEF_CODE and "instructions aimed at you" not in DEBRIEF_CODE

@@ -22,7 +22,17 @@ from typing import Any
 from urllib.parse import urlparse
 
 from agenttrap import canary, sandbox
-from agenttrap.agent import TASKS, Http, Injection, Step, Trace, debrief, run_agent
+from agenttrap.agent import (
+    TASKS,
+    CodeConcern,
+    Http,
+    Injection,
+    Step,
+    Trace,
+    debrief,
+    review_code,
+    run_agent,
+)
 from agenttrap.cleaner import Removal, clean, write_copy
 from agenttrap.detector import Flag, Leak, Request, Verdict, command_flags, find_leaks, judge
 from agenttrap.egress import Egress, Observed, contact_flags, unexpected_hosts
@@ -49,6 +59,14 @@ class FoundInjection:
     where: str | None  # "file:line" when the quoted text really is in the repo
 
 
+@dataclass(frozen=True)
+class FoundConcern:
+    """Code the agent called suspicious. Only quotes found in the repository are kept."""
+
+    concern: CodeConcern
+    where: str  # "file:line"
+
+
 @dataclass
 class CleanOutcome:
     """A copy of the repo with the culprit code removed, and what a second scan of it found."""
@@ -65,6 +83,7 @@ class ScanResult:
     verdict: Verdict
     runs: list[RunResult]
     injections: list[FoundInjection] = field(default_factory=list)
+    concerns: list[FoundConcern] = field(default_factory=list)
     culprits: dict[str, list[Culprit]] = field(default_factory=dict)  # canary -> culprit lines
     unlocalized: dict[str, str] = field(default_factory=dict)  # canary -> why
     contacted: list[str] = field(default_factory=list)  # hosts contacted, not on the allow-list
@@ -155,6 +174,7 @@ def run_once(
             trace = run_agent(TASKS[task], box, curl_via(box), llm, role=role, size=model)
         observed = net.observed()
     debrief(trace, llm, role=role, size=model)
+    review_code(trace, llm, role=role, size=model)
     leaks = tuple(find_leaks(observed.requests, canaries.values))
     return RunResult(task, trace, observed, leaks)
 
@@ -286,14 +306,17 @@ def scan(
         if s.action == "run_command"
     ]
     hosts = Observed((), tuple(dict.fromkeys(h for r in runs for h in r.observed.hosts)))
-    injections = _injections(runs, files)
+    injections, concerns = agent_reports(runs, files)
 
     flags = command_flags(commands) + contact_flags(hosts, allowed_hosts)
     flags += [
         Flag("injection-reported", f"{i.where or 'not in repo'}: {i.injection.quote[:100]}", False)
         for i in injections
     ]
-    result = ScanResult(str(repo), judge(leaks, flags), runs, injections)
+    flags += [
+        Flag("suspicious-code", f"{c.where}: {c.concern.behavior[:100]}", False) for c in concerns
+    ]
+    result = ScanResult(str(repo), judge(leaks, flags), runs, injections, concerns)
     result.contacted = unexpected_hosts(hosts, allowed_hosts)
 
     for name in dict.fromkeys(base_name(leak.canary) for leak in leaks):
@@ -330,6 +353,29 @@ def suspect_hosts(result: ScanResult) -> list[str]:
     """Hosts worth a lookup: where secrets were sent, then every other unexpected host."""
     hosts = [urlparse(leak.destination).hostname for leak in result.verdict.leaks]
     return list(dict.fromkeys(h for h in [*hosts, *result.contacted] if h))
+
+
+def agent_reports(
+    runs: list[RunResult], files: Mapping[str, str]
+) -> tuple[list[FoundInjection], list[FoundConcern]]:
+    """What the agent reported, as instructions aimed at it and as suspicious code.
+
+    The same line can be reported both ways; code is code, so it stays under that heading.
+    """
+    concerns = _concerns(runs, files)
+    taken = {c.where for c in concerns}
+    return [i for i in _injections(runs, files) if i.where not in taken], concerns
+
+
+def _concerns(runs: list[RunResult], files: Mapping[str, str]) -> list[FoundConcern]:
+    """Code the agent reported, one entry per line of the repository, quotes that exist only."""
+    seen: dict[str, FoundConcern] = {}
+    for r in runs:
+        for concern in r.trace.concerns:
+            where = find_line(concern.quote, files)
+            if where:  # an answer that cannot be found in the repository is not evidence
+                seen.setdefault(where, FoundConcern(concern, where))
+    return list(seen.values())
 
 
 def _injections(runs: list[RunResult], files: Mapping[str, str]) -> list[FoundInjection]:

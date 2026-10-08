@@ -104,6 +104,15 @@ def render(result: ScanResult, console: Console | None = None) -> None:
             console.print(f"    [bold]{escape(where)}[/]")
             console.print(f'    "{escape(item.injection.quote.strip()[:100])}"')
             console.print(f"    asked for: {escape(item.injection.asked_for.strip()[:100])}")
+    if result.concerns:
+        console.print(
+            "\n[bold yellow]Code the AI agent found suspicious[/] "
+            "(its opinion, checked only to exist in the repository)"
+        )
+        for item in result.concerns:
+            console.print(f"    [bold]{escape(item.where)}[/]")
+            console.print(f"    {escape(item.concern.quote.strip()[:100])}")
+            console.print(f"    it does: {escape(item.concern.behavior.strip()[:100])}")
     if result.contacted:
         console.print("\n[yellow]Hosts contacted that are not on the allow-list[/]")
         for host in result.contacted:

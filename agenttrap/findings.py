@@ -35,6 +35,14 @@ RULES: dict[str, tuple[str, str, Level, str]] = {
         "warning",
         "5.0",
     ),
+    "agent-trap/suspicious-code": (
+        "Code the AI agent found suspicious",
+        "The AI agent reported this code as doing something a normal library would not, such as "
+        "sending the user's data to a server. It is the agent's opinion, not proof, and the "
+        "quoted line was found in the repository.",
+        "warning",
+        "5.0",
+    ),
     "agent-trap/unexpected-host": (
         "Unexpected network contact",
         "The sandbox tried to contact a host that is not on the allow-list.",
@@ -122,6 +130,17 @@ def findings(result: ScanResult) -> list[Finding]:
                 f"The AI agent reported this text as instructions aimed at it. It asks the agent "
                 f"to: {asked}",
                 (location,) if location else (),
+            )
+        )
+
+    for item in result.concerns:
+        file, _, line = item.where.rpartition(":")
+        behavior = item.concern.behavior.strip() or "something a normal library would not"
+        out.append(
+            Finding(
+                "agent-trap/suspicious-code",
+                f"The AI agent flagged this code as suspicious: {behavior}",
+                (Location(file, int(line), item.concern.quote.strip()),),
             )
         )
 

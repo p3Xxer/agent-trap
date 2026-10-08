@@ -284,6 +284,17 @@ function renderDetail(doc) {
     out.append(card);
   }
 
+  // code the agent called suspicious
+  if ((doc.concerns || []).length) {
+    const card = h("div", { class: "card" }, h("h2", {}, "Code the AI agent found suspicious"),
+      h("p", { class: "muted small" }, "The agent's opinion, so a warning and not proof. Each quoted line was found in the repository."));
+    for (const item of doc.concerns)
+      card.append(h("div", { class: "finding warning" }, chip({ file: item.where, line: "" }),
+        item.quote ? h("div", { class: "quote" }, item.quote) : null,
+        h("div", { class: "small" }, `It does: ${item.behavior}`)));
+    out.append(card);
+  }
+
   // hosts
   const hosts = doc.contacted_hosts || [];
   if (hosts.length) {

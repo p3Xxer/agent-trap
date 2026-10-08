@@ -249,6 +249,8 @@ def _why(outcome: Outcome) -> str:
         reasons.append("a secret left the sandbox")
     if "agent-trap/agent-instruction" in outcome.rules:
         reasons.append("the agent reported an instruction")
+    if "agent-trap/suspicious-code" in outcome.rules:
+        reasons.append("the agent flagged suspicious code")
     if "agent-trap/unexpected-host" in outcome.rules:
         reasons.append("contacted an unlisted host")
     return ", ".join(reasons) or "-"

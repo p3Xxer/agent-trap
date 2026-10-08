@@ -68,6 +68,10 @@ def result_document(
             {"where": i.where, "quote": i.injection.quote, "asked_for": i.injection.asked_for}
             for i in result.injections
         ],
+        "concerns": [
+            {"where": c.where, "quote": c.concern.quote, "behavior": c.concern.behavior}
+            for c in result.concerns
+        ],
         "contacted_hosts": result.contacted,
         "host_intel": {
             host: {
@@ -100,7 +104,7 @@ def _without_code(document: dict[str, Any]) -> dict[str, Any]:
     for culprits in stripped["culprits"].values():
         for culprit in culprits:
             culprit["text"] = ""
-    for item in stripped["injections"]:
+    for item in (*stripped["injections"], *stripped["concerns"]):
         item["quote"] = ""
     for item in stripped["static_scan"]["flagged"]:
         item["text"] = ""

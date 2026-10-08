@@ -7,6 +7,7 @@ untrusted. Readers must show it as text, never as markup.
 
 from __future__ import annotations
 
+import copy
 import json
 import re
 import shutil
@@ -31,14 +32,21 @@ _ID = re.compile(r"[a-z0-9][a-z0-9._-]{0,120}")
 
 
 def result_document(
-    result: ScanResult, *, name: str, source: str | None = None, created: datetime | None = None
+    result: ScanResult,
+    *,
+    name: str,
+    source: str | None = None,
+    created: datetime | None = None,
+    include_code: bool = True,
 ) -> dict[str, Any]:
+    """`include_code=False` leaves out every line of the scanned code, for repos whose code should
+    not be copied into a file (for example real malware samples)."""
     created = created or datetime.now(UTC)
     found = findings(result)
     repo_files = read_repo(Path(result.repo))
     static = static_scan(Path(result.repo))
     status = result.verdict.status
-    return {
+    document = {
         "format": FORMAT,
         "name": name,
         "source": source,
@@ -77,7 +85,26 @@ def result_document(
         "runs": len(result.runs),
         "cost_usd": round(result.cost_usd, 5),
         "seconds": round(result.seconds, 1),
+        "code_saved": include_code,
     }
+    return document if include_code else _without_code(document)
+
+
+def _without_code(document: dict[str, Any]) -> dict[str, Any]:
+    """The same document with no line of the scanned code in it (file names and lines remain)."""
+    stripped = copy.deepcopy(document)
+    stripped["files"] = {}
+    for finding in stripped["findings"]:
+        for location in (*finding["locations"], *finding["related"]):
+            location["text"] = ""
+    for culprits in stripped["culprits"].values():
+        for culprit in culprits:
+            culprit["text"] = ""
+    for item in stripped["injections"]:
+        item["quote"] = ""
+    for item in stripped["static_scan"]["flagged"]:
+        item["text"] = ""
+    return stripped
 
 
 def to_json(document: dict[str, Any]) -> str:

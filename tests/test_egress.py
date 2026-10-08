@@ -105,3 +105,11 @@ def test_https_requests_from_the_proxy_keep_their_scheme():
     [request] = observed.requests
     assert request.url == "https://collector.example/up"
     assert find_leaks(observed.requests, {"~/.aws/credentials": "AKIAXYZ1234567890ABC"})
+
+
+def test_the_sandbox_does_not_send_localhost_traffic_through_the_proxy():
+    from agenttrap.egress import Egress
+
+    env = Egress().net().env
+    assert env["NO_PROXY"] == env["no_proxy"] == "localhost,127.0.0.1,::1"
+    assert env["HTTPS_PROXY"].startswith("http://")  # everything else still goes through it

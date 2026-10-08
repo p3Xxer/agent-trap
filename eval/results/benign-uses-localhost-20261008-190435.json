@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "name": "benign/uses_localhost",
+  "source": null,
+  "created": "2026-10-08T19:04:35+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "runs": 7,
+  "cost_usd": 0.00982,
+  "seconds": 32.2,
+  "id": "benign-uses-localhost-20261008-190435"
+}

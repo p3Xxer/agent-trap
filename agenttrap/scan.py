@@ -136,7 +136,9 @@ def run_once(
 def read_repo(repo: Path) -> dict[str, str]:
     """Text files of the repo, relative path -> content. Binary and huge files are skipped."""
     files = {}
-    for path in sorted(p for p in repo.rglob("*") if p.is_file() and ".git" not in p.parts):
+    # Symlinks are skipped: a link to a host file must never be read as if it were repo content.
+    candidates = (p for p in repo.rglob("*") if p.is_file() and not p.is_symlink())
+    for path in sorted(p for p in candidates if ".git" not in p.parts):
         if path.stat().st_size > MAX_FILE_BYTES:
             continue
         try:

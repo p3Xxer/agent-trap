@@ -29,7 +29,7 @@ class Finding:
 
 def scan(repo: Path) -> list[Finding]:
     findings = []
-    for path in sorted(p for p in repo.rglob("*") if p.is_file()):
+    for path in sorted(p for p in repo.rglob("*") if p.is_file() and not p.is_symlink()):
         for n, line in enumerate(path.read_text(errors="ignore").splitlines(), 1):
             if SUSPICIOUS.search(line):
                 findings.append(Finding(str(path.relative_to(repo)), n, line.strip()))

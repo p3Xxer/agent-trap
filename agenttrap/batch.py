@@ -1,0 +1,95 @@
+"""Scan every project in a folder and summarize, for folders of code somebody else wrote.
+
+Nothing in the folder is installed or run outside the sandbox. By default no line of the scanned
+code is written into the saved results, so the results can be kept or shared without copying the
+code itself.
+"""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from pathlib import Path
+
+from agenttrap.llm import LLM
+from agenttrap.pipeline import full_scan
+from agenttrap.results import ResultStore, result_document
+
+MARKERS = ("setup.py", "pyproject.toml", "setup.cfg")
+MAX_DEPTH = 3
+
+
+@dataclass(frozen=True)
+class BatchItem:
+    name: str
+    status: str  # SAFE, SUSPICIOUS, HIJACKED, or ERROR when the scan itself failed
+    seconds: float
+    findings: int
+    error: str | None = None
+
+
+def _is_project(directory: Path) -> bool:
+    return any((directory / marker).is_file() for marker in MARKERS)
+
+
+def _subdirectories(directory: Path) -> list[Path]:
+    return sorted(p for p in directory.iterdir() if p.is_dir() and not p.is_symlink())
+
+
+def _project_inside(candidate: Path) -> Path | None:
+    """The nearest directory at or below `candidate` that looks like a Python project."""
+    queue = [(candidate, 0)]
+    while queue:
+        directory, depth = queue.pop(0)
+        if _is_project(directory):
+            return directory
+        if depth < MAX_DEPTH:
+            queue += [(child, depth + 1) for child in _subdirectories(directory)]
+    return None
+
+
+def find_projects(root: Path) -> list[Path]:
+    """One project per folder inside `root` (or `root` itself if it is a project)."""
+    if _is_project(root):
+        return [root]
+    return [_project_inside(child) or child for child in _subdirectories(root)]
+
+
+def scan_project(
+    project: Path, name: str, *, store: ResultStore, k: int, model: str, include_code: bool
+) -> BatchItem:
+    started = time.time()
+    try:
+        result = full_scan(project, llm=LLM(), model=model, k=k)
+        document = result_document(result, name=name, include_code=include_code)
+        store.save(document)
+    except Exception as error:  # noqa: BLE001 - one broken project must not stop the batch
+        reason = f"{type(error).__name__}: {str(error)[:100]}"
+        return BatchItem(name, "ERROR", time.time() - started, 0, reason)
+    return BatchItem(name, result.verdict.status.value, result.seconds, len(document["findings"]))
+
+
+def run_batch(
+    root: Path,
+    *,
+    store: ResultStore,
+    k: int = 2,
+    model: str = "nano",
+    workers: int = 2,
+    include_code: bool = False,
+    on_done: Callable[[BatchItem], None] = lambda item: None,
+    scan: Callable[..., BatchItem] = scan_project,
+) -> list[BatchItem]:
+    """Scan every project under `root`, `workers` at a time. Results come back in folder order."""
+    projects = find_projects(root)
+
+    def one(project: Path) -> BatchItem:
+        name = "batch/" + (project.relative_to(root).as_posix() if project != root else root.name)
+        item = scan(project, name, store=store, k=k, model=model, include_code=include_code)
+        on_done(item)
+        return item
+
+    with ThreadPoolExecutor(workers) as pool:
+        return list(pool.map(one, projects))

@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "name": "benign/fetches_exchange_rates",
+  "source": null,
+  "created": "2026-10-08T19:05:16+00:00",
+  "status": "SUSPICIOUS",
+  "headline": "SUSPICIOUS: warning signs, but no secret was seen leaving.",
+  "leaks": [],
+  "flags": [
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted rates.example-lib.org",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted rates.example-lib.org, which is not on the allow-list.",
+      "locations": [],
+      "related": []
+    }
+  ],
+  "culprits": {},
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "contacted_hosts": [
+    "rates.example-lib.org"
+  ],
+  "host_intel": {
+    "rates.example-lib.org": {
+      "registered": null,
+      "age_days": null,
+      "reports": []
+    }
+  },
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "runs": 7,
+  "cost_usd": 0.01439,
+  "seconds": 37.4,
+  "id": "benign-fetches-exchange-rates-20261008-190516"
+}

@@ -118,6 +118,8 @@ def write_copy(repo: Path, out_dir: Path, changed: Mapping[str, str]) -> None:
     """
     if out_dir.exists() and any(out_dir.iterdir()):
         raise FileExistsError(f"{out_dir} already exists and is not empty")
-    shutil.copytree(repo, out_dir, ignore=shutil.ignore_patterns(".git"), dirs_exist_ok=True)
+    shutil.copytree(  # symlinks stay links; copying what they point at could pull in host files
+        repo, out_dir, symlinks=True, ignore=shutil.ignore_patterns(".git"), dirs_exist_ok=True
+    )
     for name, text in changed.items():
         (out_dir / name).write_text(text)

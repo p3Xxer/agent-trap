@@ -1,4 +1,5 @@
 import ast
+import os
 
 import pytest
 
@@ -161,3 +162,19 @@ def test_copy_may_use_an_existing_empty_directory(tmp_path):
     out.mkdir()
     write_copy(repo, out, {})
     assert (out / "a.txt").read_text() == "x"
+
+
+def test_copy_keeps_symlinks_as_links_and_never_copies_what_they_point_at(tmp_path):
+    outside = tmp_path / "host-secret.txt"
+    outside.write_text("HOST FILE CONTENT")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "a.py").write_text("x")
+    os.symlink(outside, repo / "link")
+
+    out = tmp_path / "copy"
+    write_copy(repo, out, {})
+
+    assert (out / "link").is_symlink()
+    assert os.readlink(out / "link") == str(outside)  # still just a pointer, not a copy
+    assert (out / "a.py").read_text() == "x"

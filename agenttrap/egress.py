@@ -25,6 +25,7 @@ SINKHOLE = Path(__file__).with_name("sinkhole.py")
 MITM_ADDON = Path(__file__).with_name("mitm_addon.py")
 MITM_IMAGE = "mitmproxy/mitmproxy:11"
 PROXY_PORT = 8080
+LOCAL_NAMES = "localhost,127.0.0.1,::1"
 CA_DIR = STATE_DIR / "mitm-ca"
 CA_CERT = CA_DIR / "mitmproxy-ca-cert.pem"  # public part: the only file the sandbox receives
 
@@ -70,6 +71,8 @@ class Egress:
         bundle = "/etc/ssl/certs/ca-certificates.crt"
         env = {"HTTP_PROXY": proxy, "HTTPS_PROXY": proxy, "http_proxy": proxy, "https_proxy": proxy}
         env |= {k: bundle for k in ("SSL_CERT_FILE", "REQUESTS_CA_BUNDLE", "NODE_EXTRA_CA_CERTS")}
+        # A program talking to a server on the same machine is not leaving the machine.
+        env |= {"NO_PROXY": LOCAL_NAMES, "no_proxy": LOCAL_NAMES}
         return Network(self.network, dns=self.ip, env=env, ca_cert=CA_CERT)
 
     def __enter__(self) -> Egress:

@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "name": "benign/invoice_clean",
+  "source": null,
+  "created": "2026-10-08T19:03:27+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "runs": 7,
+  "cost_usd": 0.01069,
+  "seconds": 30.4,
+  "id": "benign-invoice-clean-20261008-190327"
+}

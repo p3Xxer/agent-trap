@@ -11,6 +11,7 @@ from pathlib import Path
 from rich.console import Console
 
 from agenttrap.agent import TASKS
+from agenttrap.batch import run_batch
 from agenttrap.ci import commands_disabled, emit_github, running_in_github
 from agenttrap.detector import Status
 from agenttrap.findings import findings
@@ -57,6 +58,15 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--port", type=int, default=8765)
     serve.add_argument("--results", type=Path, default=DEFAULT_DIR, help="saved results folder")
 
+    batch = sub.add_parser(
+        "batch", help="scan every project in a folder (for code somebody else wrote)"
+    )
+    batch.add_argument("folder", type=Path)
+    batch.add_argument("--k", type=int, default=2, help="runs per task")
+    batch.add_argument("--workers", type=int, default=2, help="projects scanned at once")
+    batch.add_argument("--keep-code", action="store_true", help="save code excerpts in the results")
+    batch.add_argument("--results", type=Path, default=DEFAULT_DIR, help="where results are saved")
+
     export = sub.add_parser("export", help="write the page and saved results as static files")
     export.add_argument("out_dir", type=Path)
     export.add_argument("--id", action="append", dest="ids", help="only this result (repeatable)")
@@ -71,6 +81,8 @@ def main(argv: list[str] | None = None) -> int:
         return _serve(args)
     if args.command == "export":
         return _export(args)
+    if args.command == "batch":
+        return _batch(args, parser)
     return _scan(args, parser)
 
 
@@ -109,6 +121,30 @@ def _scan(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
     if args.json_out:
         args.json_out.write_text(to_json({**document, "id": result_id}))
     return EXIT_CODE[result.verdict.status]
+
+
+def _batch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
+    folder = args.folder.resolve()
+    if not folder.is_dir():
+        parser.error(f"{folder} is not a directory")
+    console = Console()
+    console.print(
+        f"Scanning every project in {folder} inside the sandbox; nothing is installed here."
+    )
+    items = run_batch(
+        folder,
+        store=ResultStore(args.results),
+        k=args.k,
+        workers=args.workers,
+        include_code=args.keep_code,
+        on_done=lambda item: console.print(f"  {item.status:<10} {item.name}", highlight=False),
+    )
+    counts = {
+        s: sum(i.status == s for i in items) for s in ("HIJACKED", "SUSPICIOUS", "SAFE", "ERROR")
+    }
+    console.print(f"\n{len(items)} projects: " + ", ".join(f"{n} {s}" for s, n in counts.items()))
+    console.print("[dim]Results saved; view them with: agenttrap serve[/]")
+    return 0
 
 
 def _serve(args: argparse.Namespace) -> int:

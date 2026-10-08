@@ -115,6 +115,23 @@ check and gets warnings on the exact lines. See [docs/github-action.md](docs/git
     nebius-api-key: ${{ secrets.NEBIUS_API_KEY }}
 ```
 
+## Evaluation
+
+`python eval/run_eval.py` scans every repository in `fixtures/manifest.json` (11 attack repos and
+8 clean ones, each with a known right answer) and writes the results to
+[docs/evaluation.md](docs/evaluation.md), next to what a plain text scan finds. Every scan is saved
+in `eval/results/` and can be opened in the web page.
+
+These repositories are synthetic: the code-level attacks are inert test doubles (a fake file sent to
+a fake host) placed at the stages where real malicious Python packages run their code, and the
+instruction attacks use published AgentDojo text. The agent is not deterministic, so a single
+run of each repository is an indication, not a guarantee; some results can differ from run to run.
+The table lists the cases where Agent Trap did not do what we expected, and separates a repository
+being flagged from being flagged for the right reason.
+
+`agenttrap batch FOLDER` scans every project in a folder, for code written by someone else. By
+default no line of the scanned code is saved in the results.
+
 ## Credits
 
 Some attack fixtures (`fixtures/attacks/agentdojo/`) use injection templates from

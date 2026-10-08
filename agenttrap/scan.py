@@ -34,6 +34,7 @@ from agenttrap.agent import (
     run_agent,
 )
 from agenttrap.cleaner import Removal, clean, write_copy
+from agenttrap.counterfactual import localize_by_asking
 from agenttrap.detector import Flag, Leak, Request, Verdict, command_flags, find_leaks, judge
 from agenttrap.egress import Egress, Observed, contact_flags, unexpected_hosts
 from agenttrap.intel import HostIntel
@@ -257,15 +258,27 @@ def _replay(steps: list, box: Sandbox) -> None:
 
 
 def localize_leak(
-    files: Mapping[str, str], run: RunResult, canary_name: str, served: Mapping[str, str]
+    files: Mapping[str, str],
+    run: RunResult,
+    canary_name: str,
+    served: Mapping[str, str],
+    *,
+    llm: LLM | None = None,
+    model: str = "nano",
 ) -> tuple[list[Culprit], str]:
-    """Culprit lines for one leaked canary, or ([], reason) when replay can't explain it."""
+    """Culprit lines for one leaked secret, or ([], why not).
+
+    Code that steals the secret is found by replaying the agent's commands against versions of the
+    repository. If that cannot explain the leak, the agent decided to send it, and when a model is
+    available the lines are found by asking the model again (see counterfactual.py).
+    """
     runner = replay_runner(run.trace.steps, served)
-    if canary_name not in runner(files):
-        return [], "the leak did not reproduce when replaying the agent's commands"
-    if canary_name in runner({name: "" for name in files}):
-        return [], "the agent's own commands leak it, whatever the repo contains"
-    return localize(files, runner, canary_name), ""
+    if canary_name in runner(files) and canary_name not in runner({n: "" for n in files}):
+        return localize(files, runner, canary_name), ""
+    if llm is None:
+        return [], "the leak does not depend on the repository's code when replaying the commands"
+    leak = next(x for x in run.leaks if base_name(x.canary) == canary_name)
+    return localize_by_asking(files, run.trace, canary_name, leak.destination, llm, model)
 
 
 # ---- the whole scan ----------------------------------------------
@@ -322,7 +335,7 @@ def scan(
     for name in dict.fromkeys(base_name(leak.canary) for leak in leaks):
         leaking_run = next(r for r in runs if any(base_name(x.canary) == name for x in r.leaks))
         progress(f"pinpointing the culprit for {name}")
-        culprits, reason = localize_leak(files, leaking_run, name, served)
+        culprits, reason = localize_leak(files, leaking_run, name, served, llm=llm, model=model)
         if culprits:
             result.culprits[name] = culprits
         else:

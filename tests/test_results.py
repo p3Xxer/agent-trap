@@ -80,7 +80,7 @@ def test_the_static_scan_is_part_of_the_document(tmp_path):
     assert doc["static_scan"]["flagged"][0]["file"] == "README.md"
 
 
-# ---- ids and the store ------------------------------------------
+# ---- ids and the store ------------------------------
 
 
 def test_ids_are_safe_file_names():
@@ -138,7 +138,7 @@ def test_an_empty_store_lists_nothing(tmp_path):
     assert ResultStore(tmp_path / "does-not-exist").summaries() == []
 
 
-# ---- export ------------------------------------------
+# ---- export ------------------------------
 
 
 def test_export_writes_the_page_an_index_and_each_result(tmp_path, repo):

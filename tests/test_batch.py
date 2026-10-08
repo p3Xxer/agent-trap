@@ -15,7 +15,7 @@ def make(root, *paths):
         target.write_text("x")
 
 
-# ---- finding the projects ---------------------------------------------------------------------
+# ---- finding the projects ------------------------------
 
 
 def test_projects_are_found_at_the_top_of_a_folder_or_a_few_levels_down(tmp_path):
@@ -66,7 +66,7 @@ def test_files_in_the_folder_are_ignored_and_an_empty_folder_has_no_projects(tmp
     assert find_projects(tmp_path) == []
 
 
-# ---- running a batch ---------------------------------------------------------------------------
+# ---- running a batch ------------------------------
 
 
 def fake_scan(project, name, **options):
@@ -120,7 +120,7 @@ def test_a_project_that_fails_to_scan_is_reported_and_does_not_stop_the_others(
     assert item.status == "ERROR" and "docker is not running" in item.error
 
 
-# ---- leaving the code out of a saved result ------------------------------------------------------
+# ---- leaving the code out of a saved result ------------------------------
 
 
 def document(tmp_path, include_code):

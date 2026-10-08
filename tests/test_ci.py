@@ -56,7 +56,7 @@ def test_a_very_long_message_is_cut():
     assert len(line) < 800
 
 
-# ---- the run summary ----------------------------------------
+# ---- the run summary ------------------------------
 
 
 def test_summary_has_the_verdict_and_a_table_of_findings():
@@ -80,7 +80,7 @@ def test_untrusted_text_cannot_break_the_summary_table():
     assert "a \\| b" in rows[0] and "x\\|y.py" in rows[0]
 
 
-# ---- emitting ------------------------------------------------
+# ---- emitting ------------------------------
 
 
 def test_emit_prints_annotations_and_appends_the_summary(tmp_path, monkeypatch, capsys):

@@ -47,7 +47,7 @@ def hit(title, content, url="https://blog.example.net/post"):
     return {"title": title, "content": content, "url": url}
 
 
-# ---- RDAP -------------------------------------------------------------------------------------
+# ---- RDAP ------------------------------
 
 
 def test_candidates_try_the_longer_name_first():
@@ -84,7 +84,7 @@ def test_old_domain_is_not_recent():
     assert not lookup(["old.org"], key=None, fetch=web, today=TODAY)["old.org"].is_recent
 
 
-# ---- Tavily -------------------------------------------------------------------------------------
+# ---- Tavily ------------------------------
 
 
 def test_only_pages_that_mention_the_host_and_are_not_its_own_site_count():
@@ -137,7 +137,7 @@ def test_web_text_is_cleaned_and_shortened():
     assert clean("x" * 300, 20) == "x" * 19 + "…"
 
 
-# ---- which hosts --------------------------------------------
+# ---- which hosts ------------------------------
 
 
 def test_ip_addresses_and_dotless_names_are_skipped_and_the_list_is_capped():
@@ -159,7 +159,7 @@ def test_unexpected_hosts_respects_the_allow_list():
     assert unexpected_hosts(observed, {"pypi.org", "files.pythonhosted.org"}) == ["evil.com"]
 
 
-# ---- the report --------------------------------------------
+# ---- the report ------------------------------
 
 
 def render(intel):

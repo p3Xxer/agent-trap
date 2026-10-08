@@ -120,7 +120,7 @@ def test_the_plain_text_scan_skips_a_huge_file_instead_of_reading_it(tmp_path):
     assert [f.file for f in plain_scan(tmp_path)] == ["small.txt"]
 
 
-# ---- the import step, run for real on harmless packages -----------------------------------------
+# ---- the import step, run for real on harmless packages ------------------------------
 
 
 def run_import_all(directory):

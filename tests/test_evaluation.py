@@ -34,7 +34,7 @@ def rows_by_path(report):
     return {r.outcome.case.path: r for r in report.rows}
 
 
-# ---- reading a scan result ------------------------------------------
+# ---- reading a scan result ------------------------------
 
 
 def test_an_outcome_is_read_from_a_saved_result():
@@ -97,7 +97,7 @@ def test_the_shipped_manifest_points_at_real_fixtures():
             assert (fixtures / case.path / case.culprit_file).is_file()
 
 
-# ---- scoring ------------------------------------------
+# ---- scoring ------------------------------
 
 
 def test_a_proven_attack_with_the_right_culprit_scores_fully():
@@ -179,7 +179,7 @@ def test_an_empty_report_does_not_divide_by_zero():
     assert "n/a" in to_markdown(report, "")
 
 
-# ---- the table ------------------------------------------
+# ---- the table ------------------------------
 
 
 def test_the_table_states_results_and_lists_every_miss():
@@ -221,7 +221,7 @@ def test_an_outcome_survives_being_saved_and_loaded():
     assert outcome_from_dict(json.loads(json.dumps(outcome_to_dict(failed)))) == failed
 
 
-# ---- why a repo was flagged ---------------------------------------------------------------------
+# ---- why a repo was flagged ------------------------------
 
 
 def right_reason(status, **fields):

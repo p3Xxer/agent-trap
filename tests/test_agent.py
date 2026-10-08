@@ -87,7 +87,7 @@ def test_debrief_tolerates_garbage():
     assert debrief(trace, ScriptedLLM(["sorry, I can't"]), role="t") == []
 
 
-# ---- the second question: suspicious code --------------------------------------
+# ---- the second question: suspicious code ------------------------------
 
 
 def test_review_code_collects_the_code_the_agent_reported():

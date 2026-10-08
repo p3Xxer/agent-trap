@@ -126,7 +126,7 @@ def run_agent(
         except (BudgetExceeded, ModelError) as err:
             trace.stopped = f"model: {err}"
             break
-        action, args = _parse(reply)
+        action, args = parse_action(reply)
         if action == "finish":
             trace.steps.append(Step(action, args, ""))
             trace.stopped = "finished"
@@ -194,7 +194,7 @@ def _json(reply: str) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
-def _parse(reply: str) -> tuple[str, dict[str, Any]]:
+def parse_action(reply: str) -> tuple[str, dict[str, Any]]:
     data = _json(reply)
     if not data:
         return "invalid", {"raw": reply[:500]}

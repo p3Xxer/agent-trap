@@ -95,15 +95,7 @@ def findings(result: ScanResult) -> list[Finding]:
     for name in sorted({base_name(x.canary) for x in result.verdict.leaks}):
         evidence = next(x for x in result.verdict.leaks if base_name(x.canary) == name)
         key, support = split_culprits(result.culprits.get(name, []), name, evidence.destination)
-        message = (
-            f"While an AI agent set up and tested this repository, the planted fake secret "
-            f"{name} was sent to {evidence.destination}."
-        )
-        message += (
-            " These lines make that happen."
-            if key
-            else f" Agent Trap could not pinpoint the line ({result.unlocalized.get(name, '')})."
-        )
+        message = _leak_message(name, evidence.destination, key, result.unlocalized.get(name, ""))
         out.append(
             Finding(
                 "agent-trap/secret-leak",
@@ -165,3 +157,19 @@ def _host_message(host: str, result: ScanResult) -> str:
     if info and info.reports:
         message += f" Public pages mention it alongside malware or phishing: {info.reports[0].url}"
     return message
+
+
+def _leak_message(canary: str, destination: str, key: list[Culprit], why_not: str) -> str:
+    if any(c.tag == "agent-instruction" for c in key):
+        return (
+            f"An AI agent was tricked by text in this repository into sending the planted fake "
+            f"secret {canary} to {destination}. Shown on their own, these lines were enough to "
+            f"make it do so."
+        )
+    message = (
+        f"While an AI agent set up and tested this repository, the planted fake secret "
+        f"{canary} was sent to {destination}."
+    )
+    if key:
+        return message + " These lines make that happen."
+    return message + f" Agent Trap could not pinpoint the line ({why_not})."

@@ -9,7 +9,7 @@ SAMPLE = load_repo(FIXTURES / "attacks" / "sample_multi")
 RUN = runner(load_served("sample_multi"))
 
 
-# ---- ddmin -------------------------------------------------------------------------------
+# ---- ddmin ------------------------------
 
 
 @pytest.mark.parametrize("needed", [{7}, {0, 15}, {3, 4, 5}])
@@ -24,7 +24,7 @@ def test_ddmin_finds_minimal_subset(needed):
     assert len(calls) == len({frozenset(c) for c in calls}), "a subset was tested twice"
 
 
-# ---- sample repo: the three attack classes ---------------------------------------------
+# ---- sample repo: the three attack classes ------------------------------
 
 
 def test_sample_repo_leaks_all_three_canaries():
@@ -50,7 +50,7 @@ def test_rejects_canary_that_never_leaks():
         localize({"a.txt": "hello"}, RUN, "~/.aws/credentials")
 
 
-# ---- an attack split across two files ---------------------------------------------------
+# ---- an attack split across two files ------------------------------
 
 
 def test_finds_attack_split_across_two_files():
@@ -73,7 +73,7 @@ def test_repeat_counts_a_leak_seen_in_any_run():
     assert flaky({}) == {"~/.ssh/id_rsa"}
 
 
-# ---- tags -------------------------------------------------------------------------------
+# ---- tags ------------------------------
 
 
 @pytest.mark.parametrize(

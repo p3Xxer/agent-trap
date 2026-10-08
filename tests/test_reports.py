@@ -32,7 +32,7 @@ def concern(quote, behavior="calls a webhook"):
     return CodeConcern("setup.py", quote, behavior)
 
 
-# ---- checking what the agent said --------------------------------------
+# ---- checking what the agent said ------------------------------
 
 
 def test_only_quotes_that_exist_in_the_repository_count():
@@ -64,7 +64,7 @@ def test_a_line_reported_as_both_code_and_instruction_stays_with_the_code():
     assert [i.where for i in injections] == ["README.md:2"]  # the other report is untouched
 
 
-# ---- naming and showing it --------------------------------------
+# ---- naming and showing it ------------------------------
 
 
 def with_concern(tmp_path):

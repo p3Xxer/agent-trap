@@ -58,7 +58,7 @@ def finish(client, job):
     return sse(client.get(f"/api/jobs/{job}/events").text)
 
 
-# ---- pages and data ---------------------------------------------------------------------------
+# ---- pages and data ------------------------------
 
 
 def test_the_page_is_served_and_not_cached(client):
@@ -91,7 +91,7 @@ def test_the_api_docs_pages_are_not_exposed(client):
     assert client.get("/openapi.json").status_code == 404
 
 
-# ---- who may talk to the server ---------------------------------------------------------------
+# ---- who may talk to the server ------------------------------
 
 
 @pytest.mark.parametrize(
@@ -129,7 +129,7 @@ def test_a_post_from_our_own_page_is_accepted(client, origin):
     finish(client, response.json()["job"])
 
 
-# ---- starting a scan ---------------------------------------------------------------------------
+# ---- starting a scan ------------------------------
 
 
 def post(client, body):
@@ -229,7 +229,7 @@ def test_an_unknown_job_is_404(client):
     assert client.get("/api/jobs/nope/events").status_code == 404
 
 
-# ---- finding our own demo repositories -----------------------------------------------------------
+# ---- finding our own demo repositories ------------------------------
 
 
 def test_demos_are_the_repo_folders_under_attacks_and_benign(tmp_path):

@@ -125,7 +125,7 @@ def test_cutting_inside_a_function_never_breaks_the_file(lines):
     ast.parse(cleaned_text(SETUP, *lines, file="setup.py"))
 
 
-# ---- writing the copy ---------------------------------------------
+# ---- writing the copy ------------------------------
 
 
 def test_copy_keeps_every_file_overwrites_changed_ones_and_skips_git(tmp_path):

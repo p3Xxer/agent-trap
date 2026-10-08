@@ -234,7 +234,7 @@ def test_symlinks_are_not_followed_when_measuring(tmp_path):
     measure_and_strip(tree, max_bytes=1_000_000)  # the link itself is tiny
 
 
-# ---- all four steps together ------------------------------------------
+# ---- all four steps together ------------------------------
 
 
 def fake_clone(files):

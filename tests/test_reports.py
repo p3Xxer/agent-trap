@@ -179,12 +179,14 @@ def test_the_document_says_whether_the_project_installed_and_what_its_tests_did(
         "",
         "3 failed, 12 passed in 1.1s",
     )
-    assert baseline_of(tmp_path, *steps) == {"installed": True, "tests": "3 failed, 12 passed"}
+    baseline = baseline_of(tmp_path, *steps)
+    assert (baseline["installed"], baseline["tests"]) == (True, "3 failed, 12 passed")
 
 
 def test_a_project_that_could_not_be_built_is_recorded_as_not_installed(tmp_path):
     steps = ("ERROR: Could not build wheel", "ERROR: failed", "x", "", "no tests ran in 0.01s")
-    assert baseline_of(tmp_path, *steps) == {"installed": False, "tests": ""}
+    baseline = baseline_of(tmp_path, *steps)
+    assert (baseline["installed"], baseline["tests"]) == (False, "")
 
 
 def test_the_editable_install_counts_too(tmp_path):
@@ -202,3 +204,16 @@ def test_a_scan_without_a_baseline_run_has_no_summary(tmp_path):
     result = safe_result()
     result.repo = str(tmp_path)
     assert result_document(result, name="n")["baseline"] is None
+
+
+def test_the_exit_status_of_every_baseline_command_is_recorded_as_a_number(tmp_path):
+    steps = (
+        "[exit 1]\nERROR: boom",
+        "[exit 0]\nSuccessfully installed x",
+        "[exit 2]",
+        "[exit 0]\n",
+        "no status here",
+    )
+    baseline = baseline_of(tmp_path, *steps)
+    assert baseline["exits"] == [1, 0, 2, 0, None]
+    assert all(isinstance(code, int | type(None)) for code in baseline["exits"])  # numbers only

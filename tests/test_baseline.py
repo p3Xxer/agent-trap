@@ -177,3 +177,22 @@ def test_a_package_that_exits_while_importing_does_not_stop_the_step(tmp_path):
 def test_a_project_with_no_packages_imports_nothing_and_succeeds(tmp_path):
     (tmp_path / "setup.py").write_text("")
     assert run_import_all(tmp_path).returncode == 0
+
+
+def test_every_baseline_command_reports_its_exit_status_before_its_output():
+    for command in scan.BASELINE:
+        assert ') > /tmp/step.out 2>&1; echo "[exit $?]"; tail -n 20 /tmp/step.out' in command
+        assert "| tail" not in command  # a pipe into tail would hide a failure
+
+
+def test_the_exit_status_wrapper_really_reports_success_and_failure(tmp_path):
+    import subprocess
+
+    def run(command):
+        out = subprocess.run(
+            ["sh", "-c", scan._with_exit_status(command)], capture_output=True, text=True
+        )
+        return out.stdout.splitlines()
+
+    assert run("echo fine")[:2] == ["[exit 0]", "fine"]
+    assert run("echo broken; exit 3")[:2] == ["[exit 3]", "broken"]

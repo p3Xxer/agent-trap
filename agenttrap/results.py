@@ -121,12 +121,21 @@ def _baseline(result: ScanResult) -> dict[str, Any] | None:
     run = next((r for r in result.runs if r.task == "baseline"), None)
     if run is None or not run.trace.steps:
         return None
-    installs = run.trace.steps[:2]
-    summary = _TEST_COUNTS.findall(run.trace.steps[-1].observation)
+    steps = run.trace.steps
+    exits = [_exit_status(step.observation) for step in steps]
+    summary = _TEST_COUNTS.findall(steps[-1].observation)
     return {
-        "installed": any("Successfully installed" in step.observation for step in installs),
+        "installed": any("Successfully installed" in step.observation for step in steps[:2]),
         "tests": ", ".join(summary),  # only the counts, never a line of the project's output
+        # one number per baseline command: pip install, editable install, setup.py install,
+        # import, tests (None when a command did not report one)
+        "exits": exits,
     }
+
+
+def _exit_status(observation: str) -> int | None:
+    match = re.search(r"^\[exit (\d+)\]", observation, re.M)
+    return int(match.group(1)) if match else None
 
 
 def to_json(document: dict[str, Any]) -> str:

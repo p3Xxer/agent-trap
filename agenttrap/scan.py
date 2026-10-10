@@ -131,17 +131,26 @@ for package in sorted(packages):
         print("import", package.name, "failed:", type(error).__name__)
 """
 
+
 # What a user does with a Python project, by every normal route. Run without an AI, so that code
 # which fires at install, import or test time is found whether or not the agent happens to run
 # these commands. Malicious packages hook different routes (the wheel build, the editable install,
 # the older `setup.py install`), so all of them are exercised. Build tools are baked into the image
 # and dependencies are not fetched (there is no internet): only the project's own code is run.
+def _with_exit_status(command: str) -> str:
+    """Run `command`, then report its exit status first and the last lines of its output after.
+
+    Piping straight into `tail` would hide whether the command failed.
+    """
+    return f'( {command} ) > /tmp/step.out 2>&1; echo "[exit $?]"; tail -n 20 /tmp/step.out'
+
+
 BASELINE = (
-    "pip install --no-build-isolation --no-deps . 2>&1 | tail -n 20",
-    "pip install --no-build-isolation --no-deps -e . 2>&1 | tail -n 20",
-    "python setup.py install 2>&1 | tail -n 20",
-    f"python -c {shlex.quote(IMPORT_ALL)} 2>&1 | tail -n 20",
-    "python -m pytest -q 2>&1 | tail -n 20",
+    _with_exit_status("pip install --no-build-isolation --no-deps ."),
+    _with_exit_status("pip install --no-build-isolation --no-deps -e ."),
+    _with_exit_status("python setup.py install"),
+    _with_exit_status(f"python -c {shlex.quote(IMPORT_ALL)}"),
+    _with_exit_status("python -m pytest -q"),
 )
 BASELINE_TIMEOUT = 120
 

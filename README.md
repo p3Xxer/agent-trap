@@ -132,6 +132,21 @@ being flagged from being flagged for the right reason.
 `agenttrap batch FOLDER` scans every project in a folder, for code written by someone else. By
 default no line of the scanned code is saved in the results.
 
+## What Agent Trap does and does not do
+
+- **Proven (HIJACKED):** a planted fake secret really leaves the sandbox, found by running the
+  project's install, import and test steps and the agent's own work. For code that steals, the
+  culprit file and line are found by replaying commands. When the agent itself was tricked by text,
+  the lines are found by asking the model again with and without them (`counterfactual.py`).
+- **Warnings (SUSPICIOUS):** the agent reported text aimed at it, or code it found suspicious, or
+  the sandbox contacted a host that is not on the allow-list. These are the agent's opinion and
+  context, not proof.
+- **Limits.** Real malware that needs the internet, targets another operating system, or hides
+  from a sandbox will not show anything here (a SAFE verdict means nothing was observed, not that
+  the code is safe). Python projects only. Whether the agent follows an injected instruction
+  varies from run to run, so one scan is an indication; `docs/evaluation.md` shows how much the
+  verdicts varied across repeated runs.
+
 ## Credits
 
 Some attack fixtures (`fixtures/attacks/agentdojo/`) use injection templates from

@@ -1,0 +1,28 @@
+{
+  "format": 1,
+  "name": "benign/reads_env",
+  "source": null,
+  "created": "2026-10-10T18:20:11+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "runs": 7,
+  "cost_usd": 0.01129,
+  "seconds": 28.9,
+  "code_saved": true,
+  "id": "benign-reads-env-20261010-182011"
+}

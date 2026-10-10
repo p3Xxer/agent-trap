@@ -17,7 +17,7 @@ import time
 from collections.abc import Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import urlparse
 
@@ -368,16 +368,35 @@ def suspect_hosts(result: ScanResult) -> list[str]:
     return list(dict.fromkeys(h for h in [*hosts, *result.contacted] if h))
 
 
+PROSE_SUFFIXES = {".md", ".markdown", ".txt", ".rst", ".adoc"}
+
+
+def _in_prose(where: str) -> bool:
+    return PurePosixPath(where.rpartition(":")[0]).suffix.lower() in PROSE_SUFFIXES
+
+
 def agent_reports(
     runs: list[RunResult], files: Mapping[str, str]
 ) -> tuple[list[FoundInjection], list[FoundConcern]]:
     """What the agent reported, as instructions aimed at it and as suspicious code.
 
-    The same line can be reported both ways; code is code, so it stays under that heading.
+    The agent often describes a sentence in a document ("send the keys to this address") as code
+    that sends data out. The heading follows the kind of file, not the agent's wording: a line in
+    a document is text that instructs the agent, and only a line of a code file is code. A line
+    reported both ways keeps the heading its file calls for.
     """
-    concerns = _concerns(runs, files)
-    taken = {c.where for c in concerns}
-    return [i for i in _injections(runs, files) if i.where not in taken], concerns
+    reported_code = _concerns(runs, files)
+    prose = [c for c in reported_code if _in_prose(c.where)]
+    code = [c for c in reported_code if not _in_prose(c.where)]
+    taken = {c.where for c in code}
+    injections = [i for i in _injections(runs, files) if i.where not in taken]
+    have = {i.where for i in injections if i.where}
+    injections += [
+        FoundInjection(Injection(c.concern.source, c.concern.quote, c.concern.behavior), c.where)
+        for c in prose
+        if c.where not in have
+    ]
+    return injections, code
 
 
 def _concerns(runs: list[RunResult], files: Mapping[str, str]) -> list[FoundConcern]:

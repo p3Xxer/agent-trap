@@ -177,8 +177,8 @@ def _error_summary(observation: str) -> list[str]:
 
 
 def _exit_status(observation: str) -> int | None:
-    match = re.search(r"^\[exit (\d+)\]", observation, re.M)
-    return int(match.group(1)) if match else None
+    found = re.findall(r"^\[exit (\d+)\]", observation, re.M)
+    return int(found[-1]) if found else None
 
 
 def to_json(document: dict[str, Any]) -> str:

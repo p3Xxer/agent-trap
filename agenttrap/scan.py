@@ -138,11 +138,13 @@ for package in sorted(packages):
 # the older `setup.py install`), so all of them are exercised. Build tools are baked into the image
 # and dependencies are not fetched (there is no internet): only the project's own code is run.
 def _with_exit_status(command: str) -> str:
-    """Run `command`, then report its exit status first and the last 80 lines of its output.
+    """Run `command`, then print the last 80 lines of its output and, last of all, its exit status.
 
-    Piping straight into `tail` would hide whether the command failed.
+    Piping straight into `tail` would hide whether the command failed. The status comes last
+    because only the end of a long output is kept, and the status must not be what gets cut.
     """
-    return f'( {command} ) > /tmp/step.out 2>&1; echo "[exit $?]"; tail -n 80 /tmp/step.out'
+    run = f"( {command} ) > /tmp/step.out 2>&1; code=$?"
+    return f'{run}; tail -n 80 /tmp/step.out; echo "[exit $code]"'
 
 
 BASELINE = (
@@ -153,6 +155,7 @@ BASELINE = (
     _with_exit_status("python -m pytest -q"),
 )
 BASELINE_TIMEOUT = 120
+OUTPUT_KEPT = 6000  # characters of each baseline command's output kept in memory
 
 
 def run_baseline(repo: Path, *, served: Mapping[str, str]) -> RunResult:
@@ -162,7 +165,9 @@ def run_baseline(repo: Path, *, served: Mapping[str, str]) -> RunResult:
         with Sandbox(repo, canaries, net.net()) as box:
             for command in BASELINE:
                 result = box.run(command, timeout=BASELINE_TIMEOUT)
-                trace.steps.append(Step("run_command", {"command": command}, result.stdout[-2000:]))
+                trace.steps.append(
+                    Step("run_command", {"command": command}, result.stdout[-OUTPUT_KEPT:])
+                )
         observed = net.observed()
     trace.stopped = "finished"
     leaks = tuple(find_leaks(observed.requests, canaries.values))

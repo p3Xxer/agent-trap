@@ -248,3 +248,9 @@ def test_the_last_python_error_wins_and_an_unrecognized_failure_has_no_labels(tm
 def test_a_failure_with_no_output_that_was_killed_is_labelled_as_such(tmp_path):
     steps = ("[exit 137]\nKilled", "[exit 0]", "[exit 0]", "[exit 0]", "[exit 0]")
     assert baseline_of(tmp_path, *steps)["errors"][0] == ["killed"]
+
+
+def test_the_exit_status_is_found_at_the_end_of_a_long_output_and_the_last_one_counts(tmp_path):
+    long_output = "lots of output\n" * 50 + "[exit 1]"
+    steps = (long_output, "[exit 9]\nmiddle\n[exit 0]", "x", "[exit 0]", "[exit 0]")
+    assert baseline_of(tmp_path, *steps)["exits"] == [1, 0, None, 0, 0]

@@ -181,7 +181,8 @@ def test_a_project_with_no_packages_imports_nothing_and_succeeds(tmp_path):
 
 def test_every_baseline_command_reports_its_exit_status_before_its_output():
     for command in scan.BASELINE:
-        assert ') > /tmp/step.out 2>&1; echo "[exit $?]"; tail -n 80 /tmp/step.out' in command
+        assert command.endswith('echo "[exit $code]"')  # the status comes last, so it is never cut
+        assert "tail -n 80 /tmp/step.out" in command
         assert "| tail" not in command  # a pipe into tail would hide a failure
 
 
@@ -194,5 +195,15 @@ def test_the_exit_status_wrapper_really_reports_success_and_failure(tmp_path):
         )
         return out.stdout.splitlines()
 
-    assert run("echo fine")[:2] == ["[exit 0]", "fine"]
-    assert run("echo broken; exit 3")[:2] == ["[exit 3]", "broken"]
+    assert run("echo fine") == ["fine", "[exit 0]"]
+    assert run("echo broken; exit 3") == ["broken", "[exit 3]"]
+
+
+def test_a_long_output_never_cuts_off_the_exit_status():
+    """The exit status comes last, so keeping only the end of a long output keeps it."""
+    import subprocess
+
+    command = scan._with_exit_status("python3 -c \"print(('x' * 100 + chr(10)) * 500)\"; exit 7")
+    out = subprocess.run(["sh", "-c", command], capture_output=True, text=True).stdout
+    assert len(out) > scan.OUTPUT_KEPT  # long enough that the start really would be cut off
+    assert out[-scan.OUTPUT_KEPT :].rstrip().endswith("[exit 7]")

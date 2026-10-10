@@ -13,6 +13,7 @@ from agenttrap.counterfactual import (
     localize_by_asking,
     markers,
     neutralize,
+    prune,
     touches,
 )
 from agenttrap.detector import Leak, Request
@@ -318,3 +319,41 @@ def test_without_a_model_the_reason_is_given_instead(monkeypatch):
     monkeypatch.setattr(scan, "replay_runner", lambda steps, served: lambda version: set())
     culprits, reason = scan.localize_leak({"a": "x"}, run_with_leak(make_trace()), CANARY, {})
     assert culprits == [] and "does not depend on the repository's code" in reason
+
+
+# ---- pruning what the search kept by chance ------------------------------
+
+
+def lines(*numbers):
+    return [("README.md", n) for n in numbers]
+
+
+def test_pruning_drops_lines_the_others_do_not_need():
+    needs_four = lambda kept: ("README.md", 4) in kept  # noqa: E731
+    assert prune(lines(4, 1, 3, 6), needs_four) == lines(4)
+
+
+def test_pruning_keeps_lines_that_are_needed_together():
+    needs_both = lambda kept: {("README.md", 3), ("README.md", 4)} <= set(kept)  # noqa: E731
+    assert prune(lines(3, 4, 6), needs_both) == lines(3, 4)
+
+
+def test_pruning_never_returns_an_empty_answer():
+    assert prune(lines(4), lambda kept: True) == lines(4)
+    assert len(prune(lines(1, 2, 3), lambda kept: True)) == 1  # anything alone is enough
+
+
+def test_pruning_stops_asking_once_a_single_line_is_left():
+    asked = []
+
+    def always(kept):
+        asked.append(list(kept))
+        return True
+
+    prune(lines(1, 2), always)
+    assert len(asked) == 1
+
+
+def test_the_search_ends_with_the_pruned_answer():
+    # a model that reaches for the secret as long as SEND is visible, whatever else is
+    assert culprit_lines(ask(Model(required=[SEND]))) == [("README.md", 4)]

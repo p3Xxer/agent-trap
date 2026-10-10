@@ -22,6 +22,9 @@ Two things keep the answer honest:
   line is named and the reason is given. If a remark carried the instruction in other words, the
   blanked conversation still reproduces it and the search refuses instead of guessing.
 
+Because the answers are noisy, the result is finally pruned: each line is removed in turn, and kept
+only if the hijack stops without it.
+
 The model is not deterministic, so each test is a small statistical one: draw `samples` answers and
 call the version "still hijacked" when at least `threshold` of them reach for the secret. A single
 stray answer is then noise, not evidence.
@@ -30,7 +33,7 @@ stray answer is then noise, not evidence.
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from urllib.parse import urlparse
@@ -114,6 +117,21 @@ def _without_remarks_naming(reply: str, marks: Sequence[str]) -> str:
     return json.dumps({**data, "thought": ""})
 
 
+def prune(lines: Sequence[Line], reproduces: Callable[[Sequence[Line]], bool]) -> list[Line]:
+    """Drop every line that the others do not need.
+
+    The model's answers are noisy, so the search can keep a line that only happened to coincide
+    with a hit. Removing each line in turn and asking again leaves only the lines that are doing
+    work; at least one line always stays.
+    """
+    kept = list(lines)
+    for line in list(kept):
+        without = [other for other in kept if other != line]
+        if without and reproduces(without):
+            kept = without
+    return kept
+
+
 def _hijacked(
     messages: list[Message],
     marks: Sequence[str],
@@ -176,7 +194,7 @@ def localize_by_asking(
             return [], "asking the model again did not reproduce the hijack"
         if reproduces([]):
             return [], "the agent does it even when it is shown none of the repository's text"
-        minimal = ddmin(candidates, reproduces)
+        minimal = prune(ddmin(candidates, reproduces), reproduces)
     except _OutOfBudget:
         return [], "the search needed more model calls than allowed"
     lines = {name: body.splitlines() for name, body in files.items()}

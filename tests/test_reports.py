@@ -217,3 +217,33 @@ def test_the_exit_status_of_every_baseline_command_is_recorded_as_a_number(tmp_p
     baseline = baseline_of(tmp_path, *steps)
     assert baseline["exits"] == [1, 0, 2, 0, None]
     assert all(isinstance(code, int | type(None)) for code in baseline["exits"])  # numbers only
+
+
+def test_a_failing_command_is_recorded_by_the_type_of_its_last_error_only(tmp_path):
+    traceback = (
+        "[exit 1]\nTraceback (most recent call last):\n"
+        '  File "setup.py", line 3, in <module>\n    import secret_package\n'
+        "ModuleNotFoundError: No module named 'secret_package'"
+    )
+    steps = (
+        traceback,
+        "[exit 0]\nok",
+        "[exit 1]\nsubprocess.CalledProcessError: Command failed",
+        "[exit 0]",
+        "[exit 0]",
+    )
+    errors = baseline_of(tmp_path, *steps)["errors"]
+    assert errors == ["ModuleNotFoundError", None, "CalledProcessError", None, None]
+    assert "secret_package" not in json.dumps(errors)  # never any text from the output
+
+
+def test_the_last_error_wins_and_an_unnamed_failure_has_no_type(tmp_path):
+    steps = (
+        "[exit 1]\nKeyError: 'a'\nDuring handling...\nOSError: boom",
+        "[exit 1]\nERROR: failed",
+        "",
+        "",
+        "",
+    )
+    errors = baseline_of(tmp_path, *steps)["errors"]
+    assert errors[:2] == ["OSError", None]

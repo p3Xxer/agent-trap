@@ -130,7 +130,21 @@ def _baseline(result: ScanResult) -> dict[str, Any] | None:
         # one number per baseline command: pip install, editable install, setup.py install,
         # import, tests (None when a command did not report one)
         "exits": exits,
+        # the type of the last error each failing command ended with, for example
+        # "ModuleNotFoundError"; its message is never kept, because it may quote the code
+        "errors": [
+            _error_type(s.observation) if code else None
+            for s, code in zip(steps, exits, strict=True)
+        ],
     }
+
+
+_ERROR_TYPE = re.compile(r"^(?:[\w.]+\.)?([A-Z]\w*(?:Error|Exception|Exit|Interrupt))\b", re.M)
+
+
+def _error_type(observation: str) -> str | None:
+    found = _ERROR_TYPE.findall(observation)
+    return found[-1] if found else None
 
 
 def _exit_status(observation: str) -> int | None:

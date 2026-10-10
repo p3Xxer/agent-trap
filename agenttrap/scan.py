@@ -134,10 +134,11 @@ for package in sorted(packages):
 # What a user does with a Python project, by every normal route. Run without an AI, so that code
 # which fires at install, import or test time is found whether or not the agent happens to run
 # these commands. Malicious packages hook different routes (the wheel build, the editable install,
-# the older `setup.py install`), so all of them are exercised.
+# the older `setup.py install`), so all of them are exercised. Build tools are baked into the image
+# and dependencies are not fetched (there is no internet): only the project's own code is run.
 BASELINE = (
-    "pip install . 2>&1 | tail -n 20",
-    "pip install -e . 2>&1 | tail -n 20",
+    "pip install --no-build-isolation --no-deps . 2>&1 | tail -n 20",
+    "pip install --no-build-isolation --no-deps -e . 2>&1 | tail -n 20",
     "python setup.py install 2>&1 | tail -n 20",
     f"python -c {shlex.quote(IMPORT_ALL)} 2>&1 | tail -n 20",
     "python -m pytest -q 2>&1 | tail -n 20",

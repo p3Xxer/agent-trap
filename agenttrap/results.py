@@ -86,6 +86,7 @@ def result_document(
             "count": len(static),
             "flagged": [asdict(f) for f in static[:STATIC_SHOWN]],
         },
+        "baseline": _baseline(result),
         "runs": len(result.runs),
         "cost_usd": round(result.cost_usd, 5),
         "seconds": round(result.seconds, 1),
@@ -109,6 +110,23 @@ def _without_code(document: dict[str, Any]) -> dict[str, Any]:
     for item in stripped["static_scan"]["flagged"]:
         item["text"] = ""
     return stripped
+
+
+_TEST_COUNTS = re.compile(r"\d+ (?:passed|failed|errors?|skipped|deselected|xfailed|xpassed)")
+
+
+def _baseline(result: ScanResult) -> dict[str, Any] | None:
+    """Did the project install, and what did its tests do? Without this a SAFE verdict cannot be
+    told apart from "nothing of the project ever ran"."""
+    run = next((r for r in result.runs if r.task == "baseline"), None)
+    if run is None or not run.trace.steps:
+        return None
+    installs = run.trace.steps[:2]
+    summary = _TEST_COUNTS.findall(run.trace.steps[-1].observation)
+    return {
+        "installed": any("Successfully installed" in step.observation for step in installs),
+        "tests": ", ".join(summary),  # only the counts, never a line of the project's output
+    }
 
 
 def to_json(document: dict[str, Any]) -> str:

@@ -57,8 +57,9 @@ def test_the_standard_install_and_test_commands_run_in_order(tmp_path):
     result = scan.run_baseline(tmp_path, served={})
     assert [command for command, _ in STATE["commands"]] == list(scan.BASELINE)
     joined = " ".join(scan.BASELINE)
-    for route in ("pip install .", "pip install -e .", "setup.py install", "pytest"):
+    for route in ("--no-deps .", "--no-deps -e .", "setup.py install", "pytest"):
         assert route in joined, route
+    assert all("pip install --no-build-isolation --no-deps" in c for c in scan.BASELINE[:2])
     assert all(timeout == scan.BASELINE_TIMEOUT for _, timeout in STATE["commands"])
     assert result.task == "baseline" and result.trace.stopped == "finished"
 

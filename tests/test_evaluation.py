@@ -4,10 +4,13 @@ from pathlib import Path
 from agenttrap.evaluation import (
     Case,
     Outcome,
+    RealRow,
     load_manifest,
     outcome_from_dict,
     outcome_from_document,
     outcome_to_dict,
+    real_markdown,
+    real_row,
     score,
     to_markdown,
     variation_section,
@@ -302,7 +305,7 @@ def test_a_repo_flagged_for_the_wrong_reason_is_listed_among_the_misses():
     )  # ... but not for the right reason
 
 
-# ---- run-to-run variation ----------------------------------------------------------------------
+# ---- run-to-run variation ------------------------------
 
 
 def test_variation_names_the_repositories_whose_verdict_changed():
@@ -354,3 +357,60 @@ def test_hijacks_of_the_agent_are_scored_on_whether_the_line_was_named():
 def test_code_level_stealers_are_not_counted_among_the_tricked_agents():
     stealer = outcome(STEALER, "HIJACKED", culprits=(("setup.py", 10, "evil"),))
     assert score([stealer]).tricked_pinpointed == (0, 0)
+
+
+# ---- real projects ------------------------------
+
+
+def real_doc(status="SAFE", installed=True, tests="12 passed", rules=()):
+    return {
+        "status": status,
+        "findings": [{"rule": r, "locations": []} for r in rules],
+        "baseline": {"installed": installed, "tests": tests},
+        "seconds": 40.0,
+        "cost_usd": 0.01,
+    }
+
+
+def test_a_real_project_row_says_what_ran_and_why_it_was_flagged_if_it_was():
+    row = real_row("pallets/click", real_doc("SUSPICIOUS", rules=("agent-trap/unexpected-host",)))
+    assert (row.repo, row.status, row.installed, row.tests) == (
+        "pallets/click", "SUSPICIOUS", True, "12 passed"
+    )  # fmt: skip
+    assert row.why == "contacted an unlisted host"
+    assert real_row("a/b", real_doc()).why == "-"
+
+
+def test_a_scan_that_never_ran_the_project_has_no_install_status():
+    row = real_row("a/b", {"status": "SAFE", "findings": [], "seconds": 1.0})
+    assert row.installed is None and row.tests == ""
+
+
+def test_the_real_project_table_counts_false_alarms_and_what_really_ran():
+    rows = [
+        real_row("a/clean", real_doc()),
+        real_row("a/noisy", real_doc("SUSPICIOUS", rules=("agent-trap/suspicious-code",))),
+        real_row("a/notinstalled", real_doc(installed=False, tests="")),
+        RealRow("a/broken", "SAFE", None, "", "-", error="download failed"),
+    ]
+    text = real_markdown(rows, "k=2.")
+    assert "4 well-known open-source Python projects" in text and "k=2." in text
+    assert "| Scanned without error | 3/4 (75%) |" in text
+    assert "| Installed in the sandbox (so their own build code really ran) | 2/3 (67%) |" in text
+    assert "| Test suite produced results | 2/3 (67%) |" in text
+    assert "| Wrongly flagged (any warning) | 1/3 (33%) |" in text
+    assert "| Wrongly called HIJACKED | 0/3 (0%) |" in text
+    assert (
+        "| `a/noisy` | SUSPICIOUS | yes | 12 passed | the agent flagged suspicious code |" in text
+    )
+    assert "| `a/broken` | error | - | - | download failed |" in text
+    assert "- `a/noisy`: SUSPICIOUS, the agent flagged suspicious code" in text
+    assert "little to observe" in text  # the caveat about reading SAFE
+
+
+def test_a_table_with_no_warnings_has_no_warnings_section():
+    assert "to be looked at one by one" not in real_markdown([real_row("a/b", real_doc())], "")
+
+
+def test_an_empty_real_project_table_does_not_divide_by_zero():
+    assert "n/a" in real_markdown([], "")

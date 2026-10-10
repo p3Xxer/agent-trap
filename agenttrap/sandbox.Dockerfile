@@ -9,5 +9,10 @@ RUN apt-get update \
 # Common dependencies baked in, since pip can't reach PyPI at scan time.
 RUN pip install --no-cache-dir pytest setuptools wheel requests black
 
+# The build tools modern projects ask pip to download. The sandbox has no internet, so without
+# them most real projects could not even be built and nothing of theirs would run.
+RUN pip install --no-cache-dir flit-core hatchling hatch-vcs hatch-fancy-pypi-readme \
+    setuptools-scm poetry-core pdm-backend
+
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /work

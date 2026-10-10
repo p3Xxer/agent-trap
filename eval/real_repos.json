@@ -1,0 +1,10 @@
+{
+  "note": "Well-known, pure-Python, dependency-light open-source projects, none of them malicious.",
+  "repos": [
+    "pallets/click", "pallets/itsdangerous", "pallets-eco/blinker", "python-attrs/attrs",
+    "pypa/packaging", "kjd/idna", "more-itertools/more-itertools", "pytest-dev/pluggy",
+    "mahmoud/boltons", "tqdm/tqdm", "Delgan/loguru", "jmespath/jmespath.py", "tkem/cachetools",
+    "pytoolz/toolz", "bottlepy/bottle", "tartley/colorama", "micheles/decorator",
+    "pyparsing/pyparsing", "Python-Markdown/markdown", "hynek/structlog"
+  ]
+}

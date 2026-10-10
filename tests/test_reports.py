@@ -149,3 +149,56 @@ def test_every_kind_of_document_counts_as_prose_and_code_files_do_not():
     injections, found = agent_reports([run(concerns=concerns)], files)
     assert sorted(i.where for i in injections) == ["a.txt:1", "b.rst:1", "c.MD:1"]
     assert [c.where for c in found] == ["d.py:1"]
+
+
+# ---- what the baseline run did ------------------------------
+
+
+def baseline_run(*observations):
+    from agenttrap.agent import Step
+    from agenttrap.egress import Observed
+
+    trace = Trace(
+        task="baseline", steps=[Step("run_command", {"command": "x"}, o) for o in observations]
+    )
+    return RunResult("baseline", trace, Observed((), ()), ())
+
+
+def baseline_of(tmp_path, *observations):
+    result = safe_result()
+    result.repo = str(tmp_path)
+    result.runs = [baseline_run(*observations)]
+    return result_document(result, name="n", created=datetime(2026, 10, 11, tzinfo=UTC))["baseline"]
+
+
+def test_the_document_says_whether_the_project_installed_and_what_its_tests_did(tmp_path):
+    steps = (
+        "Successfully installed pkg-1.0",
+        "WARNING",
+        "legacy",
+        "",
+        "3 failed, 12 passed in 1.1s",
+    )
+    assert baseline_of(tmp_path, *steps) == {"installed": True, "tests": "3 failed, 12 passed"}
+
+
+def test_a_project_that_could_not_be_built_is_recorded_as_not_installed(tmp_path):
+    steps = ("ERROR: Could not build wheel", "ERROR: failed", "x", "", "no tests ran in 0.01s")
+    assert baseline_of(tmp_path, *steps) == {"installed": False, "tests": ""}
+
+
+def test_the_editable_install_counts_too(tmp_path):
+    steps = ("ERROR", "Successfully installed pkg-1.0", "x", "", "1 passed in 0.1s")
+    assert baseline_of(tmp_path, *steps)["installed"] is True
+
+
+def test_no_line_of_the_projects_own_output_is_kept(tmp_path):
+    secret_looking = "FAILED tests/test_x.py::test_token - AssertionError: sk-live-123"
+    steps = ("Successfully installed pkg-1.0", "", "", "", secret_looking + "\n2 failed in 0.3s")
+    assert baseline_of(tmp_path, *steps)["tests"] == "2 failed"
+
+
+def test_a_scan_without_a_baseline_run_has_no_summary(tmp_path):
+    result = safe_result()
+    result.repo = str(tmp_path)
+    assert result_document(result, name="n")["baseline"] is None

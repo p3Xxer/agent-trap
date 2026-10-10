@@ -17,7 +17,7 @@ from pathlib import Path
 
 from agenttrap.canary import Canaries, write_home
 
-IMAGE = "agenttrap-sandbox:0.1"
+IMAGE = "agenttrap-sandbox:0.2"
 NETWORK = "agenttrap-internal"
 DOCKERFILE = Path(__file__).with_name("sandbox.Dockerfile")
 WORKDIR = "/work"

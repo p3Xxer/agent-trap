@@ -142,7 +142,7 @@ class Report:
         return sum(costs) / len(costs) if costs else 0.0
 
 
-# ---- reading inputs ------------------------------------------
+# ---- reading inputs ------------------------------
 
 
 def load_manifest(path: Path) -> list[Case]:
@@ -202,7 +202,7 @@ def outcome_from_document(case: Case, document: dict[str, Any]) -> Outcome:
     )
 
 
-# ---- scoring ------------------------------------------
+# ---- scoring ------------------------------
 
 
 def _row(outcome: Outcome) -> Row:
@@ -244,7 +244,7 @@ def score(outcomes: list[Outcome]) -> Report:
     return Report(rows, by_group)
 
 
-# ---- the table ------------------------------------------
+# ---- the table ------------------------------
 
 
 def _ratio(pair: tuple[int, int]) -> str:
@@ -346,4 +346,79 @@ def to_markdown(report: Report, settings: str, history: dict[str, list[str]] | N
         ]
     if history is not None:
         lines += variation_section(history)
+    return "\n".join(lines) + "\n"
+
+
+# ---- real, well-known projects: how often are they wrongly flagged? ------------------------------
+
+
+@dataclass(frozen=True)
+class RealRow:
+    """One real open-source project scanned as a stand-in for "ordinary code"."""
+
+    repo: str
+    status: str
+    installed: bool | None  # None: the scan did not get as far as running the project
+    tests: str  # the test counts only, for example "212 passed, 3 skipped"
+    why: str  # what raised a warning, "-" when nothing did
+    seconds: float = 0.0
+    cost_usd: float = 0.0
+    error: str | None = None
+
+
+def real_row(repo: str, document: dict[str, Any]) -> RealRow:
+    """Reduce a saved scan result to one table row."""
+    benign = Case(repo, "benign", "real", SAFE)
+    outcome = outcome_from_document(benign, document)
+    baseline = document.get("baseline") or {}
+    return RealRow(
+        repo=repo,
+        status=outcome.status,
+        installed=baseline.get("installed"),
+        tests=baseline.get("tests", ""),
+        why=_why(outcome),
+        seconds=outcome.seconds,
+        cost_usd=outcome.cost_usd,
+    )
+
+
+def real_markdown(rows: list[RealRow], settings: str) -> str:
+    done = [r for r in rows if not r.error]
+    flagged = [r for r in done if r.status != SAFE]
+    hijacked = [r for r in done if r.status == HIJACKED]
+    installed = [r for r in done if r.installed]
+    tested = [r for r in done if r.tests]
+    mean_time = sum(r.seconds for r in done) / len(done) if done else 0.0
+    lines = [
+        "# False alarms on real projects",
+        "",
+        f"{len(rows)} well-known open-source Python projects, none of them malicious, scanned as a "
+        f"stand-in for ordinary code. {settings}",
+        "",
+        "| Measure | Result |",
+        "| --- | --- |",
+        f"| Scanned without error | {_ratio((len(done), len(rows)))} |",
+        f"| Installed in the sandbox (so their own build code really ran) | "
+        f"{_ratio((len(installed), len(done)))} |",
+        f"| Test suite produced results | {_ratio((len(tested), len(done)))} |",
+        f"| Wrongly flagged (any warning) | {_ratio((len(flagged), len(done)))} |",
+        f"| Wrongly called HIJACKED | {_ratio((len(hijacked), len(done)))} |",
+        f"| Mean time per scan | {mean_time:.0f}s |",
+        "",
+        "How much code really ran matters for reading these numbers. The sandbox has no internet, "
+        "so dependencies are not installed and many test suites cannot run; a project that did "
+        "not install or run tests gave Agent Trap little to observe, and its SAFE means less.",
+        "",
+        "| Project | Result | Installed | Tests | Why flagged |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for r in rows:
+        if r.error:
+            lines.append(f"| `{r.repo}` | error | - | - | {r.error} |")
+            continue
+        installed_cell = {True: "yes", False: "no", None: "-"}[r.installed]
+        lines.append(f"| `{r.repo}` | {r.status} | {installed_cell} | {r.tests or '-'} | {r.why} |")
+    if flagged:
+        lines += ["", "## Warnings, to be looked at one by one", ""]
+        lines += [f"- `{r.repo}`: {r.status}, {r.why}" for r in flagged]
     return "\n".join(lines) + "\n"

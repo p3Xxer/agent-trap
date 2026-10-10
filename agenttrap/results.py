@@ -130,10 +130,11 @@ def _baseline(result: ScanResult) -> dict[str, Any] | None:
         # one number per baseline command: pip install, editable install, setup.py install,
         # import, tests (None when a command did not report one)
         "exits": exits,
-        # the type of the last error each failing command ended with, for example
-        # "ModuleNotFoundError"; its message is never kept, because it may quote the code
+        # labels for why each failing command failed, from a fixed vocabulary (for example
+        # "ModuleNotFoundError" or "no-matching-distribution"); no word of the project's own
+        # output is ever kept, because it may quote the code
         "errors": [
-            _error_type(s.observation) if code else None
+            _error_summary(s.observation) if code else []
             for s, code in zip(steps, exits, strict=True)
         ],
     }
@@ -142,9 +143,37 @@ def _baseline(result: ScanResult) -> dict[str, Any] | None:
 _ERROR_TYPE = re.compile(r"^(?:[\w.]+\.)?([A-Z]\w*(?:Error|Exception|Exit|Interrupt))\b", re.M)
 
 
-def _error_type(observation: str) -> str | None:
+# Known diagnostic phrases of pip and setuptools, and the label kept when one is present. The labels
+# are ours; none of the project's own words is ever stored.
+_KNOWN_MESSAGES = {
+    "multiple top-level packages": "multiple-top-level-packages",
+    "no matching distribution": "no-matching-distribution",
+    "could not find a version": "no-matching-distribution",
+    "permission denied": "permission-denied",
+    "externally-managed-environment": "externally-managed",
+    "no such file or directory": "missing-file",
+    "failed building wheel": "failed-building-wheel",
+    "metadata-generation-failed": "metadata-generation-failed",
+    "subprocess-exited-with-error": "build-subprocess-failed",
+    "invalid command": "invalid-command",
+    "invalid version": "invalid-version",
+    "name or service not known": "name-resolution",
+    "temporary failure in name resolution": "name-resolution",
+    "max retries exceeded": "network-retries",
+    "connection refused": "connection-refused",
+    "no space left": "disk-full",
+    "killed": "killed",
+}
+
+
+def _error_summary(observation: str) -> list[str]:
+    """Labels for what went wrong: the type of the last Python error, and any known diagnostic."""
+    lowered = observation.lower()
+    labels = [label for phrase, label in _KNOWN_MESSAGES.items() if phrase in lowered]
     found = _ERROR_TYPE.findall(observation)
-    return found[-1] if found else None
+    if found:
+        labels.append(found[-1])
+    return sorted(set(labels))
 
 
 def _exit_status(observation: str) -> int | None:

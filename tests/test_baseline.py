@@ -181,7 +181,7 @@ def test_a_project_with_no_packages_imports_nothing_and_succeeds(tmp_path):
 
 def test_every_baseline_command_reports_its_exit_status_before_its_output():
     for command in scan.BASELINE:
-        assert ') > /tmp/step.out 2>&1; echo "[exit $?]"; tail -n 20 /tmp/step.out' in command
+        assert ') > /tmp/step.out 2>&1; echo "[exit $?]"; tail -n 80 /tmp/step.out' in command
         assert "| tail" not in command  # a pipe into tail would hide a failure
 
 

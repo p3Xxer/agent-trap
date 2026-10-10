@@ -219,31 +219,32 @@ def test_the_exit_status_of_every_baseline_command_is_recorded_as_a_number(tmp_p
     assert all(isinstance(code, int | type(None)) for code in baseline["exits"])  # numbers only
 
 
-def test_a_failing_command_is_recorded_by_the_type_of_its_last_error_only(tmp_path):
+def test_a_failing_command_is_recorded_by_labels_never_by_its_words(tmp_path):
     traceback = (
         "[exit 1]\nTraceback (most recent call last):\n"
         '  File "setup.py", line 3, in <module>\n    import secret_package\n'
         "ModuleNotFoundError: No module named 'secret_package'"
     )
-    steps = (
-        traceback,
-        "[exit 0]\nok",
-        "[exit 1]\nsubprocess.CalledProcessError: Command failed",
-        "[exit 0]",
-        "[exit 0]",
+    pip = (
+        "[exit 1]\nERROR: No matching distribution found for secret-thing\nPermission denied: '/x'"
     )
-    errors = baseline_of(tmp_path, *steps)["errors"]
-    assert errors == ["ModuleNotFoundError", None, "CalledProcessError", None, None]
-    assert "secret_package" not in json.dumps(errors)  # never any text from the output
+    errors = baseline_of(tmp_path, traceback, "[exit 0]\nok", pip, "[exit 0]", "[exit 0]")["errors"]
+    assert errors == [
+        ["ModuleNotFoundError"],
+        [],
+        ["no-matching-distribution", "permission-denied"],
+        [],
+        [],
+    ]
+    assert "secret" not in json.dumps(errors)  # never any text from the output
 
 
-def test_the_last_error_wins_and_an_unnamed_failure_has_no_type(tmp_path):
-    steps = (
-        "[exit 1]\nKeyError: 'a'\nDuring handling...\nOSError: boom",
-        "[exit 1]\nERROR: failed",
-        "",
-        "",
-        "",
-    )
-    errors = baseline_of(tmp_path, *steps)["errors"]
-    assert errors[:2] == ["OSError", None]
+def test_the_last_python_error_wins_and_an_unrecognized_failure_has_no_labels(tmp_path):
+    steps = ("[exit 1]\nKeyError: 'a'\nDuring handling...\nOSError: boom", "[exit 1]\nERROR: odd")
+    errors = baseline_of(tmp_path, *steps, "", "", "")["errors"]
+    assert errors[:2] == [["OSError"], []]
+
+
+def test_a_failure_with_no_output_that_was_killed_is_labelled_as_such(tmp_path):
+    steps = ("[exit 137]\nKilled", "[exit 0]", "[exit 0]", "[exit 0]", "[exit 0]")
+    assert baseline_of(tmp_path, *steps)["errors"][0] == ["killed"]

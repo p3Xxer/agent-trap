@@ -138,11 +138,11 @@ for package in sorted(packages):
 # the older `setup.py install`), so all of them are exercised. Build tools are baked into the image
 # and dependencies are not fetched (there is no internet): only the project's own code is run.
 def _with_exit_status(command: str) -> str:
-    """Run `command`, then report its exit status first and the last lines of its output after.
+    """Run `command`, then report its exit status first and the last 80 lines of its output.
 
     Piping straight into `tail` would hide whether the command failed.
     """
-    return f'( {command} ) > /tmp/step.out 2>&1; echo "[exit $?]"; tail -n 20 /tmp/step.out'
+    return f'( {command} ) > /tmp/step.out 2>&1; echo "[exit $?]"; tail -n 80 /tmp/step.out'
 
 
 BASELINE = (

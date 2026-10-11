@@ -75,6 +75,15 @@ def scan_project(
     return BatchItem(name, result.verdict.status.value, result.seconds, len(document["findings"]))
 
 
+def _short_name(project: Path, root: Path) -> str:
+    """The folder under `root` plus the project's own folder, without the long path in between
+    that an unpacked archive keeps."""
+    if project == root:
+        return root.name
+    parts = project.relative_to(root).parts
+    return "/".join(parts if len(parts) <= 2 else (parts[0], parts[-1]))
+
+
 def run_batch(
     root: Path,
     *,
@@ -90,7 +99,7 @@ def run_batch(
     projects = find_projects(root)
 
     def one(project: Path) -> BatchItem:
-        name = "batch/" + (project.relative_to(root).as_posix() if project != root else root.name)
+        name = "batch/" + _short_name(project, root)
         item = scan(project, name, store=store, k=k, model=model, include_code=include_code)
         on_done(item)
         return item

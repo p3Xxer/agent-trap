@@ -29,3 +29,11 @@ def test_name_for_path():
     assert c.name_for_path("/root/.aws/credentials") == "~/.aws/credentials"
     assert c.name_for_path("~/.ssh/id_rsa") == "~/.ssh/id_rsa"
     assert c.name_for_path("/work/README.md") is None
+
+
+def test_the_machines_identity_is_a_canary_too():
+    c = generate()
+    assert re.fullmatch(r"build-[0-9a-f]{10}", c.values["$HOSTNAME"])
+    assert c.hostname == c.values["$HOSTNAME"]
+    assert c.env["USER"] == c.env["LOGNAME"] == c.values["$USER"]
+    assert generate().hostname != c.hostname

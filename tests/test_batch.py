@@ -155,3 +155,11 @@ def test_without_code_no_line_of_the_scanned_files_is_in_the_document(tmp_path):
     assert doc["status"] == "HIJACKED"
     assert {(loc["file"], loc["line"]) for f in doc["findings"] for loc in f["locations"]}
     assert doc["injections"][0]["where"] == "README.md:1"
+
+
+def test_long_archive_paths_are_left_out_of_a_project_name(tmp_path):
+    from agenttrap.batch import _short_name
+
+    deep = tmp_path / "pkg-1" / "var" / "folders" / "T" / "tmpab" / "pkg-1"
+    assert _short_name(deep, tmp_path) == "pkg-1/pkg-1"
+    assert _short_name(tmp_path / "a" / "b", tmp_path) == "a/b"

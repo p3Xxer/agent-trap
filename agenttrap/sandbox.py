@@ -81,8 +81,9 @@ class Sandbox:
         variables = {**self.canaries.env, **self.net.env}
         env = [arg for k, v in variables.items() for arg in ("-e", f"{k}={v}")]
         dns = ["--dns", self.net.dns] if self.net.dns else []
+        host = ["--hostname", self.canaries.hostname] if self.canaries.hostname else []
         started = _docker(
-            "run", "-d", "--name", self.name, "--network", self.net.name, *dns,
+            "run", "-d", "--name", self.name, "--network", self.net.name, *dns, *host,
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
             "--memory", "1g", "--cpus", "1", "--pids-limit", "256",
             *env, IMAGE, "sleep", "infinity",

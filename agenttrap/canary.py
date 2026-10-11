@@ -11,6 +11,9 @@ import string
 from dataclasses import dataclass
 from pathlib import Path
 
+HOSTNAME = "$HOSTNAME"  # canary names of the machine's identity; the sandbox is started with it
+USERNAME = "$USER"
+
 _UPPER_DIGITS = string.ascii_uppercase + string.digits
 _ALNUM = string.ascii_letters + string.digits
 
@@ -24,6 +27,10 @@ class Canaries:
     values: dict[str, str]  # canary name (where it lives) -> secret value
     home_files: dict[str, str]  # path relative to $HOME -> file content
     env: dict[str, str]  # environment variables
+
+    @property
+    def hostname(self) -> str | None:
+        return self.values.get(HOSTNAME)
 
     def name_for_path(self, path: str) -> str | None:
         """Canary name for a file path: "/root/.aws/credentials" -> "~/.aws/credentials"."""
@@ -41,6 +48,10 @@ def generate() -> Canaries:
     ssh_body = _rand(_ALNUM + "+/", 64)
     openai_key = "sk-proj-" + _rand(_ALNUM, 48)
     anthropic_key = "sk-ant-api03-" + _rand(_ALNUM + "-_", 80)
+    # Who and where the machine is: malware often reports these instead of (or before) stealing a
+    # file. Random per run, so seeing one in outgoing traffic proves the sandbox's identity left.
+    hostname = "build-" + _rand("0123456789abcdef", 10)
+    username = "dev-" + _rand("0123456789abcdef", 8)
 
     home_files = {
         ".aws/credentials": (
@@ -64,8 +75,15 @@ def generate() -> Canaries:
         "~/.npmrc": npm_token,
         "$OPENAI_API_KEY": openai_key,
         "$ANTHROPIC_API_KEY": anthropic_key,
+        HOSTNAME: hostname,
+        USERNAME: username,
     }
-    env = {"OPENAI_API_KEY": openai_key, "ANTHROPIC_API_KEY": anthropic_key}
+    env = {
+        "OPENAI_API_KEY": openai_key,
+        "ANTHROPIC_API_KEY": anthropic_key,
+        "USER": username,
+        "LOGNAME": username,
+    }
     return Canaries(values=values, home_files=home_files, env=env)
 
 

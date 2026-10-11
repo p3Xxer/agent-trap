@@ -290,7 +290,7 @@ def test_code_that_steals_is_still_found_by_replaying_commands(monkeypatch):
     def runner(version):
         return {CANARY} if version.get("setup.py") else set()
 
-    monkeypatch.setattr(scan, "replay_runner", lambda steps, served, deadline=None: runner)
+    monkeypatch.setattr(scan, "replay_runner", lambda steps, served, deadline=None, **_: runner)
     monkeypatch.setattr(scan, "localize", lambda f, r, c, workers=1: ["found by replay"])
     monkeypatch.setattr(scan, "localize_by_asking", lambda *a, **k: calls.append(a) or ([], ""))
     assert scan.localize_leak(files, run_with_leak(make_trace()), CANARY, {}, llm=object()) == (
@@ -303,7 +303,7 @@ def test_code_that_steals_is_still_found_by_replaying_commands(monkeypatch):
 def test_a_leak_that_replay_cannot_explain_is_handed_to_the_model(monkeypatch):
     seen = []
     monkeypatch.setattr(
-        scan, "replay_runner", lambda steps, served, deadline=None: lambda version: set()
+        scan, "replay_runner", lambda steps, served, deadline=None, **_: lambda version: set()
     )
 
     def asked(files, trace, canary, destination, llm, model):
@@ -319,7 +319,7 @@ def test_a_leak_that_replay_cannot_explain_is_handed_to_the_model(monkeypatch):
 
 def test_without_a_model_the_reason_is_given_instead(monkeypatch):
     monkeypatch.setattr(
-        scan, "replay_runner", lambda steps, served, deadline=None: lambda version: set()
+        scan, "replay_runner", lambda steps, served, deadline=None, **_: lambda version: set()
     )
     culprits, reason = scan.localize_leak({"a": "x"}, run_with_leak(make_trace()), CANARY, {})
     assert culprits == [] and "does not depend on the repository's code" in reason
@@ -364,7 +364,7 @@ def test_the_search_ends_with_the_pruned_answer():
 
 
 def test_a_search_that_runs_out_of_time_says_so_instead_of_hanging(monkeypatch):
-    def too_slow(steps, served, deadline=None):
+    def too_slow(steps, served, deadline=None, **_):
         def run(version):
             raise scan.OutOfTime
 

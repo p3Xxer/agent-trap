@@ -10,11 +10,15 @@ TLS handshake is visible. The proxy answers every request itself and never conta
 from __future__ import annotations
 
 import json
+import queue
+import threading
 import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from typing import NamedTuple
 from urllib.parse import urlparse
 
 from agenttrap.detector import Flag, Request
@@ -51,6 +55,16 @@ class Observed:
 
     requests: tuple[Request, ...]  # plain-HTTP requests, in full
     hosts: tuple[str, ...]  # every host contacted, by DNS lookup, TLS name or Host header
+
+
+class Mark(NamedTuple):
+    """How many log lines each container had written at some moment."""
+
+    sink: int
+    proxy: int
+
+
+START = Mark(0, 0)
 
 
 class Egress:
@@ -123,12 +137,70 @@ class Egress:
         _docker("rm", "-f", self.proxy_name)
         _docker("network", "rm", self.network)
 
-    def observed(self) -> Observed:
-        lines: list[str] = []
-        for container in (self.name, self.proxy_name):
-            logs = _docker("logs", container)
-            lines += (logs.stdout + logs.stderr).splitlines()
-        return parse_events(lines)
+    def mark(self) -> Mark:
+        """Where the logs end now, so a later `observed(since=mark)` shows only what came after."""
+        return Mark(*(len(self._log(container)) for container in (self.name, self.proxy_name)))
+
+    def observed(self, since: Mark = START) -> Observed:
+        """What the sandbox did on the network, optionally only after `since`. Offsets are kept
+        per container because the two logs grow independently."""
+        sink = self._log(self.name)[since.sink :]
+        proxy = self._log(self.proxy_name)[since.proxy :]
+        return parse_events(sink + proxy)
+
+    @staticmethod
+    def _log(container: str) -> list[str]:
+        """The container's events. Both the sinkhole and the proxy addon print them to stdout;
+        stderr is left out because it grows on its own (warnings) and would shift the offsets."""
+        return _docker("logs", container).stdout.splitlines()
+
+
+class EgressPool:
+    """A few Egress instances shared by many short detonations, so each one pays for its sinkhole
+    and proxy once instead of every time. Use as a context manager; every one made is removed.
+
+    An Egress is lent to one detonation at a time and made lazily, so a search that never runs in
+    parallel starts only one. Callers read their own traffic with `mark()` / `observed(since=)`.
+    """
+
+    def __init__(self, served: Mapping[str, str] | None, size: int) -> None:
+        self.served = served
+        self.size = size
+        self._made = 0
+        self._lock = threading.Lock()
+        self._idle: queue.Queue[Egress] = queue.Queue()
+        self._stack = ExitStack()
+
+    def __enter__(self) -> EgressPool:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self._stack.close()
+
+    @contextmanager
+    def lend(self) -> Iterator[Egress]:
+        egress = self._take()
+        try:
+            yield egress
+        finally:
+            self._idle.put(egress)
+
+    def _take(self) -> Egress:
+        try:
+            return self._idle.get_nowait()
+        except queue.Empty:
+            pass
+        with self._lock:
+            make = self._made < self.size
+            self._made += make
+        if not make:
+            return self._idle.get()
+        try:
+            return self._stack.enter_context(Egress(self.served))
+        except BaseException:
+            with self._lock:
+                self._made -= 1  # let another caller try rather than wait for one that never comes
+            raise
 
 
 def parse_events(lines: list[str]) -> Observed:

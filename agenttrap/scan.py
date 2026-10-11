@@ -39,7 +39,7 @@ from agenttrap.canary import IDENTITY_WORDS
 from agenttrap.cleaner import Removal, clean, write_copy
 from agenttrap.counterfactual import localize_by_asking
 from agenttrap.detector import Flag, Leak, Request, Verdict, command_flags, find_leaks, judge
-from agenttrap.egress import Egress, Observed, contact_flags, unexpected_hosts
+from agenttrap.egress import Egress, EgressPool, Observed, contact_flags, unexpected_hosts
 from agenttrap.intel import HostIntel
 from agenttrap.llm import LLM
 from agenttrap.localizer import UNCONFIRMED, Culprit, Files, Runner, localize
@@ -246,14 +246,31 @@ LOCALIZE_WORKERS = 3  # detonations at once; each needs about 2 GB of the Docker
 LOCALIZE_SECONDS = 420  # each detonation takes seconds, and a search needs dozens of them
 
 
-def replay_runner(steps: list, served: Mapping[str, str], deadline: float | None = None) -> Runner:
+def replay_runner(
+    steps: list,
+    served: Mapping[str, str],
+    deadline: float | None = None,
+    *,
+    pool: EgressPool | None = None,
+    until: str | None = None,
+) -> Runner:
     """A localizer Runner that replays the agent's recorded commands, with no model calls.
 
     Each call detonates one version of the repo in a fresh sandbox and returns which canaries
-    were seen in plain-HTTP requests.
+    were seen in plain-HTTP requests. The sandbox is new every time (an installed package must not
+    carry over), but the network watcher comes from `pool` when given, and only the traffic of
+    this detonation is read from it.
+
+    `until` names a canary: the first call replays step by step and notes the step after which it
+    had left. Later calls stop there, since the steps after it cannot change what the search asks.
+    A first call in which it does not leave changes nothing. Make that first call before running
+    in parallel.
     """
+    learning = until is not None
+    kept = steps
 
     def run(files: Files) -> set[str]:
+        nonlocal learning, kept
         if deadline is not None and time.time() > deadline:
             raise OutOfTime
         canaries = canary.generate()
@@ -262,20 +279,29 @@ def replay_runner(steps: list, served: Mapping[str, str], deadline: float | None
                 path = Path(tmp, name)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text)
-            with Egress(served) as net:
+            with pool.lend() if pool else Egress(served) as net:
+                mark = net.mark()
+
+                def leaked() -> set[str]:
+                    seen = net.observed(mark)
+                    found = find_leaks(seen.requests, canaries.values, seen.hosts)
+                    return {base_name(leak.canary) for leak in found}
+
                 with Sandbox(Path(tmp), canaries, net.net()) as box:
-                    _replay(steps, box)
-                observed = net.observed()
-        return {
-            base_name(leak.canary)
-            for leak in find_leaks(observed.requests, canaries.values, observed.hosts)
-        }
+                    watching = learning
+                    learning = False
+                    stopped = _replay(kept, box, (lambda: until in leaked()) if watching else None)
+                    if stopped is not None:
+                        kept = steps[: stopped + 1]
+                return leaked()
 
     return run
 
 
-def _replay(steps: list, box: Sandbox) -> None:
-    for step in steps:
+def _replay(steps: list, box: Sandbox, stop: Callable[[], bool] | None = None) -> int | None:
+    """Replay the steps. With `stop`, ask after each one whether to end here; returns that step's
+    index, or None if the replay ran to the end."""
+    for index, step in enumerate(steps):
         match step.action:
             case "write_file":
                 box.write(str(step.args.get("path", "")), str(step.args.get("content", "")))
@@ -288,6 +314,9 @@ def _replay(steps: list, box: Sandbox) -> None:
                     body=str(step.args.get("body", "")),
                 )
                 curl_via(box)(request)
+        if stop is not None and stop():
+            return index
+    return None
 
 
 def textual_suspects(files: Mapping[str, str], destination: str, canary_name: str) -> list[Culprit]:
@@ -320,10 +349,14 @@ def localize_leak(
     repository. If that cannot explain the leak, the agent decided to send it, and when a model is
     available the lines are found by asking the model again (see counterfactual.py).
     """
-    runner = replay_runner(run.trace.steps, served, time.time() + LOCALIZE_SECONDS)
     try:
-        if canary_name in runner(files) and canary_name not in runner({n: "" for n in files}):
-            return localize(files, runner, canary_name, workers=LOCALIZE_WORKERS), ""
+        with EgressPool(served, LOCALIZE_WORKERS) as pool:
+            deadline = time.time() + LOCALIZE_SECONDS
+            runner = replay_runner(run.trace.steps, served, deadline, pool=pool, until=canary_name)
+            # The unmodified repo goes first because it teaches the runner where to stop; the
+            # blanked one then replays only that far, which saves more than running both at once.
+            if canary_name in runner(files) and canary_name not in runner({n: "" for n in files}):
+                return localize(files, runner, canary_name, workers=LOCALIZE_WORKERS), ""
     except OutOfTime:
         leak = next(x for x in run.leaks if base_name(x.canary) == canary_name)
         found = textual_suspects(files, leak.destination, canary_name)

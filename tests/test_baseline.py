@@ -265,3 +265,116 @@ def test_text_search_finds_the_lines_that_name_the_destination_and_read_the_iden
         ("setup.py", 3, UNCONFIRMED),
     ]
     assert scan.textual_suspects(files, "http://other.test/", "$AWS") == []
+
+
+class StepBox:
+    def __init__(self):
+        self.ran = []
+
+    def run(self, command, timeout=60):
+        self.ran.append(command)
+        return CommandResult(0, "", "")
+
+
+def steps_of(*commands):
+    return [scan.Step("run_command", {"command": c}, "") for c in commands]
+
+
+def test_a_replay_can_stop_after_the_step_that_leaks():
+    box = StepBox()
+    stopped = scan._replay(steps_of("a", "b", "c"), box, lambda: box.ran == ["a", "b"])
+    assert (stopped, box.ran) == (1, ["a", "b"])
+
+
+def test_a_replay_without_a_leak_runs_every_step():
+    box = StepBox()
+    assert scan._replay(steps_of("a", "b"), box, lambda: False) is None
+    assert box.ran == ["a", "b"]
+
+
+def test_later_detonations_replay_only_up_to_the_step_that_leaked(monkeypatch):
+    ran = []
+    leaving_after = {"count": 2}  # the unmodified repo leaks once two commands have run
+
+    class Box(FakeBox):
+        def run(self, command, timeout=60):
+            ran.append(command)
+            return CommandResult(0, "", "")
+
+    class Net(FakeEgress):
+        def mark(self):
+            return len(ran)
+
+        def observed(self, since=0):
+            if len(ran) - since >= leaving_after["count"]:
+                secret = STATE["canaries"].values["~/.aws/credentials"]
+                return Observed((Request("POST", "https://x.test/", body=secret),), ())
+            return Observed((), ())
+
+    class Pool:
+        def lend(self):
+            return Net(None)
+
+    monkeypatch.setattr(scan, "Sandbox", Box)
+    run = scan.replay_runner(
+        steps_of("a", "b", "c", "d"), {}, pool=Pool(), until="~/.aws/credentials"
+    )
+    assert run({"f": "x"}) == {"~/.aws/credentials"}
+    assert ran == ["a", "b"]
+    ran.clear()
+    leaving_after["count"] = 99  # a blanked repo: nothing leaves, but only the short prefix runs
+    assert run({"f": ""}) == set()
+    assert ran == ["a", "b"]
+
+
+def test_a_first_run_that_does_not_leak_keeps_every_step(monkeypatch):
+    ran = []
+
+    class Box(FakeBox):
+        def run(self, command, timeout=60):
+            ran.append(command)
+            return CommandResult(0, "", "")
+
+    class Net(FakeEgress):
+        def mark(self):
+            return 0
+
+        def observed(self, since=0):
+            return Observed((), ())
+
+    class Pool:
+        def lend(self):
+            return Net(None)
+
+    monkeypatch.setattr(scan, "Sandbox", Box)
+    run = scan.replay_runner(steps_of("a", "b"), {}, pool=Pool(), until="~/.aws/credentials")
+    run({})
+    run({})
+    assert ran == ["a", "b", "a", "b"]
+
+
+def test_the_pool_is_removed_even_when_the_search_runs_out_of_time(monkeypatch):
+    exited = []
+
+    class Pool:
+        def __init__(self, served, size):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            exited.append(True)
+
+    def too_slow(*a, **k):
+        def run(files):
+            raise scan.OutOfTime
+
+        return run
+
+    leak = scan.Leak("~/.aws/credentials", "http://x.test/", Request("POST", "http://x.test/"))
+    run = scan.RunResult("baseline", scan.Trace(task="t"), None, (leak,))
+    monkeypatch.setattr(scan, "EgressPool", Pool)
+    monkeypatch.setattr(scan, "replay_runner", too_slow)
+    scan.localize_leak({"a.py": "x"}, run, "~/.aws/credentials", {})
+    assert exited == [True]

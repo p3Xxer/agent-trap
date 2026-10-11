@@ -113,3 +113,102 @@ def test_the_sandbox_does_not_send_localhost_traffic_through_the_proxy():
     env = Egress().net().env
     assert env["NO_PROXY"] == env["no_proxy"] == "localhost,127.0.0.1,::1"
     assert env["HTTPS_PROXY"].startswith("http://")  # everything else still goes through it
+
+
+def test_events_since_a_mark_are_counted_per_container(monkeypatch):
+    from agenttrap import egress
+    from agenttrap.egress import Egress
+    from agenttrap.sandbox import CommandResult
+
+    logs = {
+        "sink": lines({"kind": "dns", "name": "old.test"}),
+        "proxy": lines({"kind": "ready"}, {"kind": "tls", "sni": "older.test"}),
+    }
+
+    def docker(*args, **_):
+        container = "sink" if args[1] == "sink" else "proxy"
+        return CommandResult(0, "\n".join(logs[container]) + "\n", "")
+
+    monkeypatch.setattr(egress, "_docker", docker)
+    net = Egress()
+    net.name, net.proxy_name = "sink", "proxy"
+    mark = net.mark()
+    assert tuple(mark) == (1, 2)
+
+    logs["sink"] += lines({"kind": "dns", "name": "new.test"})
+    logs["proxy"] += lines({"kind": "tls", "sni": "newer.test"})
+    assert set(net.observed(mark).hosts) == {"new.test", "newer.test"}
+    assert set(net.observed().hosts) == {"old.test", "older.test", "new.test", "newer.test"}
+
+
+def test_the_pool_lends_one_egress_at_a_time_and_removes_every_one(monkeypatch):
+    import threading
+
+    from agenttrap import egress
+
+    made, exited = [], []
+
+    class Fake:
+        def __init__(self, served):
+            made.append(self)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            exited.append(self)
+
+    monkeypatch.setattr(egress, "Egress", Fake)
+    with egress.EgressPool({}, 2) as pool:
+        with pool.lend() as first:
+            with pool.lend() as second:
+                assert first is not second
+            waiting = []
+            third = threading.Thread(target=lambda: waiting.append(pool.lend().__enter__()))
+            third.start()
+            third.join(timeout=5)  # the second was returned, so this does not block
+            assert waiting == [second]
+        with pool.lend() as again:
+            assert again in (first, second)
+        assert len(made) == 2  # never more than the size, and reused rather than remade
+    assert sorted(map(id, exited)) == sorted(map(id, made))
+
+
+def test_a_pool_that_is_left_by_an_error_still_removes_its_egress(monkeypatch):
+    import pytest
+
+    from agenttrap import egress
+
+    exited = []
+
+    class Fake:
+        def __init__(self, served): ...
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            exited.append(self)
+
+    monkeypatch.setattr(egress, "Egress", Fake)
+    with pytest.raises(KeyError), egress.EgressPool({}, 1) as pool, pool.lend():
+        raise KeyError
+    assert len(exited) == 1
+
+
+def test_warnings_on_stderr_do_not_hide_new_events(monkeypatch):
+    from agenttrap import egress
+    from agenttrap.egress import Egress
+    from agenttrap.sandbox import CommandResult
+
+    out = lines({"kind": "dns", "name": "old.test"})
+    err = ["warning: one"]
+
+    def docker(*args, **_):
+        return CommandResult(0, "\n".join(out) + "\n", "\n".join(err) + "\n")
+
+    monkeypatch.setattr(egress, "_docker", docker)
+    net = Egress()
+    mark = net.mark()
+    out += lines({"kind": "dns", "name": "new.test"})
+    err += ["warning: two", "warning: three"]
+    assert "new.test" in net.observed(mark).hosts

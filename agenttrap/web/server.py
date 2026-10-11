@@ -28,6 +28,7 @@ from pydantic import BaseModel
 from agenttrap.fetch import MAX_FILES, MAX_REPO_KB, FetchError, fetch_repo, parse_github_url
 from agenttrap.llm import LLM
 from agenttrap.pipeline import full_scan
+from agenttrap.reporter import HEADLINE
 from agenttrap.results import ResultStore, result_document
 
 log = logging.getLogger("agenttrap.web")
@@ -125,6 +126,10 @@ def default_work(store: ResultStore, demos: dict[str, Path], k: int) -> Work:
                 served=served,
                 clean_dir=workdir / "cleaned",
                 progress=progress,
+                on_verdict=lambda r: progress(
+                    HEADLINE[r.verdict.status]
+                    + (" Finding the exact lines..." if r.verdict.leaks else "")
+                ),
             )
             return store.save(result_document(result, name=name, source=source))
 

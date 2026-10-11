@@ -17,9 +17,10 @@ from agenttrap.detector import Status
 from agenttrap.findings import findings
 from agenttrap.llm import LLM
 from agenttrap.pipeline import full_scan
-from agenttrap.reporter import render
+from agenttrap.reporter import render, render_verdict
 from agenttrap.results import DEFAULT_DIR, ResultStore, export_site, result_document, to_json
 from agenttrap.sarif import write_sarif
+from agenttrap.scan import ScanResult
 
 EXIT_CODE = {Status.SAFE: 0, Status.SUSPICIOUS: 0, Status.HIJACKED: 1}
 
@@ -94,7 +95,14 @@ def _scan(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         parser.error(f"{args.clean} already exists and is not empty")
     served = json.loads(args.served.read_text()) if args.served else {}
 
-    with Console(stderr=True).status("starting") as status:
+    console = Console(stderr=True)
+
+    def verdict_known(result: ScanResult) -> None:
+        render_verdict(result, console)
+        if result.verdict.leaks:
+            console.print("[dim]pinpointing the culprit lines (this can take a few minutes)...[/]")
+
+    with console.status("starting") as status:
         result = full_scan(
             repo,
             llm=LLM(),
@@ -104,6 +112,7 @@ def _scan(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
             served=served,
             clean_dir=args.clean,
             progress=status.update,
+            on_verdict=verdict_known,
         )
 
     in_github = running_in_github()
@@ -117,7 +126,7 @@ def _scan(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
 
     document = result_document(result, name=repo.name)
     result_id = ResultStore(args.results).save(document)
-    Console(stderr=True).print(f"[dim]saved as {result_id} (view it with: agenttrap serve)[/]")
+    console.print(f"[dim]saved as {result_id} (view it with: agenttrap serve)[/]")
     if args.json_out:
         args.json_out.write_text(to_json({**document, "id": result_id}))
     return EXIT_CODE[result.verdict.status]
@@ -137,6 +146,9 @@ def _batch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         k=args.k,
         workers=args.workers,
         include_code=args.keep_code,
+        on_verdict=lambda item: console.print(
+            f"  {item.status:<10} {item.name}  (pinpointing culprit lines...)", highlight=False
+        ),
         on_done=lambda item: console.print(f"  {item.status:<10} {item.name}", highlight=False),
     )
     counts = {

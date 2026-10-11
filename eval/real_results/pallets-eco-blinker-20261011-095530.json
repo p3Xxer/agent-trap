@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "name": "pallets-eco/blinker",
+  "source": "https://github.com/pallets-eco/blinker",
+  "created": "2026-10-11T09:55:30+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "",
+    "exits": [
+      0,
+      0,
+      2,
+      0,
+      3
+    ],
+    "errors": [
+      [],
+      [],
+      [
+        "missing-file"
+      ],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.05812,
+  "seconds": 106.0,
+  "code_saved": false,
+  "id": "pallets-eco-blinker-20261011-095530"
+}

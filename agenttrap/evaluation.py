@@ -9,6 +9,7 @@ is the baseline an ordinary read-through of the files would give.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -382,12 +383,17 @@ def real_row(repo: str, document: dict[str, Any]) -> RealRow:
     )
 
 
+def _counts(tests: str) -> str:
+    """Test counts once each (older results repeat them, as pytest prints its summary twice)."""
+    return ", ".join(dict.fromkeys(tests.split(", "))) if tests else "-"
+
+
 def real_markdown(rows: list[RealRow], settings: str) -> str:
     done = [r for r in rows if not r.error]
     flagged = [r for r in done if r.status != SAFE]
     hijacked = [r for r in done if r.status == HIJACKED]
     installed = [r for r in done if r.installed]
-    tested = [r for r in done if r.tests]
+    tested = [r for r in done if re.search(r"\d+ (passed|failed)", r.tests or "")]
     mean_time = sum(r.seconds for r in done) / len(done) if done else 0.0
     lines = [
         "# False alarms on real projects",
@@ -400,7 +406,8 @@ def real_markdown(rows: list[RealRow], settings: str) -> str:
         f"| Scanned without error | {_ratio((len(done), len(rows)))} |",
         f"| Installed in the sandbox (so their own build code really ran) | "
         f"{_ratio((len(installed), len(done)))} |",
-        f"| Test suite produced results | {_ratio((len(tested), len(done)))} |",
+        f"| Tests really ran (at least one passed or failed) | "
+        f"{_ratio((len(tested), len(done)))} |",
         f"| Wrongly flagged (any warning) | {_ratio((len(flagged), len(done)))} |",
         f"| Wrongly called HIJACKED | {_ratio((len(hijacked), len(done)))} |",
         f"| Mean time per scan | {mean_time:.0f}s |",
@@ -417,7 +424,8 @@ def real_markdown(rows: list[RealRow], settings: str) -> str:
             lines.append(f"| `{r.repo}` | error | - | - | {r.error} |")
             continue
         installed_cell = {True: "yes", False: "no", None: "-"}[r.installed]
-        lines.append(f"| `{r.repo}` | {r.status} | {installed_cell} | {r.tests or '-'} | {r.why} |")
+        tests = _counts(r.tests)
+        lines.append(f"| `{r.repo}` | {r.status} | {installed_cell} | {tests} | {r.why} |")
     if flagged:
         lines += ["", "## Warnings, to be looked at one by one", ""]
         lines += [f"- `{r.repo}`: {r.status}, {r.why}" for r in flagged]

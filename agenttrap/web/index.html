@@ -84,7 +84,7 @@
   .demos button { font: 12px var(--mono); padding: 4px 8px; border-radius: 6px; cursor: pointer;
     background: var(--code-bg); color: var(--text); border: 1px solid var(--border); }
   #log { font: 13px/1.6 var(--mono); margin: 0; padding: 0; list-style: none; }
-  #log li::before { content: "› "; color: var(--muted); }
+  #log li::before { content: "• "; color: var(--muted); }  /* a list of steps, not a control */
   .error-text { color: var(--red); margin-top: 8px; }
   pre.cmd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; overflow: auto; }
   footer { max-width: 1180px; margin: 0 auto; padding: 8px 16px 32px; color: var(--muted); font-size: 13px; }
@@ -118,7 +118,7 @@
     </div>
   </section>
 </main>
-<footer>Every secret in a scan is a fake planted by Agent Trap. Text shown from scanned repositories is untrusted and displayed as plain text.</footer>
+<footer>The secrets shown here are fake bait planted by Agent Trap; nothing real was leaked.</footer>
 
 <script>
 "use strict";
@@ -248,6 +248,8 @@ function renderDetail(doc) {
   }
   const notes = Object.values(doc.culprits || {}).flat().map((c) => TAG_NOTES[c.tag]).filter(Boolean);
   for (const note of new Set(notes)) found.append(h("p", { class: "muted small" }, `Note: ${note}.`));
+  if (doc.culprits_pending)
+    found.append(h("p", { class: "muted small" }, "Still pinpointing the culprit lines; reload in a few minutes."));
   for (const [secret, why] of Object.entries(doc.unlocalized || {}))
     found.append(h("p", { class: "muted small" }, `Could not pinpoint the line for ${secret}: ${why}`));
   out.append(found);

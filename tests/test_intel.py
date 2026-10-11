@@ -200,3 +200,11 @@ def test_a_page_about_attackers_misusing_a_host_counts_as_a_report():
     text = "this blog explores the potential misuse of webhook.site by attackers to collect data"
     assert _reports_host(text, "webhook.site")
     assert not _reports_host("webhook.site lets you inspect http requests", "webhook.site")
+
+
+def test_reserved_names_that_cannot_exist_are_never_looked_up():
+    from agenttrap.intel import _is_domain
+
+    for host in ("setup-check.test", "collector.agenttrap.invalid", "x.example", "a.localhost"):
+        assert not _is_domain(host)
+    assert _is_domain("setup-check.io")

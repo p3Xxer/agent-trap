@@ -37,3 +37,11 @@ def test_the_machines_identity_is_a_canary_too():
     assert c.hostname == c.values["$HOSTNAME"]
     assert c.env["USER"] == c.env["LOGNAME"] == c.values["$USER"]
     assert generate().hostname != c.hostname
+
+
+def test_canaries_have_plain_names_for_people():
+    from agenttrap.canary import plain_name
+
+    assert plain_name("~/.aws/credentials#secret") == "the fake AWS key"
+    assert plain_name("$HOSTNAME") == "the sandbox's fake machine name"
+    assert plain_name("$SOMETHING_NEW") == "$SOMETHING_NEW"

@@ -58,6 +58,7 @@ def main() -> int:
     parser.add_argument("--k", type=int, default=2, help="runs per task")
     parser.add_argument("--workers", type=int, default=2, help="projects scanned at once")
     parser.add_argument("--only", help="only repos whose name contains this text")
+    parser.add_argument("--rescore", help="rebuild the table from saved outcomes on this date")
     args = parser.parse_args()
 
     repos = [
@@ -65,6 +66,8 @@ def main() -> int:
     ]
     saved = json.loads(OUTCOMES.read_text()) if OUTCOMES.exists() else {}
 
+    if args.rescore:
+        repos = []  # nothing is scanned; the table is rebuilt from what was saved
     started = time.time()
     with ThreadPoolExecutor(args.workers) as pool:
         futures = {pool.submit(run_repo, repo, k=args.k): repo for repo in repos}
@@ -77,7 +80,8 @@ def main() -> int:
 
     everything = [r for r in json.loads(MANIFEST.read_text())["repos"] if r in saved]
     rows = [RealRow(**saved[r]) for r in everything]
-    settings = f"{args.k} runs per task plus the install-and-test run. Run on {date.today()}."
+    when = args.rescore or date.today()
+    settings = f"{args.k} runs per task plus the install-and-test run. Run on {when}."
     TABLE.write_text(real_markdown(rows, settings))
     print(f"\nscanned {len(repos)} projects in {time.time() - started:.0f}s; table: {TABLE}")
     return 0

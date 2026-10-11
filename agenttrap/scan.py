@@ -242,6 +242,7 @@ class OutOfTime(Exception):
 
 
 MAX_SUSPECTS = 8
+TASK_WORDS = {"setup": "set it up", "test": "test it", "summary": "summarize it"}
 LOCALIZE_WORKERS = 3  # detonations at once; each needs about 2 GB of the Docker machine's memory
 LOCALIZE_SECONDS = 420  # each detonation takes seconds, and a search needs dozens of them
 
@@ -253,6 +254,7 @@ def replay_runner(
     *,
     pool: EgressPool | None = None,
     until: str | None = None,
+    loaded: set[str] | None = None,
 ) -> Runner:
     """A localizer Runner that replays the agent's recorded commands, with no model calls.
 
@@ -265,6 +267,9 @@ def replay_runner(
     had left. Later calls stop there, since the steps after it cannot change what the search asks.
     A first call in which it does not leave changes nothing. Make that first call before running
     in parallel.
+
+    That first call also notes, in `loaded`, which of the repo's files Python ran. A hint for
+    where to search, since a hostile repo could write that list itself; it never decides a verdict.
     """
     learning = until is not None
     kept = steps
@@ -287,12 +292,14 @@ def replay_runner(
                     found = find_leaks(seen.requests, canaries.values, seen.hosts)
                     return {base_name(leak.canary) for leak in found}
 
-                with Sandbox(Path(tmp), canaries, net.net()) as box:
-                    watching = learning
-                    learning = False
+                watching = learning
+                learning = False
+                with Sandbox(Path(tmp), canaries, net.net(), trace=watching) as box:
                     stopped = _replay(kept, box, (lambda: until in leaked()) if watching else None)
                     if stopped is not None:
                         kept = steps[: stopped + 1]
+                    if watching and loaded is not None:
+                        loaded.update(box.read(sandbox.TRACE_LOG).stdout.splitlines())
                 return leaked()
 
     return run
@@ -334,6 +341,20 @@ def textual_suspects(files: Mapping[str, str], destination: str, canary_name: st
     return found[:MAX_SUSPECTS]
 
 
+def search_scopes(
+    files: Mapping[str, str], loaded: set[str], suspects: list[Culprit]
+) -> list[list[str]]:
+    """The files to look for the culprit in, narrowest first: those Python ran while the secret
+    left, plus those the text search suspects. A big repo cannot be searched whole in the time
+    allowed, but the code that sent the secret had to run. Files outside the scope stay intact
+    during the search, so narrowing never removes code the leak needs. With nothing recorded, or
+    when the narrow scope does not hold the culprit, the whole repo is the scope."""
+    wanted = loaded | {c.file for c in suspects}
+    narrow = [name for name in files if name in wanted]
+    everything = list(files)
+    return [narrow, everything] if narrow and narrow != everything else [everything]
+
+
 def localize_leak(
     files: Mapping[str, str],
     run: RunResult,
@@ -349,23 +370,34 @@ def localize_leak(
     repository. If that cannot explain the leak, the agent decided to send it, and when a model is
     available the lines are found by asking the model again (see counterfactual.py).
     """
+    leak = next(x for x in run.leaks if base_name(x.canary) == canary_name)
     try:
         with EgressPool(served, LOCALIZE_WORKERS) as pool:
             deadline = time.time() + LOCALIZE_SECONDS
-            runner = replay_runner(run.trace.steps, served, deadline, pool=pool, until=canary_name)
-            # The unmodified repo goes first because it teaches the runner where to stop; the
-            # blanked one then replays only that far, which saves more than running both at once.
-            if canary_name in runner(files) and canary_name not in runner({n: "" for n in files}):
-                return localize(files, runner, canary_name, workers=LOCALIZE_WORKERS), ""
+            loaded: set[str] = set()
+            runner = replay_runner(
+                run.trace.steps, served, deadline, pool=pool, until=canary_name, loaded=loaded
+            )
+            # The unmodified repo goes first because it teaches the runner where to stop and which
+            # files ran; the blanked one then replays only that far, which saves more than running
+            # both at once.
+            if canary_name in runner(files):
+                suspects = textual_suspects(files, leak.destination, canary_name)
+                for scope in search_scopes(files, loaded, suspects):
+                    blanked = {n: "" if n in scope else t for n, t in files.items()}
+                    # If the leak survives blanking the whole scope, the culprit lies outside it.
+                    if canary_name not in runner(blanked):
+                        found = localize(
+                            files, runner, canary_name, candidates=scope, workers=LOCALIZE_WORKERS
+                        )
+                        return found, ""
     except OutOfTime:
-        leak = next(x for x in run.leaks if base_name(x.canary) == canary_name)
         found = textual_suspects(files, leak.destination, canary_name)
         if found:
             return found, ""
         return [], f"the search for the culprit line stopped after {LOCALIZE_SECONDS} seconds"
     if llm is None:
         return [], "the leak does not depend on the repository's code when replaying the commands"
-    leak = next(x for x in run.leaks if base_name(x.canary) == canary_name)
     return localize_by_asking(files, run.trace, canary_name, leak.destination, llm, model)
 
 
@@ -383,7 +415,10 @@ def scan(
     allowed_hosts: set[str] = frozenset(ALLOWED_HOSTS),
     workers: int = 3,
     progress: Callable[[str], None] = lambda message: None,
+    on_verdict: Callable[[ScanResult], None] = lambda result: None,
 ) -> ScanResult:
+    """Detonate the repo and judge it. `on_verdict` gets the result once, as soon as the verdict
+    is known and before the (slow) search for the culprit lines begins; its culprits are empty."""
     started = time.time()
     served = served or {}
     sandbox.ensure_ready()
@@ -395,7 +430,12 @@ def scan(
         for task in tasks
         for run in range(k)
     ]
-    progress(f"detonating {len(jobs)} runs (install and test, then {', '.join(tasks)} x {k})")
+    asks = " and ".join(TASK_WORDS.get(task, task) for task in tasks)
+    times = f", {k} times each" if k > 1 else ""
+    progress(
+        f"running the repo in the sandbox: installing it, running its tests, and asking an AI "
+        f"agent to {asks}{times}"
+    )
     with ThreadPoolExecutor(workers) as pool:
         runs = list(pool.map(lambda job: job(), jobs))
 
@@ -419,13 +459,16 @@ def scan(
     ]
     result = ScanResult(str(repo), judge(leaks, flags), runs, injections, concerns)
     result.contacted = unexpected_hosts(hosts, allowed_hosts)
+    result.cost_usd = llm.status()["cost_usd"]
+    result.seconds = time.time() - started
+    on_verdict(result)
 
     located: dict[str, tuple[list, str]] = {}  # where the leak went -> what localizing it found
     for name in dict.fromkeys(base_name(leak.canary) for leak in leaks):
         leaking_run = next(r for r in runs if any(base_name(x.canary) == name for x in r.leaks))
         destination = next(x.destination for x in leaking_run.leaks if base_name(x.canary) == name)
         if destination not in located:  # two secrets sent in one request have the same culprit
-            progress(f"pinpointing the culprit for {name}")
+            progress(f"finding the lines that leaked {canary.plain_name(name)}")
             located[destination] = localize_leak(
                 files, leaking_run, name, served, llm=llm, model=model
             )

@@ -353,10 +353,16 @@ def scan(
     result = ScanResult(str(repo), judge(leaks, flags), runs, injections, concerns)
     result.contacted = unexpected_hosts(hosts, allowed_hosts)
 
+    located: dict[str, tuple[list, str]] = {}  # where the leak went -> what localizing it found
     for name in dict.fromkeys(base_name(leak.canary) for leak in leaks):
         leaking_run = next(r for r in runs if any(base_name(x.canary) == name for x in r.leaks))
-        progress(f"pinpointing the culprit for {name}")
-        culprits, reason = localize_leak(files, leaking_run, name, served, llm=llm, model=model)
+        destination = next(x.destination for x in leaking_run.leaks if base_name(x.canary) == name)
+        if destination not in located:  # two secrets sent in one request have the same culprit
+            progress(f"pinpointing the culprit for {name}")
+            located[destination] = localize_leak(
+                files, leaking_run, name, served, llm=llm, model=model
+            )
+        culprits, reason = located[destination]
         if culprits:
             result.culprits[name] = culprits
         else:

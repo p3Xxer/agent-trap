@@ -1,4 +1,5 @@
 """Generate docs/architecture.excalidraw (+ a plain SVG preview): python scripts/make_diagram.py docs/architecture"""
+# ruff: noqa: E501  (the diagram's text is laid out by hand, one card per line)
 
 import json
 import random

@@ -11,7 +11,7 @@ from agenttrap.results import (
     make_id,
     result_document,
 )
-from tests.scan_results import injection, intel_for, leaking_result, safe_result
+from tests.scan_results import injection, intel_for, leak, leaking_result, run_of, safe_result
 
 WHEN = datetime(2026, 10, 7, 14, 30, 5, tzinfo=UTC)
 SETUP = "\n".join(f"line {n}" for n in range(1, 60))
@@ -215,3 +215,27 @@ def test_a_failed_write_keeps_the_previous_document(tmp_path, monkeypatch):
 def test_older_readers_see_the_new_field_as_just_another_key(repo):
     doc = document(repo)
     assert doc["culprits_pending"] is False and doc["format"] == 1
+
+
+def test_leak_groups_are_in_the_document_with_plain_names(repo):
+    doc = document(repo, runs=[run_of("baseline", leak())])
+    [group] = doc["leak_groups"]
+    assert group["destination_host"] == "setup-check.io"
+    assert group["secrets"] == ["the fake AWS key"] and group["canaries"] == ["~/.aws/credentials"]
+    assert group["phase"] == "install" and group["tasks"] == []
+    assert group["lines"][0] == {"file": "setup.py", "line": 10}
+    assert group["unconfirmed"] is False and group["tricked"] is False
+
+
+def test_leak_groups_carry_no_code_when_code_is_left_out(repo):
+    result = leaking_result(repo=str(repo))
+    doc = result_document(result, name="demo/stealer", created=WHEN, include_code=False)
+    assert doc["leak_groups"][0]["lines"]
+    assert "urlopen" not in json.dumps(doc["leak_groups"])
+    assert "expanduser" not in json.dumps(doc["leak_groups"])
+
+
+def test_a_safe_scan_has_no_leak_groups(tmp_path):
+    result = safe_result()
+    result.repo = str(tmp_path)
+    assert result_document(result, name="clean", created=WHEN)["leak_groups"] == []

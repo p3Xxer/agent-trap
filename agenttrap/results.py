@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Any
 
 from agenttrap.baseline_static import scan as static_scan
-from agenttrap.findings import Finding, findings
+from agenttrap.canary import plain_name
+from agenttrap.findings import Finding, LeakGroup, findings, leak_groups
 from agenttrap.llm import STATE_DIR
 from agenttrap.reporter import HEADLINE
 from agenttrap.scan import ScanResult, base_name, read_repo
@@ -62,6 +63,7 @@ def result_document(
             {"kind": f.kind, "detail": f.detail, "hard": f.hard} for f in result.verdict.flags
         ],
         "findings": [_finding(f) for f in found],
+        "leak_groups": [_leak_group(g) for g in leak_groups(result)],
         "culprits": {
             canary: [{"file": c.file, "line": c.line, "text": c.text, "tag": c.tag} for c in cs]
             for canary, cs in result.culprits.items()
@@ -98,6 +100,22 @@ def result_document(
         "code_saved": include_code,
     }
     return document if include_code else _without_code(document)
+
+
+def _leak_group(group: LeakGroup) -> dict[str, Any]:
+    """What went to one host, for the page: plain names, when it happened and the key lines."""
+    return {
+        "destination_host": group.host,
+        "destination": group.destination,
+        "secrets": [plain_name(c) for c in group.canaries],
+        "canaries": list(group.canaries),
+        "phase": group.phase,
+        "tasks": list(group.tasks),
+        "tricked": group.tricked,
+        "lines": [{"file": loc.file, "line": loc.line} for loc in group.lines],
+        "unconfirmed": group.unconfirmed,
+        "why_not": list(group.why_not),
+    }
 
 
 def _without_code(document: dict[str, Any]) -> dict[str, Any]:

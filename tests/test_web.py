@@ -67,6 +67,24 @@ def test_the_page_is_served_and_not_cached(client):
     assert response.headers["cache-control"] == "no-store"
 
 
+def test_the_page_never_turns_text_into_markup(client):
+    page = client.get("/").text
+    for unsafe in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval("):
+        assert unsafe not in page
+
+
+def test_the_page_reads_the_new_keys_as_optional(client):
+    page = client.get("/").text  # old saved results lack them and must still render
+    assert "doc.leak_groups" in page and "Array.isArray(doc.leak_groups)" in page
+    assert "doc.findings || []" in page
+
+
+def test_an_old_document_without_the_new_keys_is_served_as_saved(client, store):
+    [summary] = client.get("/api/results").json()
+    document = client.get(f"/api/results/{summary['id']}").json()
+    assert "leak_groups" not in document and document["status"] == "SAFE"
+
+
 def test_config_lists_the_demos_and_limits(client):
     config = client.get("/api/config").json()
     assert config["live"] is True and config["demos"] == ["attacks/x"]

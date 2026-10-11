@@ -69,6 +69,14 @@
   .line.hit { background: var(--hit); } .line.rel { background: var(--rel); }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+  .grid > * { min-width: 0; }
+  .summary { margin: 12px 0 0; font-size: 16px; }
+  .chip.link { cursor: pointer; color: var(--blue); }
+  .chip.link:hover { text-decoration: underline; }
+  .line:focus { outline: 2px solid var(--blue); outline-offset: -2px; }
+  details > summary { cursor: pointer; font-weight: 600; }
+  details h3 { margin: 16px 0 4px; font-size: 14px; }
+  ul.plain { list-style: none; margin: 0; padding: 0; }
   .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 800px) { .compare { grid-template-columns: 1fr; } }
   .compare > div { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
@@ -199,13 +207,27 @@ async function selectResult(id) {
 }
 
 // ---- one result ---------------------------------------------------------------------------------------
+const lineId = (file, line) => `code:${file}:${line}`;
+
+function jumpTo(file, line) {
+  const row = document.getElementById(lineId(file, line));
+  if (!row) return;
+  row.scrollIntoView({ block: "center", behavior: "smooth" });
+  row.focus({ preventScroll: true });
+}
+
+// a line number that scrolls to the same line in the code view (when that code is shown)
+function lineLink(file, line) {
+  return h("button", { type: "button", class: "chip link", onclick: () => jumpTo(file, line) }, line);
+}
+
 function chip(location) { return h("span", { class: "chip" }, `${location.file}:${location.line}`); }
 
 function codeBlock(file, excerpt, hits, related) {
   const rows = excerpt.lines.map((text, index) => {
     const number = excerpt.start + index;
     const kind = hits.has(number) ? "hit" : related.has(number) ? "rel" : "";
-    return h("div", { class: `line ${kind}` },
+    return h("div", { class: `line ${kind}`, id: lineId(file, number), tabindex: "-1" },
       h("span", { class: "no" }, number), h("span", { class: "src" }, text || " "));
   });
   const more = excerpt.start + excerpt.lines.length - 1 < excerpt.total_lines;
@@ -226,33 +248,167 @@ const TAG_NOTES = {
   "agent-instruction": "an AI agent obeyed this text; on its own it was enough",
 };
 
+const UNLOOKABLE = /\.(invalid|test|example|localhost)$/i;  // names no registry or search can know
+
+function listOf(items) {
+  if (items.length < 2) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+function sinceInstall(group) {
+  if (group.phase === "install") return "While the project was installed and tested (no AI involved)";
+  if (group.phase === "both") return "While the project was installed and tested, and again while an AI agent was working on it";
+  const tasks = (group.tasks || []).join(", ");
+  return `While an AI agent was working on the repo${tasks ? ` (task: ${tasks})` : ""}`;
+}
+
+// One plain sentence for everything sent to one destination.
+function leakSentence(group) {
+  const names = group.secrets || [];
+  const what = `${names.length} fake secret${names.length === 1 ? "" : "s"} (${listOf(names)})`;
+  const files = [...new Set((group.lines || []).map((l) => l.file))];
+  const to = group.destination_host || group.destination;
+  if (group.tricked)
+    return `${sinceInstall(group)}, the AI agent was tricked by text in the repo${files.length ? ` (${listOf(files)})` : ""} into sending ${what} to ${to}.`;
+  const who = files.length ? listOf(files) : "something in the repo";
+  return `${sinceInstall(group)}, ${who} sent ${what} to ${to}.`;
+}
+
+// Old saved results have no leak_groups: fall back to the leak findings, each with its own message.
+function leakGroups(doc) {
+  if (Array.isArray(doc.leak_groups)) return doc.leak_groups;
+  return (doc.findings || []).filter((f) => f.rule === "agent-trap/secret-leak")
+    .map((f) => ({ message: f.message, lines: f.locations || [] }));
+}
+
+function linesBlock(groups, doc) {
+  const box = h("div", {});
+  const lines = groups.flatMap((g) => g.lines || []);
+  if (!lines.length) {
+    if (doc.culprits_pending) box.append(h("p", { class: "muted" }, "Finding the exact lines…"));
+    for (const why of groups.flatMap((g) => g.why_not || []))
+      box.append(h("p", { class: "muted small" }, `Could not pinpoint the line: ${why}`));
+    for (const [secret, why] of Object.entries(doc.unlocalized || {}))
+      if (!groups.some((g) => g.why_not)) box.append(h("p", { class: "muted small" }, `Could not pinpoint the line for ${secret}: ${why}`));
+    return box.childNodes.length ? box : null;
+  }
+  const byFile = new Map();
+  for (const l of lines) {
+    if (!byFile.has(l.file)) byFile.set(l.file, new Set());
+    byFile.get(l.file).add(l.line);
+  }
+  for (const [file, numbers] of byFile)
+    box.append(h("div", {}, h("span", { class: "chip" }, file),
+      [...numbers].sort((a, b) => a - b).map((n) => lineLink(file, n))));
+  if (groups.some((g) => g.unconfirmed))
+    box.append(h("p", { class: "muted small" }, "Unconfirmed: found by searching the code, not by re-running it."));
+  if (doc.culprits_pending) box.append(h("p", { class: "muted small" }, "Still finding the exact lines…"));
+  const notes = Object.values(doc.culprits || {}).flat().map((c) => TAG_NOTES[c.tag]).filter(Boolean);
+  for (const note of new Set(notes)) box.append(h("p", { class: "muted small" }, `Note: ${note}.`));
+  return box;
+}
+
+function hostLines(doc, groups) {
+  const named = new Set(groups.map((g) => g.destination_host).filter(Boolean));
+  const rows = [];
+  for (const host of doc.contacted_hosts || []) {
+    const info = (doc.host_intel || {})[host];
+    const parts = [];
+    if (info?.registered && !UNLOOKABLE.test(host)) parts.push(`registered ${info.registered} (${info.age_days} days ago)`);
+    if (info?.reports?.length && !UNLOOKABLE.test(host)) parts.push(`public reports: ${info.reports.map((r) => `${r.title} (${r.url})`).join("; ")}`);
+    if (named.has(host) && !parts.length) continue;
+    rows.push(h("li", {}, h("span", { class: "chip" }, host), parts.join(" · ")));
+  }
+  return rows;
+}
+
+function detailsBlock(doc, findings) {
+  const groups = leakGroups(doc);
+  const box = h("details", { class: "card" }, h("summary", {}, "More details"));
+
+  const thoughts = [
+    ...(doc.injections || []).map((item) => h("div", { class: "finding warning" },
+      h("div", { class: "title" }, "Text that tried to instruct the agent"),
+      item.where ? chip(splitWhere(item.where)) : h("span", { class: "muted small" }, "quoted text not found in the repository"),
+      item.quote ? h("div", { class: "quote" }, item.quote) : null,
+      h("div", { class: "small" }, `Asked for: ${item.asked_for}`))),
+    ...(doc.concerns || []).map((item) => h("div", { class: "finding warning" },
+      h("div", { class: "title" }, "Code the agent found suspicious"),
+      chip(splitWhere(item.where)),
+      item.quote ? h("div", { class: "quote" }, item.quote) : null,
+      h("div", { class: "small" }, `It does: ${item.behavior}`))),
+  ];
+  if (thoughts.length)
+    box.append(h("h3", {}, "What the AI agent thought"),
+      h("p", { class: "muted small" }, "Reported by the agent itself, so a warning and not proof."), ...thoughts);
+
+  const hosts = hostLines(doc, groups);
+  if (hosts.length)
+    box.append(h("h3", {}, "Hosts the sandbox contacted"),
+      h("p", { class: "muted small" }, "Not on the allow-list. A recent registration or a web report is context, not proof."),
+      h("ul", { class: "plain" }, hosts));
+
+  const flagged = doc.static_scan?.count ?? 0;
+  const detected = doc.status !== "SAFE";
+  box.append(h("h3", {}, "Versus just reading the files"),
+    h("div", { class: "compare" },
+      h("div", {}, h("div", { class: "muted small" }, "A plain text scan flagged"),
+        h("div", { class: "big" }, `${flagged} line${flagged === 1 ? "" : "s"}`)),
+      h("div", {}, h("div", { class: "muted small" }, "Agent Trap, by running the repo"),
+        h("div", { class: `big ${doc.status}`, style: "background:none" }, detected ? `${findings.length} finding${findings.length === 1 ? "" : "s"}` : "nothing found"))),
+    flagged === 0 && detected ? h("p", { class: "small" }, "Reading the files showed nothing wrong here. The problem only appears when the code runs.") : null,
+    (doc.static_scan?.flagged || []).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`))));
+
+  if (doc.cleaned) {
+    const c = doc.cleaned;
+    box.append(h("h3", {}, "Cleaned copy"),
+      h("p", {}, "Removed: ", c.removed.map((r) => h("span", { class: "chip" }, r))),
+      c.warnings.map((w) => h("p", { class: "small", style: "color:var(--amber)" }, w)),
+      h("p", { class: "muted small" }, "Removing code can change what the repository does. Review it before use."));
+  }
+
+  box.append(h("h3", {}, "Scan facts"),
+    h("p", { class: "muted small" }, `${doc.runs ?? "?"} runs · ${doc.seconds}s · $${Number(doc.cost_usd).toFixed(3)} · ${when(doc.created)}`));
+  return box;
+}
+
+function splitWhere(where) {
+  const at = String(where).lastIndexOf(":");
+  return at < 0 ? { file: where, line: "" } : { file: where.slice(0, at), line: where.slice(at + 1) };
+}
+
+function cleanedLine(cleaned) {
+  if (!cleaned) return null;
+  if (cleaned.rescan_status === "SAFE") return h("p", {}, "✓ With those lines removed, the repo scanned SAFE.");
+  const still = cleaned.rescan_leaks.length ? `, still leaking ${cleaned.rescan_leaks.join(", ")}` : "";
+  return h("p", {}, "With those lines removed, the repo scanned ",
+    h("span", { class: `badge ${cleaned.rescan_status}` }, cleaned.rescan_status), still, ".");
+}
+
 function renderDetail(doc) {
   const out = $("detail");
   clear(out);
-
-  out.append(h("div", { class: "card banner" },
-    h("span", { class: `badge ${doc.status}` }, doc.status),
-    h("div", {}, h("div", { style: "font-weight:600" }, doc.name),
-      h("div", { class: "muted small" }, doc.headline)),
-    h("div", { class: "muted small", style: "margin-left:auto" },
-      `${doc.runs} runs · ${doc.seconds}s · $${Number(doc.cost_usd).toFixed(3)} · ${when(doc.created)}`)));
-
-  // what was found
   const findings = doc.findings || [];
-  const found = h("div", { class: "card" }, h("h2", {}, "What Agent Trap found"));
-  if (!findings.length) found.append(h("p", { class: "muted" }, "Nothing. No secret left the sandbox and no text tried to instruct the agent."));
-  for (const f of findings) {
-    found.append(h("div", { class: `finding ${f.level}` },
-      h("div", { class: "title" }, f.title), h("div", {}, f.message),
-      f.locations.map(chip)));
-  }
-  const notes = Object.values(doc.culprits || {}).flat().map((c) => TAG_NOTES[c.tag]).filter(Boolean);
-  for (const note of new Set(notes)) found.append(h("p", { class: "muted small" }, `Note: ${note}.`));
-  if (doc.culprits_pending)
-    found.append(h("p", { class: "muted small" }, "Still pinpointing the culprit lines; reload in a few minutes."));
-  for (const [secret, why] of Object.entries(doc.unlocalized || {}))
-    found.append(h("p", { class: "muted small" }, `Could not pinpoint the line for ${secret}: ${why}`));
-  out.append(found);
+  const groups = leakGroups(doc);
+
+  // the verdict, in one sentence per destination
+  const summary = h("div", {});
+  if (groups.length) for (const g of groups) summary.append(h("p", { class: "summary" }, g.message || leakSentence(g)));
+  else summary.append(h("p", { class: "summary" }, doc.headline || ""));
+  for (const f of findings.filter((x) => x.rule === "agent-trap/destructive-command"))
+    summary.append(h("p", { class: "summary" }, f.message));
+  out.append(h("div", { class: "card" },
+    h("div", { class: "banner" },
+      h("span", { class: `badge ${doc.status}` }, doc.status),
+      h("div", { style: "font-weight:600" }, doc.name)),
+    summary));
+
+  // the lines to look at: the leak's own, or else what the agent pointed at
+  const lineGroups = groups.some((g) => (g.lines || []).length) || doc.culprits_pending || !findings.length
+    ? groups : [{ lines: findings.flatMap((f) => f.locations || []) }];
+  const lines = linesBlock(lineGroups, doc);
+  if (lines) out.append(h("div", { class: "card" }, h("h2", {}, "Lines responsible"), lines, cleanedLine(doc.cleaned)));
+  else if (doc.cleaned) out.append(h("div", { class: "card" }, cleanedLine(doc.cleaned)));
 
   // the code
   const files = Object.entries(doc.files || {});
@@ -264,65 +420,7 @@ function renderDetail(doc) {
     out.append(code);
   }
 
-  // comparison with a plain read-through
-  const flagged = doc.static_scan?.count ?? 0;
-  const detected = doc.status !== "SAFE";
-  out.append(h("div", { class: "card" }, h("h2", {}, "Versus just reading the files"),
-    h("div", { class: "compare" },
-      h("div", {}, h("div", { class: "muted small" }, "A plain text scan flagged"),
-        h("div", { class: "big" }, `${flagged} line${flagged === 1 ? "" : "s"}`)),
-      h("div", {}, h("div", { class: "muted small" }, "Agent Trap, by running the repo"),
-        h("div", { class: `big ${doc.status}`, style: "background:none" }, detected ? `${findings.length} finding${findings.length === 1 ? "" : "s"}` : "nothing found"))),
-    flagged === 0 && detected ? h("p", { class: "small" }, "Reading the files showed nothing wrong here. The problem only appears when the code runs.") : null,
-    (doc.static_scan?.flagged || []).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`)))));
-
-  // agent-reported text
-  if ((doc.injections || []).length) {
-    const card = h("div", { class: "card" }, h("h2", {}, "Text that tried to instruct the AI agent"),
-      h("p", { class: "muted small" }, "Reported by the agent itself, so this is a warning, not proof."));
-    for (const item of doc.injections)
-      card.append(h("div", { class: "finding warning" },
-        item.where ? chip({ file: item.where, line: "" }) : h("span", { class: "muted small" }, "quoted text not found in the repository"),
-        h("div", { class: "quote" }, item.quote), h("div", { class: "small" }, `Asked for: ${item.asked_for}`)));
-    out.append(card);
-  }
-
-  // code the agent called suspicious
-  if ((doc.concerns || []).length) {
-    const card = h("div", { class: "card" }, h("h2", {}, "Code the AI agent found suspicious"),
-      h("p", { class: "muted small" }, "The agent's opinion, so a warning and not proof. Each quoted line was found in the repository."));
-    for (const item of doc.concerns)
-      card.append(h("div", { class: "finding warning" }, chip({ file: item.where, line: "" }),
-        item.quote ? h("div", { class: "quote" }, item.quote) : null,
-        h("div", { class: "small" }, `It does: ${item.behavior}`)));
-    out.append(card);
-  }
-
-  // hosts
-  const hosts = doc.contacted_hosts || [];
-  if (hosts.length) {
-    const table = h("table", {}, h("tr", {}, ["Host", "Registered", "Public reports"].map((t) => h("th", {}, t))));
-    for (const host of hosts) {
-      const info = (doc.host_intel || {})[host];
-      const reports = !info || info.reports == null ? "unknown (search did not run)"
-        : info.reports.length ? info.reports.map((r) => `${r.title} (${r.url})`).join("; ") : "none found";
-      const registered = info?.registered ? `${info.registered} (${info.age_days} days ago)` : "unknown";
-      table.append(h("tr", {}, h("td", {}, host), h("td", {}, registered), h("td", {}, reports)));
-    }
-    out.append(h("div", { class: "card" }, h("h2", {}, "Hosts the sandbox contacted"),
-      h("p", { class: "muted small" }, "These are not on the allow-list. A recent registration or a web report is context, not proof."), table));
-  }
-
-  // cleaned copy
-  if (doc.cleaned) {
-    const c = doc.cleaned;
-    out.append(h("div", { class: "card" }, h("h2", {}, "Cleaned copy"),
-      h("p", {}, "Removed: ", c.removed.map((r) => h("span", { class: "chip" }, r))),
-      h("p", {}, "Scanned again: ", h("span", { class: `badge ${c.rescan_status}` }, c.rescan_status),
-        c.rescan_leaks.length ? ` still leaks ${c.rescan_leaks.join(", ")}` : " the secret no longer leaves the sandbox"),
-      c.warnings.map((w) => h("p", { class: "small", style: "color:var(--amber)" }, w)),
-      h("p", { class: "muted small" }, "Removing code can change what the repository does. Review it before use.")));
-  }
+  out.append(detailsBlock(doc, findings));
 }
 
 // ---- live scanning ------------------------------------------------------------------------------------------

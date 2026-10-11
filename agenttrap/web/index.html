@@ -476,10 +476,11 @@ function detailsBlock(doc, findings) {
 }
 
 function scanFacts(doc) {
-  const runs = doc.runs ? `Ran the repo ${doc.runs} times (install and tests, plus ${doc.runs - 1} by an AI agent)` : "Ran the repo";
+  const how = "Agent Trap installed the repo and ran its tests, then had an AI coding agent set it up, " +
+    "run its tests and summarize it, the way a developer would use one on new code.";
   const s = Math.round(Number(doc.seconds) || 0);
   const took = s < 90 ? `${s} seconds` : `${Math.round(s / 60)} minutes`;
-  return `${runs} · ${took} · AI cost $${Number(doc.cost_usd || 0).toFixed(3)} · ${when(doc.created)}`;
+  return `${how} ${took} · AI cost $${Number(doc.cost_usd || 0).toFixed(3)} · ${when(doc.created)}`;
 }
 
 function splitWhere(where) {

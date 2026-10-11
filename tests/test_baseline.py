@@ -1,5 +1,7 @@
 """The deterministic install-and-test run, with Docker replaced by stand-ins."""
 
+from pathlib import Path
+
 import pytest
 
 from agenttrap import scan

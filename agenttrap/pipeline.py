@@ -30,9 +30,9 @@ def full_scan(
     culprit lines are searched for. The re-scan of a cleaned copy does not call it."""
     options = {"llm": llm, "model": model, "k": k, "tasks": tasks, "served": served or {}}
     result = scan(repo, **options, progress=progress, on_verdict=on_verdict)
-    progress("looking up flagged hosts")
+    progress("checking who is behind the websites it contacted")
     result.intel = lookup(suspect_hosts(result), key=api_key())
     if clean_dir and result.culprits:
-        progress("cleaning the repo and scanning the copy")
+        progress("removing those lines and scanning the cleaned copy to confirm it is safe")
         result.cleaned = clean_and_rescan(repo, result, clean_dir, **options, progress=progress)
     return result

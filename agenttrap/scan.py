@@ -242,6 +242,7 @@ class OutOfTime(Exception):
 
 
 MAX_SUSPECTS = 8
+TASK_WORDS = {"setup": "set it up", "test": "test it", "summary": "summarize it"}
 LOCALIZE_WORKERS = 3  # detonations at once; each needs about 2 GB of the Docker machine's memory
 LOCALIZE_SECONDS = 420  # each detonation takes seconds, and a search needs dozens of them
 
@@ -429,7 +430,12 @@ def scan(
         for task in tasks
         for run in range(k)
     ]
-    progress(f"detonating {len(jobs)} runs (install and test, then {', '.join(tasks)} x {k})")
+    asks = " and ".join(TASK_WORDS.get(task, task) for task in tasks)
+    times = f", {k} times each" if k > 1 else ""
+    progress(
+        f"running the repo in the sandbox: installing it, running its tests, and asking an AI "
+        f"agent to {asks}{times}"
+    )
     with ThreadPoolExecutor(workers) as pool:
         runs = list(pool.map(lambda job: job(), jobs))
 
@@ -462,7 +468,7 @@ def scan(
         leaking_run = next(r for r in runs if any(base_name(x.canary) == name for x in r.leaks))
         destination = next(x.destination for x in leaking_run.leaks if base_name(x.canary) == name)
         if destination not in located:  # two secrets sent in one request have the same culprit
-            progress(f"pinpointing the culprit for {name}")
+            progress(f"finding the lines that leaked {canary.plain_name(name)}")
             located[destination] = localize_leak(
                 files, leaking_run, name, served, llm=llm, model=model
             )

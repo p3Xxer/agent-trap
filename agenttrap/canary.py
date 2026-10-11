@@ -45,6 +45,23 @@ class Canaries:
         return None
 
 
+_PLAIN_NAMES = {
+    "~/.aws/credentials": "the fake AWS key",
+    "~/.ssh/id_rsa": "the fake SSH key",
+    "~/.config/gh/hosts.yml": "the fake GitHub token",
+    "~/.npmrc": "the fake npm token",
+    "$OPENAI_API_KEY": "the fake OpenAI key",
+    "$ANTHROPIC_API_KEY": "the fake Anthropic key",
+    HOSTNAME: "the sandbox's fake machine name",
+    USERNAME: "the sandbox's fake user name",
+}
+
+
+def plain_name(name: str) -> str:
+    """How a canary is named to a person: "the fake AWS key" rather than "~/.aws/credentials"."""
+    return _PLAIN_NAMES.get(name.split("#")[0], name)
+
+
 def generate() -> Canaries:
     """Layer 1: the standard locations every credential stealer probes."""
     aws_id, aws_secret = "AKIA" + _rand(_UPPER_DIGITS, 16), _rand(_ALNUM + "+/", 40)

@@ -18,7 +18,7 @@ from agenttrap.pipeline import full_scan
 from agenttrap.results import ResultStore, result_document
 
 MARKERS = ("setup.py", "pyproject.toml", "setup.cfg")
-MAX_DEPTH = 3
+MAX_DEPTH = 12  # an unpacked archive can keep a long absolute path of its own
 
 
 @dataclass(frozen=True)

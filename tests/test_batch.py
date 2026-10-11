@@ -47,8 +47,15 @@ def test_a_folder_that_is_itself_a_project_is_the_only_project(tmp_path):
 
 
 def test_projects_nested_too_deep_are_not_searched_for(tmp_path):
-    make(tmp_path, "a/b/c/d/e/setup.py")
+    deep = "/".join("abcdefghijklmnop")  # 16 levels
+    make(tmp_path, f"{deep}/setup.py")
     assert find_projects(tmp_path) == [tmp_path / "a"]
+
+
+def test_a_project_under_the_long_path_of_an_unpacked_archive_is_found(tmp_path):
+    make(tmp_path, "pkg-1/var/folders/rs/52vst/T/tmpab/pkg/pkg-1/setup.py")
+    [found] = find_projects(tmp_path)
+    assert found.name == "pkg-1" and found.parent.name == "pkg"
 
 
 def test_symlinked_folders_are_never_entered(tmp_path):

@@ -30,10 +30,10 @@ def leaking_result(**overrides) -> ScanResult:
         "runs": [],
         "culprits": {
             CANARY: [
-                culprit(2, "import urllib.request"),
+                culprit(2, "def _build_telemetry():"),
                 culprit(10, READ),
                 culprit(11, SEND),
-                culprit(13, "pass"),
+                culprit(13, "report_done()"),
             ]
         },
         "contacted": ["setup-check.io"],

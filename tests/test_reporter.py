@@ -16,7 +16,7 @@ def test_key_lines_touch_the_secret_or_destination_and_the_rest_is_support():
     ]
     key, support = split_culprits(culprits, "~/.aws/credentials", "http://setup-check.io/verify")
     assert [c.line for c in key] == [10, 11]
-    assert [c.line for c in support] == [2, 7, 13]
+    assert [c.line for c in support] == [7]  # the import and `pass` are plain scaffolding
 
 
 def test_without_a_marker_every_culprit_is_a_key_line():
@@ -24,3 +24,21 @@ def test_without_a_marker_every_culprit_is_a_key_line():
     key, support = split_culprits(culprits, "~/.ssh/id_rsa", "http://x.test/")
     assert key == culprits
     assert support == []
+
+
+def test_a_leaked_hostname_points_at_the_code_that_reads_it_not_at_scaffolding():
+    from agenttrap.localizer import Culprit
+
+    lines = [
+        "import os",
+        "def _callback():",
+        "    try:",
+        "        h = socket.gethostname()",
+        '        url = "http://p1s.uk/x?h={h}".format(h=h)',
+        "    except Exception:",
+        "        pass",
+    ]
+    culprits = [Culprit("setup.py", i + 1, text, "plaintext") for i, text in enumerate(lines)]
+    key, support = split_culprits(culprits, "$HOSTNAME", "http://p1s.uk/x?h=build-1")
+    assert [c.line for c in key] == [4, 5]
+    assert [c.line for c in support] == [2]  # the function header stays; imports, try, pass go

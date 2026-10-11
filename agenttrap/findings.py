@@ -3,6 +3,7 @@ run summary) is rendered from, so they cannot disagree with each other or with t
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Literal
 from urllib.parse import urlparse
@@ -76,18 +77,34 @@ class Finding:
         return RULES[self.rule][0]
 
 
+# Other ways code names the machine's identity, which never contains the word "HOSTNAME" or "USER"
+# in the sandbox's random values.
+_IDENTITY_WORDS = {
+    "$HOSTNAME": ("hostname", "gethostname", "platform.node", "uname", "getfqdn"),
+    "$USER": ("user", "getuser", "logname", "whoami"),
+}
+_SCAFFOLDING = re.compile(
+    r"import\s.*|from\s+\S+\s+import\s.*|try:|except\b.*:|finally:|else:|pass|[)\]}]+,?"
+)
+
+
 def split_culprits(
     culprits: list[Culprit], canary: str, destination: str
 ) -> tuple[list[Culprit], list[Culprit]]:
     """Separate the lines that touch the secret or the destination from supporting lines.
 
     The localizer returns every line the leak needs (including `try:` and `pass`). Only some of
-    them are what a reviewer should look at; the rest are scaffolding around them.
+    them are what a reviewer should look at; the rest are scaffolding around them, and plain
+    scaffolding (imports, try/except, closing brackets) is left out of the supporting lines.
     """
     host = urlparse(destination).hostname or destination
-    markers = [m for m in (host, canary.removeprefix("~/").removeprefix("$")) if m]
-    key = [c for c in culprits if any(m in c.text for m in markers)]
-    return key or culprits, [c for c in culprits if c not in key] if key else []
+    words = _IDENTITY_WORDS.get(canary, ())
+    markers = [m for m in (host, canary.removeprefix("~/").removeprefix("$"), *words) if m]
+    key = [c for c in culprits if any(m.lower() in c.text.lower() for m in markers)]
+    if not key:
+        return culprits, []
+    support = [c for c in culprits if c not in key and not _SCAFFOLDING.fullmatch(c.text.strip())]
+    return key, support
 
 
 def findings(result: ScanResult) -> list[Finding]:

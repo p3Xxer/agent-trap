@@ -128,7 +128,7 @@ def _baseline(result: ScanResult) -> dict[str, Any] | None:
         return None
     steps = run.trace.steps
     exits = [_exit_status(step.observation) for step in steps]
-    summary = _TEST_COUNTS.findall(steps[-1].observation)
+    summary = list(dict.fromkeys(_TEST_COUNTS.findall(steps[-1].observation)))  # pytest repeats it
     return {
         "installed": any("Successfully installed" in step.observation for step in steps[:2]),
         "tests": ", ".join(summary),  # only the counts, never a line of the project's output

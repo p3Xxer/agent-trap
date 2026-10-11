@@ -1,0 +1,51 @@
+{
+  "format": 1,
+  "name": "kjd/idna",
+  "source": "https://github.com/kjd/idna",
+  "created": "2026-10-11T09:56:22+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "1 error, 1 error",
+    "exits": [
+      0,
+      0,
+      2,
+      0,
+      2
+    ],
+    "errors": [
+      [],
+      [],
+      [
+        "missing-file"
+      ],
+      [],
+      [
+        "ImportError"
+      ]
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.04372,
+  "seconds": 50.3,
+  "code_saved": false,
+  "id": "kjd-idna-20261011-095622"
+}

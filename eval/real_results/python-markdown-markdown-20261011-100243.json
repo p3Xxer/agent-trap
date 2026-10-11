@@ -1,0 +1,51 @@
+{
+  "format": 1,
+  "name": "Python-Markdown/markdown",
+  "source": "https://github.com/Python-Markdown/markdown",
+  "created": "2026-10-11T10:02:43+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "2 errors, 2 errors",
+    "exits": [
+      0,
+      0,
+      2,
+      0,
+      2
+    ],
+    "errors": [
+      [],
+      [],
+      [
+        "missing-file"
+      ],
+      [],
+      [
+        "ImportError"
+      ]
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.03841,
+  "seconds": 54.0,
+  "code_saved": false,
+  "id": "python-markdown-markdown-20261011-100243"
+}

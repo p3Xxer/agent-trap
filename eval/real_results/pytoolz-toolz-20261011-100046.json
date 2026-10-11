@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "name": "pytoolz/toolz",
+  "source": "https://github.com/pytoolz/toolz",
+  "created": "2026-10-11T10:00:46+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "1 failed, 191 passed, 1 skipped",
+    "exits": [
+      0,
+      0,
+      2,
+      0,
+      1
+    ],
+    "errors": [
+      [],
+      [],
+      [
+        "missing-file"
+      ],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.03651,
+  "seconds": 58.5,
+  "code_saved": false,
+  "id": "pytoolz-toolz-20261011-100046"
+}

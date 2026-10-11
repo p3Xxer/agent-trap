@@ -391,15 +391,16 @@ def test_the_real_project_table_counts_false_alarms_and_what_really_ran():
         real_row("a/clean", real_doc()),
         real_row("a/noisy", real_doc("SUSPICIOUS", rules=("agent-trap/suspicious-code",))),
         real_row("a/notinstalled", real_doc(installed=False, tests="")),
+        real_row("a/collecterror", real_doc(tests="1 error")),  # its tests never ran
         RealRow("a/broken", "SAFE", None, "", "-", error="download failed"),
     ]
     text = real_markdown(rows, "k=2.")
-    assert "4 well-known open-source Python projects" in text and "k=2." in text
-    assert "| Scanned without error | 3/4 (75%) |" in text
-    assert "| Installed in the sandbox (so their own build code really ran) | 2/3 (67%) |" in text
-    assert "| Test suite produced results | 2/3 (67%) |" in text
-    assert "| Wrongly flagged (any warning) | 1/3 (33%) |" in text
-    assert "| Wrongly called HIJACKED | 0/3 (0%) |" in text
+    assert "5 well-known open-source Python projects" in text and "k=2." in text
+    assert "| Scanned without error | 4/5 (80%) |" in text
+    assert "| Installed in the sandbox (so their own build code really ran) | 3/4 (75%) |" in text
+    assert "| Tests really ran (at least one passed or failed) | 2/4 (50%) |" in text
+    assert "| Wrongly flagged (any warning) | 1/4 (25%) |" in text
+    assert "| Wrongly called HIJACKED | 0/4 (0%) |" in text
     assert (
         "| `a/noisy` | SUSPICIOUS | yes | 12 passed | the agent flagged suspicious code |" in text
     )

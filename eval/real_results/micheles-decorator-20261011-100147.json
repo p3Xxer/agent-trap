@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "name": "micheles/decorator",
+  "source": "https://github.com/micheles/decorator",
+  "created": "2026-10-11T10:01:47+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "",
+    "exits": [
+      0,
+      0,
+      2,
+      0,
+      5
+    ],
+    "errors": [
+      [],
+      [],
+      [
+        "missing-file"
+      ],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.03192,
+  "seconds": 56.0,
+  "code_saved": false,
+  "id": "micheles-decorator-20261011-100147"
+}

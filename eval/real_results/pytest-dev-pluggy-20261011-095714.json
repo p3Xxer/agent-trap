@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "name": "pytest-dev/pluggy",
+  "source": "https://github.com/pytest-dev/pluggy",
+  "created": "2026-10-11T09:57:14+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": false,
+    "tests": "68 failed, 151 passed",
+    "exits": [
+      1,
+      1,
+      2,
+      0,
+      1
+    ],
+    "errors": [
+      [
+        "build-subprocess-failed",
+        "metadata-generation-failed"
+      ],
+      [
+        "build-subprocess-failed",
+        "metadata-generation-failed"
+      ],
+      [
+        "missing-file"
+      ],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.04569,
+  "seconds": 50.2,
+  "code_saved": false,
+  "id": "pytest-dev-pluggy-20261011-095714"
+}

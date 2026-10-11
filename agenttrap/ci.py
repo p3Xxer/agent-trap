@@ -29,8 +29,11 @@ def _escape_property(text: str) -> str:
     return _escape_data(text).replace(":", "%3A").replace(",", "%2C")
 
 
-def annotation_lines(findings: list[Finding]) -> list[str]:
-    """One `::error file=...,line=...::message` line per place to look at."""
+def annotation_lines(findings: list[Finding], prefix: str = "") -> list[str]:
+    """One `::error file=...,line=...::message` line per place to look at.
+
+    `prefix` is the scanned folder inside the repository: GitHub places an annotation by its path
+    from the repository root, while findings give paths from the scanned folder."""
     lines = []
     for finding in findings:
         title = _escape_property(f"Agent Trap: {finding.title}")
@@ -39,7 +42,8 @@ def annotation_lines(findings: list[Finding]) -> list[str]:
         if not finding.locations:
             lines.append(f"::{command} title={title}::{message}")
         for loc in finding.locations:
-            where = f"file={_escape_property(loc.file)},line={max(loc.line, 1)}"
+            path = f"{prefix}/{loc.file}" if prefix else loc.file
+            where = f"file={_escape_property(path)},line={max(loc.line, 1)}"
             lines.append(f"::{command} {where},title={title}::{message}")
     return lines
 
@@ -66,7 +70,7 @@ def summary_markdown(result: ScanResult, findings: list[Finding]) -> str:
 
 def emit_github(result: ScanResult, findings: list[Finding]) -> None:
     """Print annotations to stdout and append the summary, when running inside GitHub Actions."""
-    for line in annotation_lines(findings):
+    for line in annotation_lines(findings, scanned_folder(result.repo)):
         print(line, flush=True)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
@@ -87,6 +91,17 @@ def commands_disabled() -> Iterator[None]:
         yield
     finally:
         print(f"::{token}::", flush=True)
+
+
+def scanned_folder(repo: str, workspace: str | None = None) -> str:
+    """The scanned folder's path from the workspace root ("" for the root itself or a folder
+    outside the workspace)."""
+    root = Path(workspace or os.environ.get("GITHUB_WORKSPACE") or os.getcwd()).resolve()
+    try:
+        relative = Path(repo).resolve().relative_to(root).as_posix()
+    except ValueError:
+        return ""
+    return "" if relative == "." else relative
 
 
 def running_in_github() -> bool:

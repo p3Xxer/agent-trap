@@ -1,0 +1,20 @@
+name: Agent Trap
+on:
+  pull_request:
+    paths:
+      - "demo/**"
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./action
+        with:
+          path: demo
+          nebius-api-key: ${{ secrets.NEBIUS_API_KEY }}
+          tavily-api-key: ${{ secrets.TAVILY_API_KEY }}
+          upload-sarif: "false"  # code scanning needs GitHub Advanced Security on a private repo

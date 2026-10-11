@@ -133,3 +133,14 @@ def test_running_in_github_reads_the_environment(monkeypatch):
     assert not running_in_github()
     monkeypatch.delenv("GITHUB_ACTIONS")
     assert not running_in_github()
+
+
+def test_annotations_for_a_scanned_subfolder_use_paths_from_the_repository_root(tmp_path):
+    from agenttrap.ci import scanned_folder
+
+    (tmp_path / "demo").mkdir()
+    assert scanned_folder(str(tmp_path / "demo"), str(tmp_path)) == "demo"
+    assert scanned_folder(str(tmp_path), str(tmp_path)) == ""
+    assert scanned_folder("/somewhere/else", str(tmp_path)) == ""
+    lines = annotation_lines(findings(leaking_result()), "demo")
+    assert all("file=demo/setup.py" in line for line in lines if "file=" in line)

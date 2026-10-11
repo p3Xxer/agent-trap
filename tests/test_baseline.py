@@ -207,3 +207,35 @@ def test_a_long_output_never_cuts_off_the_exit_status():
     out = subprocess.run(["sh", "-c", command], capture_output=True, text=True).stdout
     assert len(out) > scan.OUTPUT_KEPT  # long enough that the start really would be cut off
     assert out[-scan.OUTPUT_KEPT :].rstrip().endswith("[exit 7]")
+
+
+def test_the_output_of_each_baseline_step_is_shown_only_when_asked_for(monkeypatch, capsys):
+    from agenttrap import scan as scan_module
+
+    class Box:
+        def __init__(self, *a, **k): ...
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a): ...
+        def run(self, command, timeout=0):
+            return CommandResult(0, "pip said hello\n[exit 0]", "")
+
+    class Net:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a): ...
+        def net(self):
+            return None
+
+        def observed(self):
+            return scan_module.Observed((), ())
+
+    monkeypatch.setattr(scan_module, "Sandbox", Box)
+    monkeypatch.setattr(scan_module, "Egress", lambda served: Net())
+    scan_module.run_baseline(Path("."), served={})
+    assert "pip said hello" not in capsys.readouterr().err
+    monkeypatch.setenv("AGENTTRAP_SHOW_BASELINE", "1")
+    scan_module.run_baseline(Path("."), served={})
+    assert "pip said hello" in capsys.readouterr().err

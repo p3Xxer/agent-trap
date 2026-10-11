@@ -11,7 +11,9 @@ with files and lines blanked (no model calls) until the minimal culprit lines re
 
 from __future__ import annotations
 
+import os
 import shlex
+import sys
 import tempfile
 import time
 from collections.abc import Callable, Mapping
@@ -165,9 +167,10 @@ def run_baseline(repo: Path, *, served: Mapping[str, str]) -> RunResult:
         with Sandbox(repo, canaries, net.net()) as box:
             for command in BASELINE:
                 result = box.run(command, timeout=BASELINE_TIMEOUT)
-                trace.steps.append(
-                    Step("run_command", {"command": command}, result.stdout[-OUTPUT_KEPT:])
-                )
+                output = result.stdout[-OUTPUT_KEPT:]
+                trace.steps.append(Step("run_command", {"command": command}, output))
+                if os.environ.get("AGENTTRAP_SHOW_BASELINE"):  # debugging aid; never saved
+                    print(f"--- baseline step {len(trace.steps)} ---\n{output}", file=sys.stderr)
         observed = net.observed()
     trace.stopped = "finished"
     leaks = tuple(find_leaks(observed.requests, canaries.values))

@@ -38,9 +38,13 @@ def result_document(
     source: str | None = None,
     created: datetime | None = None,
     include_code: bool = True,
+    culprits_pending: bool = False,
 ) -> dict[str, Any]:
     """`include_code=False` leaves out every line of the scanned code, for repos whose code should
-    not be copied into a file (for example real malware samples)."""
+    not be copied into a file (for example real malware samples).
+
+    `culprits_pending` marks a document saved as soon as the verdict was known: the search for the
+    culprit lines is still running and will replace it."""
     created = created or datetime.now(UTC)
     found = findings(result)
     repo_files = read_repo(Path(result.repo))
@@ -63,6 +67,7 @@ def result_document(
             for canary, cs in result.culprits.items()
         },
         "unlocalized": result.unlocalized,
+        "culprits_pending": culprits_pending,
         "files": _excerpts(found, repo_files),
         "injections": [
             {"where": i.where, "quote": i.injection.quote, "asked_for": i.injection.asked_for}
@@ -243,12 +248,21 @@ class ResultStore:
         while (self.directory / f"{result_id}.json").exists():
             n += 1
             result_id = f"{base}-{n}"
-        self.directory.mkdir(parents=True, exist_ok=True)
-        saved = {**document, "id": result_id}
-        temp = self.directory / f".{result_id}.tmp"
-        temp.write_text(to_json(saved))
-        temp.replace(self.directory / f"{result_id}.json")
+        self._write(result_id, document)
         return result_id
+
+    def overwrite(self, result_id: str, document: dict[str, Any]) -> None:
+        """Replace a saved document, keeping its id: a scan saved early is completed in place."""
+        if not _ID.fullmatch(result_id):  # never build a path from anything else
+            raise ValueError(f"not a result id: {result_id!r}")
+        self._write(result_id, document)
+
+    def _write(self, result_id: str, document: dict[str, Any]) -> None:
+        """Write to a temporary file first, so a reader never sees half a document."""
+        self.directory.mkdir(parents=True, exist_ok=True)
+        temp = self.directory / f".{result_id}.tmp"
+        temp.write_text(to_json({**document, "id": result_id}))
+        temp.replace(self.directory / f"{result_id}.json")
 
     def get(self, result_id: str) -> dict[str, Any] | None:
         if not _ID.fullmatch(result_id):  # never build a path from anything else

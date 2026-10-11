@@ -248,6 +248,8 @@ function renderDetail(doc) {
   }
   const notes = Object.values(doc.culprits || {}).flat().map((c) => TAG_NOTES[c.tag]).filter(Boolean);
   for (const note of new Set(notes)) found.append(h("p", { class: "muted small" }, `Note: ${note}.`));
+  if (doc.culprits_pending)
+    found.append(h("p", { class: "muted small" }, "Still pinpointing the culprit lines; reload in a few minutes."));
   for (const [secret, why] of Object.entries(doc.unlocalized || {}))
     found.append(h("p", { class: "muted small" }, `Could not pinpoint the line for ${secret}: ${why}`));
   out.append(found);

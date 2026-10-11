@@ -70,6 +70,15 @@ def render_clean(cleaned: CleanOutcome, console: Console) -> None:
     console.print("    [dim]Removing code can change what the repo does. Review it before use.[/]")
 
 
+def render_verdict(result: ScanResult, console: Console) -> None:
+    """Just the verdict and where each secret went: what is known before the culprit search."""
+    status = result.verdict.status
+    console.print(Panel(HEADLINE[status], style=STYLE[status], expand=False))
+    for leak in sorted({base_name(x.canary) for x in result.verdict.leaks}):
+        evidence = next(x for x in result.verdict.leaks if base_name(x.canary) == leak)
+        console.print(f"[bold red]leaked[/] {escape(leak)}  ->  {escape(evidence.destination)}")
+
+
 def render(result: ScanResult, console: Console | None = None) -> None:
     console = console or Console()
     status = result.verdict.status

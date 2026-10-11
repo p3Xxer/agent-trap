@@ -125,6 +125,10 @@ def default_work(store: ResultStore, demos: dict[str, Path], k: int) -> Work:
                 served=served,
                 clean_dir=workdir / "cleaned",
                 progress=progress,
+                on_verdict=lambda r: progress(
+                    f"verdict: {r.verdict.status.value}"
+                    + ("; pinpointing the culprit lines" if r.verdict.leaks else "")
+                ),
             )
             return store.save(result_document(result, name=name, source=source))
 

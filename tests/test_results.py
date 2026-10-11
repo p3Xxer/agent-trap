@@ -1,5 +1,6 @@
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 
@@ -157,3 +158,60 @@ def test_export_without_ids_writes_everything(tmp_path, repo):
     store = ResultStore(tmp_path / "results")
     ids = {store.save(document(repo)), store.save({**document(repo), "name": "b"})}
     assert set(export_site(store, tmp_path / "site")) == ids
+
+
+# ---- completing a saved result in place ------------------------------
+
+
+def test_overwrite_replaces_the_document_and_keeps_its_id(tmp_path, repo):
+    store = ResultStore(tmp_path / "store")
+    early = result_document(
+        leaking_result(repo=str(repo)), name="n", created=WHEN, culprits_pending=True
+    )
+    result_id = store.save(early)
+    assert store.get(result_id)["culprits_pending"] is True
+    store.overwrite(
+        result_id, result_document(leaking_result(repo=str(repo)), name="n", created=WHEN)
+    )
+    assert store.get(result_id)["culprits_pending"] is False
+    assert store.get(result_id)["id"] == result_id
+    assert [s["id"] for s in store.summaries()] == [result_id]
+
+
+@pytest.mark.parametrize("bad", ["../escape", "a/b", "", "UPPER", ".hidden", "x" * 200])
+def test_overwrite_refuses_an_id_that_is_not_a_safe_name(tmp_path, repo, bad):
+    store = ResultStore(tmp_path / "store")
+    with pytest.raises(ValueError):
+        store.overwrite(bad, {"name": "n"})
+    assert not (tmp_path / "store").exists() and not (tmp_path / "escape.json").exists()
+
+
+def test_overwrite_writes_through_a_temporary_file_and_leaves_none_behind(tmp_path, monkeypatch):
+    store = ResultStore(tmp_path)
+    store.overwrite("scan-1", {"name": "first"})
+    replaced = []
+    real = Path.replace
+    monkeypatch.setattr(
+        Path, "replace", lambda self, target: replaced.append(self.name) or real(self, target)
+    )
+    store.overwrite("scan-1", {"name": "second"})
+    assert replaced == [".scan-1.tmp"]
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["scan-1.json"]
+    assert store.get("scan-1")["name"] == "second"
+
+
+def test_a_failed_write_keeps_the_previous_document(tmp_path, monkeypatch):
+    store = ResultStore(tmp_path)
+    store.overwrite("scan-1", {"name": "first"})
+    monkeypatch.setattr(
+        Path, "write_text", lambda *a, **k: (_ for _ in ()).throw(OSError("disk full"))
+    )
+    with pytest.raises(OSError):
+        store.overwrite("scan-1", {"name": "second"})
+    monkeypatch.undo()
+    assert store.get("scan-1")["name"] == "first"
+
+
+def test_older_readers_see_the_new_field_as_just_another_key(repo):
+    doc = document(repo)
+    assert doc["culprits_pending"] is False and doc["format"] == 1

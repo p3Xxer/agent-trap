@@ -13,9 +13,10 @@ STATE = {}
 
 
 class FakeBox:
-    def __init__(self, repo, canaries, net):
+    def __init__(self, repo, canaries, net, trace=False):
         STATE["canaries"] = canaries
         STATE["commands"] = []
+        STATE["trace"] = trace
 
     def __enter__(self):
         return self
@@ -26,6 +27,9 @@ class FakeBox:
     def run(self, command, timeout=60):
         STATE["commands"].append((command, timeout))
         return CommandResult(0, f"output of {command}", "")
+
+    def read(self, path):
+        return CommandResult(0, STATE.get("loaded", ""), "")
 
 
 class FakeEgress:
@@ -378,3 +382,101 @@ def test_the_pool_is_removed_even_when_the_search_runs_out_of_time(monkeypatch):
     monkeypatch.setattr(scan, "replay_runner", too_slow)
     scan.localize_leak({"a.py": "x"}, run, "~/.aws/credentials", {})
     assert exited == [True]
+
+
+# ---- narrowing the culprit search to the files that ran ------------------------------
+
+
+def suspect(file):
+    from agenttrap.localizer import UNCONFIRMED, Culprit
+
+    return Culprit(file, 1, "x", UNCONFIRMED)
+
+
+def test_the_search_starts_with_the_files_that_ran_and_the_text_suspects():
+    files = {"a.py": "1", "b.py": "2", "c.py": "3", "d.py": "4"}
+    scopes = scan.search_scopes(files, {"c.py", "gone.py"}, [suspect("a.py")])
+    # the trace names files in the repo's own order, ignores what is not in the repo, and the
+    # whole repo remains the fallback in case the culprit is somewhere that did not show up
+    assert scopes == [["a.py", "c.py"], ["a.py", "b.py", "c.py", "d.py"]]
+
+
+def test_with_nothing_recorded_the_whole_repo_is_searched():
+    files = {"a.py": "1", "b.py": "2"}
+    assert scan.search_scopes(files, set(), []) == [["a.py", "b.py"]]
+    assert scan.search_scopes(files, {"not-in-repo.py"}, []) == [["a.py", "b.py"]]
+
+
+def test_there_is_no_second_scope_when_everything_ran():
+    files = {"a.py": "1", "b.py": "2"}
+    assert scan.search_scopes(files, {"a.py", "b.py"}, []) == [["a.py", "b.py"]]
+
+
+def test_only_the_learning_run_is_traced_and_its_log_is_read_back(monkeypatch):
+    traced = []
+
+    class Box(FakeBox):
+        def __init__(self, repo, canaries, net, trace=False):
+            super().__init__(repo, canaries, net, trace)
+            traced.append(trace)
+
+    class Net(FakeEgress):
+        def mark(self):
+            return 0
+
+        def observed(self, since=0):
+            return Observed((), ())
+
+    class Pool:
+        def lend(self):
+            return Net(None)
+
+    STATE["loaded"] = "setup.py\npkg/mod.py\n"
+    monkeypatch.setattr(scan, "Sandbox", Box)
+    loaded = set()
+    run = scan.replay_runner(
+        steps_of("a"), {}, pool=Pool(), until="~/.aws/credentials", loaded=loaded
+    )
+    run({"setup.py": "x"})
+    run({"setup.py": ""})
+    assert traced == [True, False]
+    assert loaded == {"setup.py", "pkg/mod.py"}
+
+
+def candidates_chosen(monkeypatch, files, needed):
+    """The `candidates` that localize receives when the leak needs the file `needed`."""
+    from tests.test_counterfactual import CANARY, make_trace, run_with_leak
+
+    seen = {}
+
+    def replay(steps, served, deadline=None, *, loaded, **_):
+        loaded.update({"setup.py", "helper.py"})  # what the learning run saw Python load
+        return lambda version: {CANARY} if version.get(needed) else set()
+
+    def search(files, run, canary, candidates=None, workers=1):
+        seen["candidates"] = candidates
+        return ["found"]
+
+    class Pool:
+        def __init__(self, served, size): ...
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc): ...
+
+    monkeypatch.setattr(scan, "EgressPool", Pool)
+    monkeypatch.setattr(scan, "replay_runner", replay)
+    monkeypatch.setattr(scan, "localize", search)
+    assert scan.localize_leak(files, run_with_leak(make_trace()), CANARY, {}) == (["found"], "")
+    return seen["candidates"]
+
+
+FILES = {"setup.py": "danger()", "helper.py": "x", "big.py": "y", "other.py": "z"}
+
+
+def test_the_culprit_search_is_limited_to_the_files_that_ran(monkeypatch):
+    assert candidates_chosen(monkeypatch, FILES, "setup.py") == ["setup.py", "helper.py"]
+
+
+def test_when_the_files_that_ran_do_not_hold_the_culprit_the_whole_repo_is_searched(monkeypatch):
+    assert candidates_chosen(monkeypatch, FILES, "big.py") == list(FILES)

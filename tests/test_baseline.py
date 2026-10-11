@@ -241,3 +241,12 @@ def test_the_output_of_each_baseline_step_is_shown_only_when_asked_for(monkeypat
     monkeypatch.setenv("AGENTTRAP_SHOW_BASELINE", "1")
     scan_module.run_baseline(Path("."), served={})
     assert "pip said hello" in capsys.readouterr().err
+
+
+def test_a_search_that_runs_out_of_time_stops_instead_of_detonating_again(monkeypatch):
+    import time
+
+    deadline = time.time() - 1
+    run = scan.replay_runner([], {}, deadline)
+    with pytest.raises(scan.OutOfTime):
+        run({"setup.py": "x"})

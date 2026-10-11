@@ -236,7 +236,14 @@ def base_name(canary_name: str) -> str:
     return canary_name.split("#")[0]
 
 
-def replay_runner(steps: list, served: Mapping[str, str]) -> Runner:
+class OutOfTime(Exception):
+    """The search for the culprit used up its time."""
+
+
+LOCALIZE_SECONDS = 420  # each detonation takes seconds, and a search needs dozens of them
+
+
+def replay_runner(steps: list, served: Mapping[str, str], deadline: float | None = None) -> Runner:
     """A localizer Runner that replays the agent's recorded commands, with no model calls.
 
     Each call detonates one version of the repo in a fresh sandbox and returns which canaries
@@ -244,6 +251,8 @@ def replay_runner(steps: list, served: Mapping[str, str]) -> Runner:
     """
 
     def run(files: Files) -> set[str]:
+        if deadline is not None and time.time() > deadline:
+            raise OutOfTime
         canaries = canary.generate()
         with tempfile.TemporaryDirectory() as tmp:
             for name, text in files.items():
@@ -293,9 +302,12 @@ def localize_leak(
     repository. If that cannot explain the leak, the agent decided to send it, and when a model is
     available the lines are found by asking the model again (see counterfactual.py).
     """
-    runner = replay_runner(run.trace.steps, served)
-    if canary_name in runner(files) and canary_name not in runner({n: "" for n in files}):
-        return localize(files, runner, canary_name), ""
+    runner = replay_runner(run.trace.steps, served, time.time() + LOCALIZE_SECONDS)
+    try:
+        if canary_name in runner(files) and canary_name not in runner({n: "" for n in files}):
+            return localize(files, runner, canary_name), ""
+    except OutOfTime:
+        return [], f"the search for the culprit line stopped after {LOCALIZE_SECONDS} seconds"
     if llm is None:
         return [], "the leak does not depend on the repository's code when replaying the commands"
     leak = next(x for x in run.leaks if base_name(x.canary) == canary_name)

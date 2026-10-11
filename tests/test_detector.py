@@ -81,3 +81,43 @@ def test_sending_the_machines_hostname_is_a_leak():
     beacon = Request("GET", f"https://x.test/ping?h={c.hostname}&u={c.values['$USER']}", {}, "")
     leaks = find_leaks([beacon], c.values)
     assert {leak.canary for leak in leaks} == {"$HOSTNAME", "$USER"}
+
+
+# ---- data hidden in host names and in other encodings ----------------------
+
+
+def _canary():
+    from agenttrap.canary import generate
+
+    return generate()
+
+
+def test_a_hex_encoded_hostname_inside_a_dns_name_is_a_leak():
+    c = _canary()
+    name = f"{c.hostname.encode().hex()}.attacker.test"
+    leaks = find_leaks([], c.values, [name])
+    assert [(x.canary, x.destination) for x in leaks] == [("$HOSTNAME", f"dns://{name}")]
+
+
+def test_base32_data_split_over_labels_and_changed_in_case_is_still_found():
+    import base64
+
+    c = _canary()
+    data = base64.b32encode(c.values["$USER"].encode()).decode().rstrip("=")
+    name = f"{data[:10]}.{data[10:]}.oast.test".upper()
+    assert {x.canary for x in find_leaks([], c.values, [name])} == {"$USER"}
+
+
+def test_a_hash_of_the_machine_name_counts_as_the_name():
+    import hashlib
+
+    c = _canary()
+    digest = hashlib.sha256(c.hostname.encode()).hexdigest()
+    beacon = Request("GET", f"https://x.test/ping?id={digest}")
+    assert {x.canary for x in find_leaks([beacon], c.values)} == {"$HOSTNAME"}
+
+
+def test_ordinary_host_names_are_not_leaks():
+    c = _canary()
+    names = ["pypi.org", "files.pythonhosted.org", "api.github.com", "localhost"]
+    assert find_leaks([], c.values, names) == []

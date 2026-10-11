@@ -9,6 +9,7 @@ No LLM decides the verdict.
 from __future__ import annotations
 
 import base64
+import hashlib
 import re
 import urllib.parse
 from collections.abc import Iterable, Mapping
@@ -57,25 +58,45 @@ class Verdict:
     flags: tuple[Flag, ...] = ()
 
 
-def encodings(value: str) -> set[str]:
-    """Forms a canary can take inside a request: raw, URL-encoded, or base64.
+def _whole_characters(raw: bytes, encode, bits: int, offsets: int) -> set[str]:
+    """Encoded characters that come only from `raw`, whatever bytes surround it in the payload.
 
-    Inside a base64-encoded payload the canary can start at any of three byte offsets, and each
-    gives different characters. For each offset we keep only the base64 characters whose 6 bits
-    come entirely from the canary, so they match whatever bytes surround it.
+    Inside a larger payload the value can start at any byte offset, and each offset gives different
+    characters. For each offset we keep only the characters whose bits all come from the value.
     """
-    forms = {value, urllib.parse.quote(value, safe=""), urllib.parse.quote_plus(value)}
-    raw = value.encode()
-    for offset in range(3):
-        encoded = base64.b64encode(b"\0" * offset + raw).decode()
-        first = -(-8 * offset // 6)  # first char with no prefix bits (ceil)
-        last = 8 * (offset + len(raw)) // 6  # chars before this have no trailing bits
+    forms = set()
+    for offset in range(offsets):
+        encoded = encode(b"\0" * offset + raw).decode()
+        first = -(-8 * offset // bits)  # first char with no prefix bits (ceil)
+        last = 8 * (offset + len(raw)) // bits  # chars before this have no trailing bits
         forms.add(encoded[first:last])
     return forms
 
 
-def find_leaks(requests: Iterable[Request], canaries: Mapping[str, str]) -> list[Leak]:
-    """Every (request, canary) pair where the canary appears in the request, in any encoding."""
+def encodings(value: str) -> set[str]:
+    """Forms a canary can take inside a request: raw, URL-encoded, base64, base32, hex, or the
+    hex digest of a common hash (programs often report a hash of the machine, not the name)."""
+    raw = value.encode()
+    forms = {value, urllib.parse.quote(value, safe=""), urllib.parse.quote_plus(value)}
+    forms |= _whole_characters(raw, base64.b64encode, 6, 3)
+    base32 = _whole_characters(raw, base64.b32encode, 5, 5)
+    forms |= base32 | {form.lower() for form in base32}
+    forms |= {raw.hex(), raw.hex().upper()}
+    for algorithm in (hashlib.md5, hashlib.sha1, hashlib.sha256):
+        digest = algorithm(raw).hexdigest()
+        forms |= {digest, digest.upper()}
+    return {form for form in forms if form}
+
+
+def find_leaks(
+    requests: Iterable[Request], canaries: Mapping[str, str], names: Iterable[str] = ()
+) -> list[Leak]:
+    """Every (request, canary) pair where the canary appears in the request, in any encoding.
+
+    `names` are host names the sandbox looked up or connected to. Data can ride inside a name
+    (`<hex of the hostname>.attacker.test`), and a DNS lookup leaves the machine even when no
+    request is ever made, so each name is searched too.
+    """
     patterns = {name: encodings(value) for name, value in canaries.items()}
     leaks = []
     for request in requests:
@@ -83,6 +104,14 @@ def find_leaks(requests: Iterable[Request], canaries: Mapping[str, str]) -> list
         for name, forms in patterns.items():
             if any(form in text for form in forms):
                 leaks.append(Leak(canary=name, destination=request.url, request=request))
+    for host in dict.fromkeys(names):
+        # names are case-insensitive and long data is split across dot-separated labels
+        searched = {host.lower(), host.lower().replace(".", "")}
+        for name, forms in patterns.items():
+            lowered = {form.lower() for form in forms}
+            if any(form in text for form in lowered for text in searched):
+                evidence = Request("DNS", f"dns://{host}")
+                leaks.append(Leak(canary=name, destination=f"dns://{host}", request=evidence))
     return leaks
 
 

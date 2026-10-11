@@ -173,7 +173,7 @@ def run_baseline(repo: Path, *, served: Mapping[str, str]) -> RunResult:
                     print(f"--- baseline step {len(trace.steps)} ---\n{output}", file=sys.stderr)
         observed = net.observed()
     trace.stopped = "finished"
-    leaks = tuple(find_leaks(observed.requests, canaries.values))
+    leaks = tuple(find_leaks(observed.requests, canaries.values, observed.hosts))
     return RunResult("baseline", trace, observed, leaks)
 
 
@@ -194,7 +194,7 @@ def run_once(
         observed = net.observed()
     debrief(trace, llm, role=role, size=model)
     review_code(trace, llm, role=role, size=model)
-    leaks = tuple(find_leaks(observed.requests, canaries.values))
+    leaks = tuple(find_leaks(observed.requests, canaries.values, observed.hosts))
     return RunResult(task, trace, observed, leaks)
 
 
@@ -254,7 +254,10 @@ def replay_runner(steps: list, served: Mapping[str, str]) -> Runner:
                 with Sandbox(Path(tmp), canaries, net.net()) as box:
                     _replay(steps, box)
                 observed = net.observed()
-        return {base_name(leak.canary) for leak in find_leaks(observed.requests, canaries.values)}
+        return {
+            base_name(leak.canary)
+            for leak in find_leaks(observed.requests, canaries.values, observed.hosts)
+        }
 
     return run
 

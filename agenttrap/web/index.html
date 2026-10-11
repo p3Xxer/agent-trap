@@ -77,9 +77,6 @@
   details > summary { cursor: pointer; font-weight: 600; }
   details h3 { margin: 16px 0 4px; font-size: 14px; }
   ul.plain { list-style: none; margin: 0; padding: 0; }
-  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 800px) { .compare { grid-template-columns: 1fr; } }
-  .compare > div { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
   .big { font-size: 22px; font-weight: 700; }
   .quote { font: 13px var(--mono); background: var(--code-bg); border-radius: 6px; padding: 6px 8px; overflow-wrap: anywhere; }
   form { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -349,14 +346,10 @@ function detailsBlock(doc, findings) {
       h("ul", { class: "plain" }, hosts));
 
   const flagged = doc.static_scan?.count ?? 0;
-  const detected = doc.status !== "SAFE";
-  box.append(h("h3", {}, "Versus just reading the files"),
-    h("div", { class: "compare" },
-      h("div", {}, h("div", { class: "muted small" }, "A plain text scan flagged"),
-        h("div", { class: "big" }, `${flagged} line${flagged === 1 ? "" : "s"}`)),
-      h("div", {}, h("div", { class: "muted small" }, "Agent Trap, by running the repo"),
-        h("div", { class: `big ${doc.status}`, style: "background:none" }, detected ? `${findings.length} finding${findings.length === 1 ? "" : "s"}` : "nothing found"))),
-    flagged === 0 && detected ? h("p", { class: "small" }, "Reading the files showed nothing wrong here. The problem only appears when the code runs.") : null,
+  box.append(h("h3", {}, "A tool that only reads the code"),
+    h("p", { class: "small" }, flagged
+      ? `It flagged ${flagged} line${flagged === 1 ? "" : "s"}:`
+      : "It found nothing wrong in this repository."),
     (doc.static_scan?.flagged || []).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`))));
 
   if (doc.cleaned) {
@@ -367,9 +360,15 @@ function detailsBlock(doc, findings) {
       h("p", { class: "muted small" }, "Removing code can change what the repository does. Review it before use."));
   }
 
-  box.append(h("h3", {}, "Scan facts"),
-    h("p", { class: "muted small" }, `${doc.runs ?? "?"} runs · ${doc.seconds}s · $${Number(doc.cost_usd).toFixed(3)} · ${when(doc.created)}`));
+  box.append(h("h3", {}, "How the scan ran"), h("p", { class: "muted small" }, scanFacts(doc)));
   return box;
+}
+
+function scanFacts(doc) {
+  const runs = doc.runs ? `Ran the repo ${doc.runs} times (install and tests, plus ${doc.runs - 1} by an AI agent)` : "Ran the repo";
+  const s = Math.round(Number(doc.seconds) || 0);
+  const took = s < 90 ? `${s} seconds` : `${Math.round(s / 60)} minutes`;
+  return `${runs} · ${took} · AI cost $${Number(doc.cost_usd || 0).toFixed(3)} · ${when(doc.created)}`;
 }
 
 function splitWhere(where) {
@@ -395,6 +394,8 @@ function renderDetail(doc) {
   const summary = h("div", {});
   if (groups.length) for (const g of groups) summary.append(h("p", { class: "summary" }, g.message || leakSentence(g)));
   else summary.append(h("p", { class: "summary" }, doc.headline || ""));
+  if (doc.status !== "SAFE" && doc.static_scan && !doc.static_scan.count)
+    summary.append(h("p", { class: "muted" }, "A tool that only reads the code found nothing wrong here. Running it caught the problem."));
   for (const f of findings.filter((x) => x.rule === "agent-trap/destructive-command"))
     summary.append(h("p", { class: "summary" }, f.message));
   out.append(h("div", { class: "card" },

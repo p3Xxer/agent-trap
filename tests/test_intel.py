@@ -192,3 +192,11 @@ def test_text_from_the_web_cannot_break_or_restyle_the_report():
     text = render({"evil.com": HostIntel("evil.com", None, None, (nasty,))})
     assert "[bold red]x[/" in text
     assert "[link=http://evil]click[/link]" in text
+
+
+def test_a_page_about_attackers_misusing_a_host_counts_as_a_report():
+    from agenttrap.intel import _reports_host
+
+    text = "this blog explores the potential misuse of webhook.site by attackers to collect data"
+    assert _reports_host(text, "webhook.site")
+    assert not _reports_host("webhook.site lets you inspect http requests", "webhook.site")

@@ -38,7 +38,8 @@ RECENT_DAYS = 90
 NEAR_CHARS = 150  # a malware word must be this close to the host name to count as a report
 
 _BAD_WORDS = re.compile(
-    r"\b(malware|malicious|phishing|scam|botnet|ransomware|trojan|spyware|stealer|c2|exfiltrat\w*)\b"
+    r"\b(malware|malicious|phishing|scam|botnet|ransomware|trojan|spyware|stealer|c2|exfiltrat\w*"
+    r"|misus\w*|abus\w*|attackers?)\b"
 )
 
 # Names that only exist inside a private network. They are never sent to a public service.

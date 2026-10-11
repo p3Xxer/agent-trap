@@ -42,8 +42,10 @@ _BAD_WORDS = re.compile(
     r"|misus\w*|abus\w*|attackers?)\b"
 )
 
-# Names that only exist inside a private network. They are never sent to a public service.
-PRIVATE_SUFFIXES = (".local", ".internal", ".lan", ".corp", ".home", ".localdomain", ".intranet")
+# Names that only exist inside a private network, or are reserved and can never exist on the
+# internet (RFC 2606, 6761). They are never sent to a public service.
+PRIVATE_SUFFIXES = (".local", ".internal", ".lan", ".corp", ".home", ".localdomain", ".intranet",
+                    ".test", ".invalid", ".example", ".localhost")  # fmt: skip
 
 Fetch = Callable[[urllib.request.Request], dict | None]  # JSON object, or None on any failure
 

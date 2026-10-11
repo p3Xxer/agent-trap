@@ -9,7 +9,7 @@ from typing import Literal
 from urllib.parse import urlparse
 
 from agenttrap.canary import IDENTITY_WORDS, plain_name
-from agenttrap.localizer import UNCONFIRMED, Culprit
+from agenttrap.localizer import UNCONFIRMED, Culprit, sends_over_network
 from agenttrap.scan import ScanResult, base_name
 
 Level = Literal["error", "warning", "note"]
@@ -85,7 +85,8 @@ _SCAFFOLDING = re.compile(
 def split_culprits(
     culprits: list[Culprit], canary: str, destination: str
 ) -> tuple[list[Culprit], list[Culprit]]:
-    """Separate the lines that touch the secret or the destination from supporting lines.
+    """Separate the lines that touch the secret, name the destination or send something over the
+    network from supporting lines.
 
     The localizer returns every line the leak needs (including `try:` and `pass`). Only some of
     them are what a reviewer should look at; the rest are scaffolding around them, and plain
@@ -94,7 +95,11 @@ def split_culprits(
     host = urlparse(destination).hostname or destination
     words = IDENTITY_WORDS.get(canary, ())
     markers = [m for m in (host, canary.removeprefix("~/").removeprefix("$"), *words) if m]
-    key = [c for c in culprits if any(m.lower() in c.text.lower() for m in markers)]
+    key = [
+        c
+        for c in culprits
+        if any(m.lower() in c.text.lower() for m in markers) or sends_over_network(c.text)
+    ]
     if not key:
         return culprits, []
     support = [c for c in culprits if c not in key and not _SCAFFOLDING.fullmatch(c.text.strip())]

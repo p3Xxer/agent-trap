@@ -140,8 +140,16 @@ def _localize_lines(
 
 
 _BASE64 = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
-_FETCH = re.compile(r"urlopen|requests\.(get|post)|httpx\.|\bcurl\b|\bwget\b|\bfetch\(")
+_FETCH = re.compile(
+    r"urlopen|requests\.(get|post|put|request)\b|httpx\.|http\.client|\.sendall\(|create_connection"
+    r"|\bcurl\b|\bwget\b|\bfetch\("
+)
 _INVISIBLE = re.compile("[​-‏⁠-⁤﻿\U000e0000-\U000e007f]")
+
+
+def sends_over_network(line: str) -> bool:
+    """True for a line that makes a network request (urlopen, requests.post, curl, ...)."""
+    return bool(_FETCH.search(line))
 
 
 UNCONFIRMED = "unconfirmed"  # found by text search, not by re-running the repository

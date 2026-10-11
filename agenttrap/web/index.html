@@ -414,7 +414,7 @@ function renderDetail(doc) {
   const files = Object.entries(doc.files || {});
   if (files.length) {
     const code = h("div", { class: "card" }, h("h2", {}, "Where"),
-      h("p", { class: "muted small" }, "Red lines are the ones to look at; yellow lines are also needed for it to happen."));
+      h("p", { class: "muted small" }, "Red: the lines that grab the secret, say where it goes, or send it. Yellow: other lines the theft needs in order to run (removing any of them stops it)."));
     for (const [file, excerpt] of files)
       code.append(codeBlock(file, excerpt, linesOf(findings, file, "locations"), linesOf(findings, file, "related")));
     out.append(code);

@@ -7,8 +7,10 @@ copied in at /work and the canaries are planted in /root.
 
 from __future__ import annotations
 
+import io
 import shlex
 import subprocess
+import tarfile
 import tempfile
 import uuid
 from collections.abc import Mapping
@@ -47,6 +49,12 @@ def _docker(*args: str, input: str | None = None, timeout: float = 120) -> Comma
     return CommandResult(p.returncode, p.stdout, p.stderr)
 
 
+def _as_root(info: tarfile.TarInfo) -> tarfile.TarInfo:
+    info.uid = info.gid = 0
+    info.uname = info.gname = "root"
+    return info
+
+
 def ensure_ready() -> None:
     """Build the image and create the isolated network if they don't exist yet."""
     if _docker("image", "inspect", IMAGE).exit_code != 0:
@@ -82,7 +90,7 @@ class Sandbox:
         if started.exit_code != 0:
             raise RuntimeError(f"could not start sandbox: {started.stderr}")
         try:
-            _docker("cp", f"{self.repo}/.", f"{self.name}:{WORKDIR}")
+            self._copy_repo()
             with tempfile.TemporaryDirectory() as home:
                 write_home(self.canaries, Path(home))
                 _docker("cp", f"{home}/.", f"{self.name}:/root")
@@ -92,6 +100,20 @@ class Sandbox:
             self.__exit__()
             raise
         return self
+
+    def _copy_repo(self) -> None:
+        """Copy the repo in, owned by root. The container has no right to touch files owned by
+        anyone else, so a folder the project ships (an `egg-info`, say) that kept its owner from
+        the host would make the build fail with "Cannot update time stamp"."""
+        buffer = io.BytesIO()
+        with tarfile.open(fileobj=buffer, mode="w") as archive:
+            archive.add(self.repo, arcname=".", filter=_as_root)
+        copied = subprocess.run(
+            ["docker", "cp", "-", f"{self.name}:{WORKDIR}"],
+            input=buffer.getvalue(), capture_output=True, timeout=300,
+        )  # fmt: skip
+        if copied.returncode != 0:
+            raise RuntimeError(f"could not copy the repo in: {copied.stderr.decode()[-500:]}")
 
     def _trust(self, cert: Path) -> None:
         """Add a public certificate to the sandbox's trust store."""

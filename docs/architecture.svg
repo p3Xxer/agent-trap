@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="975" viewBox="0 0 1920 975" font-family="Helvetica, Arial, sans-serif"><rect width="100%" height="100%" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1000" viewBox="0 0 1920 1000" font-family="Helvetica, Arial, sans-serif"><rect width="100%" height="100%" fill="#fff"/>
 <defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse"><path d="M0,0 L10,4 L0,8 z" fill="#1e1e1e"/></marker></defs>
 <text x="60" y="64.1" font-size="38" xml:space="preserve" fill="#1e1e1e">AGENT TRAP: how one scan works</text>
 <text x="60" y="99.1" font-size="18" xml:space="preserve" fill="#1e1e1e">Run an untrusted repo in a locked room with FAKE secrets, watch what an AI agent does with it, and point to the exact line behind any leak.</text>
@@ -7,131 +7,142 @@
 <text x="72" y="233.1" font-size="19" xml:space="preserve" fill="#1e1e1e">Untrusted repo</text>
 <text x="72" y="256.2" font-size="15" xml:space="preserve" fill="#1e1e1e">a download, a dependency,</text>
 <text x="72" y="275.0" font-size="15" xml:space="preserve" fill="#1e1e1e">or a pull request</text>
-<rect x="60" y="360" width="240" height="125" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
+<rect x="60" y="360" width="240" height="150" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
 <text x="72" y="388.1" font-size="19" xml:space="preserve" fill="#1e1e1e">agenttrap scan &lt;repo&gt;</text>
-<text x="72" y="411.2" font-size="15" xml:space="preserve" fill="#1e1e1e">from the terminal, or as a</text>
-<text x="72" y="430.0" font-size="15" xml:space="preserve" fill="#1e1e1e">GitHub Action on every pull</text>
-<text x="72" y="448.8" font-size="15" xml:space="preserve" fill="#1e1e1e">request</text>
+<text x="72" y="411.2" font-size="15" xml:space="preserve" fill="#1e1e1e">from the terminal, a folder</text>
+<text x="72" y="430.0" font-size="15" xml:space="preserve" fill="#1e1e1e">of repos (batch), the local</text>
+<text x="72" y="448.8" font-size="15" xml:space="preserve" fill="#1e1e1e">web page, or a GitHub</text>
+<text x="72" y="467.5" font-size="15" xml:space="preserve" fill="#1e1e1e">Action on every pull</text>
+<text x="72" y="486.2" font-size="15" xml:space="preserve" fill="#1e1e1e">request</text>
 <line x1="180" y1="320" x2="180" y2="360" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<rect x="60" y="525" width="240" height="190" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
-<text x="72" y="553.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Safety rules</text>
-<text x="72" y="576.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• every secret is a FAKE</text>
-<text x="72" y="595.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  canary</text>
-<text x="72" y="613.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• the sandbox has no route</text>
-<text x="72" y="632.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  to the real internet</text>
-<text x="72" y="651.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• nothing is ever forwarded</text>
-<text x="72" y="670.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  out</text>
-<text x="72" y="688.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• our test repos are inert</text>
-<rect x="340" y="150" width="740" height="650" rx="10" fill="transparent" stroke="#868e96" stroke-width="2" stroke-dasharray="8 6"/>
+<rect x="60" y="550" width="240" height="190" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+<text x="72" y="578.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Safety rules</text>
+<text x="72" y="601.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• every secret is a FAKE</text>
+<text x="72" y="620.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  canary</text>
+<text x="72" y="638.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• the sandbox has no route</text>
+<text x="72" y="657.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  to the real internet</text>
+<text x="72" y="676.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• nothing is ever forwarded</text>
+<text x="72" y="695.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  out</text>
+<text x="72" y="713.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• saved results can leave</text>
+<text x="72" y="732.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  out the scanned code</text>
+<rect x="340" y="150" width="740" height="680" rx="10" fill="transparent" stroke="#868e96" stroke-width="2" stroke-dasharray="8 6"/>
 <text x="355" y="179.0" font-size="20" xml:space="preserve" fill="#1e1e1e">2  DETONATE: a locked room, rebuilt for every run</text>
-<rect x="360" y="205" width="320" height="240" rx="10" fill="#ffe8cc" stroke="#e8590c" stroke-width="2"/>
+<rect x="360" y="205" width="320" height="265" rx="10" fill="#ffe8cc" stroke="#e8590c" stroke-width="2"/>
 <text x="372" y="233.1" font-size="19" xml:space="preserve" fill="#1e1e1e">Sandbox (Docker container)</text>
 <text x="372" y="256.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• the repo is copied in</text>
 <text x="372" y="275.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• no internet, no extra privileges</text>
 <text x="372" y="293.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• FAKE secrets planted where</text>
 <text x="372" y="312.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  attackers look: AWS, SSH, GitHub,</text>
 <text x="372" y="331.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  npm and API keys</text>
-<text x="372" y="350.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• new random values every run, so a</text>
-<text x="372" y="368.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  leak points to one run</text>
-<text x="372" y="387.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• every scan also runs pip install</text>
-<text x="372" y="406.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  and pytest, with no AI</text>
-<rect x="730" y="205" width="330" height="240" rx="10" fill="#c5f6fa" stroke="#0c8599" stroke-width="2"/>
+<text x="372" y="350.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• a FAKE machine name and user name</text>
+<text x="372" y="368.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  too</text>
+<text x="372" y="387.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• new random values every run, so a</text>
+<text x="372" y="406.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  leak points to one run</text>
+<text x="372" y="425.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• every scan also runs pip install,</text>
+<text x="372" y="443.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  setup.py, import and pytest, with</text>
+<text x="372" y="462.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  no AI</text>
+<rect x="730" y="205" width="330" height="265" rx="10" fill="#c5f6fa" stroke="#0c8599" stroke-width="2"/>
 <text x="742" y="228.2" font-size="16" xml:space="preserve" fill="#1e1e1e">Private network: everything the</text>
 <text x="742" y="248.2" font-size="16" xml:space="preserve" fill="#1e1e1e">sandbox sends goes here</text>
-<rect x="745" y="262" width="300" height="88" rx="10" fill="#ffffff" stroke="#495057" stroke-width="2"/>
+<rect x="745" y="262" width="300" height="98" rx="10" fill="#ffffff" stroke="#495057" stroke-width="2"/>
 <text x="757" y="290.1" font-size="19" xml:space="preserve" fill="#1e1e1e">mitmproxy</text>
 <text x="757" y="313.2" font-size="15" xml:space="preserve" fill="#1e1e1e">reads HTTP and HTTPS requests,</text>
 <text x="757" y="332.0" font-size="15" xml:space="preserve" fill="#1e1e1e">logs them, answers them itself</text>
-<rect x="745" y="358" width="300" height="80" rx="10" fill="#ffffff" stroke="#495057" stroke-width="2"/>
-<text x="757" y="386.1" font-size="19" xml:space="preserve" fill="#1e1e1e">Sinkhole</text>
-<text x="757" y="409.2" font-size="15" xml:space="preserve" fill="#1e1e1e">catches programs that skip the</text>
-<text x="757" y="428.0" font-size="15" xml:space="preserve" fill="#1e1e1e">proxy (site name only)</text>
-<rect x="360" y="490" width="320" height="150" rx="10" fill="#e5dbff" stroke="#6741d9" stroke-width="2"/>
-<text x="372" y="518.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Bait AI agent</text>
-<text x="372" y="541.2" font-size="15" xml:space="preserve" fill="#1e1e1e">behaves like a coding agent: reads</text>
-<text x="372" y="560.0" font-size="15" xml:space="preserve" fill="#1e1e1e">files, runs commands. Tasks: set up</text>
-<text x="372" y="578.8" font-size="15" xml:space="preserve" fill="#1e1e1e">the project, run the tests, summarize</text>
-<text x="372" y="597.5" font-size="15" xml:space="preserve" fill="#1e1e1e">it</text>
-<rect x="730" y="490" width="330" height="150" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2"/>
-<text x="742" y="518.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Nemotron Nano on Nebius</text>
-<text x="742" y="541.2" font-size="15" xml:space="preserve" fill="#1e1e1e">the agent's brain: it sends its</text>
-<text x="742" y="560.0" font-size="15" xml:space="preserve" fill="#1e1e1e">messages here and decides what to read</text>
-<text x="742" y="578.8" font-size="15" xml:space="preserve" fill="#1e1e1e">and run next</text>
-<rect x="360" y="675" width="700" height="100" rx="10" fill="#e5dbff" stroke="#6741d9" stroke-width="2"/>
-<text x="372" y="703.0" font-size="19" xml:space="preserve" fill="#1e1e1e">End-of-run question</text>
-<text x="372" y="726.2" font-size="15" xml:space="preserve" fill="#1e1e1e">We ask the agent: "Did anything you read try to give YOU instructions? Quote it." Its</text>
-<text x="372" y="745.0" font-size="15" xml:space="preserve" fill="#1e1e1e">answer is only ever a warning, never proof.</text>
-<line x1="520" y1="490" x2="520" y2="447" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<text x="530" y="472.4" font-size="13" xml:space="preserve" fill="#1e1e1e">runs its commands inside</text>
-<line x1="680" y1="320" x2="728" y2="320" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<line x1="680" y1="565" x2="728" y2="565" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)" marker-start="url(#a)"/>
-<line x1="520" y1="640" x2="520" y2="673" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<line x1="300" y1="380" x2="358" y2="380" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<rect x="745" y="368" width="300" height="95" rx="10" fill="#ffffff" stroke="#495057" stroke-width="2"/>
+<text x="757" y="396.1" font-size="19" xml:space="preserve" fill="#1e1e1e">Sinkhole DNS</text>
+<text x="757" y="419.2" font-size="15" xml:space="preserve" fill="#1e1e1e">logs every name looked up, so data</text>
+<text x="757" y="438.0" font-size="15" xml:space="preserve" fill="#1e1e1e">hidden inside a name is seen too</text>
+<rect x="360" y="510" width="320" height="150" rx="10" fill="#e5dbff" stroke="#6741d9" stroke-width="2"/>
+<text x="372" y="538.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Bait AI agent</text>
+<text x="372" y="561.2" font-size="15" xml:space="preserve" fill="#1e1e1e">behaves like a coding agent: reads</text>
+<text x="372" y="580.0" font-size="15" xml:space="preserve" fill="#1e1e1e">files, runs commands. Tasks: set up</text>
+<text x="372" y="598.8" font-size="15" xml:space="preserve" fill="#1e1e1e">the project, run the tests, summarize</text>
+<text x="372" y="617.5" font-size="15" xml:space="preserve" fill="#1e1e1e">it</text>
+<rect x="730" y="510" width="330" height="150" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2"/>
+<text x="742" y="538.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Nemotron Nano on Nebius</text>
+<text x="742" y="561.2" font-size="15" xml:space="preserve" fill="#1e1e1e">the agent's brain: it sends its</text>
+<text x="742" y="580.0" font-size="15" xml:space="preserve" fill="#1e1e1e">messages here and decides what to read</text>
+<text x="742" y="598.8" font-size="15" xml:space="preserve" fill="#1e1e1e">and run next</text>
+<rect x="360" y="695" width="700" height="115" rx="10" fill="#e5dbff" stroke="#6741d9" stroke-width="2"/>
+<text x="372" y="723.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Two end-of-run questions</text>
+<text x="372" y="746.2" font-size="15" xml:space="preserve" fill="#1e1e1e">"Did anything you read try to give YOU instructions? Quote it." and "Did you see code</text>
+<text x="372" y="765.0" font-size="15" xml:space="preserve" fill="#1e1e1e">that does something risky? Quote it." Quotes count only if found in the repo. A</text>
+<text x="372" y="783.8" font-size="15" xml:space="preserve" fill="#1e1e1e">warning, never proof.</text>
+<line x1="520" y1="510" x2="520" y2="472" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<text x="530" y="494.4" font-size="13" xml:space="preserve" fill="#1e1e1e">runs its commands inside</text>
+<line x1="680" y1="335" x2="728" y2="335" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<line x1="680" y1="585" x2="728" y2="585" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)" marker-start="url(#a)"/>
+<line x1="520" y1="660" x2="520" y2="693" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<line x1="300" y1="430" x2="358" y2="430" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <text x="1130" y="169.0" font-size="20" xml:space="preserve" fill="#1e1e1e">3  JUDGE THE EVIDENCE</text>
 <text x="1130" y="191.3" font-size="14" xml:space="preserve" fill="#1e1e1e">plain rules decide this; an AI opinion alone</text>
 <text x="1130" y="208.8" font-size="14" xml:space="preserve" fill="#1e1e1e">can never make a repo HIJACKED</text>
-<rect x="1130" y="225" width="340" height="160" rx="10" fill="#ffc9c9" stroke="#e03131" stroke-width="2"/>
+<rect x="1130" y="225" width="340" height="185" rx="10" fill="#ffc9c9" stroke="#e03131" stroke-width="2"/>
 <text x="1142" y="253.1" font-size="19" xml:space="preserve" fill="#1e1e1e">HIJACKED = proof</text>
-<text x="1142" y="276.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• a fake secret was seen leaving the</text>
-<text x="1142" y="295.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  sandbox, over HTTP or HTTPS</text>
-<text x="1142" y="313.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• a destructive command really ran (rm</text>
-<text x="1142" y="332.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  -rf, curl | sh)</text>
-<rect x="1130" y="405" width="340" height="150" rx="10" fill="#fff3bf" stroke="#f08c00" stroke-width="2"/>
-<text x="1142" y="433.1" font-size="19" xml:space="preserve" fill="#1e1e1e">SUSPICIOUS = warning</text>
-<text x="1142" y="456.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• the agent reported text aimed at it</text>
-<text x="1142" y="475.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  (we show the quote and line)</text>
-<text x="1142" y="493.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• an unexpected website was contacted</text>
-<text x="1142" y="512.5" font-size="15" xml:space="preserve" fill="#1e1e1e">No proof of a leak.</text>
-<rect x="1130" y="575" width="340" height="90" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
-<text x="1142" y="603.0" font-size="19" xml:space="preserve" fill="#1e1e1e">SAFE</text>
-<text x="1142" y="626.2" font-size="15" xml:space="preserve" fill="#1e1e1e">nothing leaked, nothing tried to</text>
-<text x="1142" y="645.0" font-size="15" xml:space="preserve" fill="#1e1e1e">instruct the agent</text>
-<line x1="1082" y1="300" x2="1128" y2="300" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<line x1="1082" y1="480" x2="1128" y2="480" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<line x1="1082" y1="620" x2="1128" y2="620" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<rect x="1130" y="688" width="340" height="150" rx="10" fill="#c5f6fa" stroke="#0c8599" stroke-width="2"/>
-<text x="1142" y="716.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Who is behind a host?</text>
-<text x="1142" y="739.2" font-size="15" xml:space="preserve" fill="#1e1e1e">Every flagged host is looked up on the</text>
-<text x="1142" y="758.0" font-size="15" xml:space="preserve" fill="#1e1e1e">public web: when the domain was</text>
-<text x="1142" y="776.8" font-size="15" xml:space="preserve" fill="#1e1e1e">registered (RDAP) and whether pages</text>
-<text x="1142" y="795.5" font-size="15" xml:space="preserve" fill="#1e1e1e">report it (Tavily). Only host names are</text>
-<text x="1142" y="814.2" font-size="15" xml:space="preserve" fill="#1e1e1e">sent.</text>
+<text x="1142" y="276.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• a fake secret or the fake machine</text>
+<text x="1142" y="295.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  name was seen leaving: in a request</text>
+<text x="1142" y="313.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  or a DNS name, plain, base64, hex or</text>
+<text x="1142" y="332.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  hashed</text>
+<text x="1142" y="351.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• a destructive command really ran (rm</text>
+<text x="1142" y="370.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  -rf, curl | sh)</text>
+<rect x="1130" y="425" width="340" height="160" rx="10" fill="#fff3bf" stroke="#f08c00" stroke-width="2"/>
+<text x="1142" y="453.1" font-size="19" xml:space="preserve" fill="#1e1e1e">SUSPICIOUS = warning</text>
+<text x="1142" y="476.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• the agent quoted text aimed at it, or</text>
+<text x="1142" y="495.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  risky code</text>
+<text x="1142" y="513.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• an unexpected website was contacted</text>
+<text x="1142" y="532.5" font-size="15" xml:space="preserve" fill="#1e1e1e">No proof of a leak.</text>
+<rect x="1130" y="600" width="340" height="80" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+<text x="1142" y="628.0" font-size="19" xml:space="preserve" fill="#1e1e1e">SAFE</text>
+<text x="1142" y="651.2" font-size="15" xml:space="preserve" fill="#1e1e1e">nothing leaked, nothing flagged</text>
+<line x1="1082" y1="310" x2="1128" y2="310" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<line x1="1082" y1="500" x2="1128" y2="500" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<line x1="1082" y1="640" x2="1128" y2="640" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<rect x="1130" y="698" width="340" height="140" rx="10" fill="#c5f6fa" stroke="#0c8599" stroke-width="2"/>
+<text x="1142" y="726.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Who is behind a host?</text>
+<text x="1142" y="749.2" font-size="15" xml:space="preserve" fill="#1e1e1e">Every flagged host is looked up on the</text>
+<text x="1142" y="768.0" font-size="15" xml:space="preserve" fill="#1e1e1e">public web: when the domain was</text>
+<text x="1142" y="786.8" font-size="15" xml:space="preserve" fill="#1e1e1e">registered (RDAP) and whether pages</text>
+<text x="1142" y="805.5" font-size="15" xml:space="preserve" fill="#1e1e1e">report it (Tavily). Only host names are</text>
+<text x="1142" y="824.2" font-size="15" xml:space="preserve" fill="#1e1e1e">sent.</text>
 <text x="1530" y="169.0" font-size="20" xml:space="preserve" fill="#1e1e1e">4  PINPOINT THE LINE</text>
-<text x="1530" y="191.3" font-size="14" xml:space="preserve" fill="#1e1e1e">only when HIJACKED</text>
-<rect x="1530" y="225" width="340" height="235" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
-<text x="1542" y="253.1" font-size="19" xml:space="preserve" fill="#1e1e1e">Replay and shrink</text>
-<text x="1542" y="276.2" font-size="15" xml:space="preserve" fill="#1e1e1e">Re-run the agent's recorded commands on</text>
-<text x="1542" y="295.0" font-size="15" xml:space="preserve" fill="#1e1e1e">copies of the repo with files, then</text>
-<text x="1542" y="313.8" font-size="15" xml:space="preserve" fill="#1e1e1e">lines, blanked out. Keep shrinking</text>
-<text x="1542" y="332.5" font-size="15" xml:space="preserve" fill="#1e1e1e">until only the lines that still cause</text>
-<text x="1542" y="351.2" font-size="15" xml:space="preserve" fill="#1e1e1e">the leak remain (delta debugging). No</text>
-<text x="1542" y="370.0" font-size="15" xml:space="preserve" fill="#1e1e1e">AI calls needed.</text>
-<text x="1542" y="388.8" font-size="15" xml:space="preserve" fill="#1e1e1e">Result, for example: setup.py:10-11</text>
-<line x1="1472" y1="300" x2="1528" y2="300" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<text x="1530" y="501.0" font-size="20" xml:space="preserve" fill="#1e1e1e">5  OUTPUT</text>
-<rect x="1530" y="515" width="340" height="305" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
-<text x="1542" y="543.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Works today</text>
-<text x="1542" y="566.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• terminal report with file:line</text>
-<text x="1542" y="585.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• JSON file (--json)</text>
-<text x="1542" y="603.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• exit code 1 on HIJACKED, to gate CI</text>
-<text x="1542" y="622.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• --clean: a copy without the culprit</text>
-<text x="1542" y="641.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  code, scanned again to prove it is</text>
-<text x="1542" y="660.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  SAFE</text>
-<text x="1542" y="678.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• GitHub Action + SARIF: warnings on</text>
-<text x="1542" y="697.5" font-size="15" xml:space="preserve" fill="#1e1e1e">  the exact lines of a pull request;</text>
-<text x="1542" y="716.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  the check fails on HIJACKED</text>
-<text x="1542" y="735.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• local web page: scan a pasted GitHub</text>
-<text x="1542" y="753.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  URL, browse saved results</text>
-<line x1="1700" y1="462" x2="1700" y2="513" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<line x1="1472" y1="480" x2="1528" y2="560" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<line x1="1472" y1="620" x2="1528" y2="610" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
-<rect x="60" y="845" width="1010" height="95" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2"/>
-<text x="72" y="873.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Why not just read the repo?</text>
-<text x="72" y="897.2" font-size="15" xml:space="preserve" fill="#1e1e1e">A static scanner (or asking ChatGPT to read it) caught 1 of 3 attacks in our first test. It cannot see instructions hidden as</text>
-<text x="72" y="916.0" font-size="15" xml:space="preserve" fill="#1e1e1e">base64 or a payload downloaded at runtime. Agent Trap runs the repo and sees what actually happens.</text>
-<text x="1130" y="871.1" font-size="17" xml:space="preserve" fill="#1e1e1e">Legend</text>
-<text x="1130" y="896.3" font-size="14" xml:space="preserve" fill="#1e1e1e">red = proof</text>
-<text x="1130" y="913.8" font-size="14" xml:space="preserve" fill="#1e1e1e">yellow = warning</text>
-<text x="1130" y="931.3" font-size="14" xml:space="preserve" fill="#1e1e1e">green = safe, or works today</text>
-<text x="1130" y="948.8" font-size="14" xml:space="preserve" fill="#1e1e1e">dashed outline = the locked room</text>
+<text x="1530" y="191.3" font-size="14" xml:space="preserve" fill="#1e1e1e">only when HIJACKED; the verdict is shown first</text>
+<rect x="1530" y="205" width="340" height="165" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
+<text x="1542" y="233.1" font-size="19" xml:space="preserve" fill="#1e1e1e">Replay and shrink</text>
+<text x="1542" y="256.2" font-size="15" xml:space="preserve" fill="#1e1e1e">When code steals: re-run the recorded</text>
+<text x="1542" y="275.0" font-size="15" xml:space="preserve" fill="#1e1e1e">commands on copies of the repo with</text>
+<text x="1542" y="293.8" font-size="15" xml:space="preserve" fill="#1e1e1e">files, then lines, blanked out, several</text>
+<text x="1542" y="312.5" font-size="15" xml:space="preserve" fill="#1e1e1e">at once, until only the lines that</text>
+<text x="1542" y="331.2" font-size="15" xml:space="preserve" fill="#1e1e1e">still cause the leak remain. No AI</text>
+<text x="1542" y="350.0" font-size="15" xml:space="preserve" fill="#1e1e1e">calls.</text>
+<rect x="1530" y="380" width="340" height="150" rx="10" fill="#e5dbff" stroke="#6741d9" stroke-width="2"/>
+<text x="1542" y="408.1" font-size="19" xml:space="preserve" fill="#1e1e1e">Ask the model again</text>
+<text x="1542" y="431.2" font-size="15" xml:space="preserve" fill="#1e1e1e">When the agent was tricked: remove</text>
+<text x="1542" y="450.0" font-size="15" xml:space="preserve" fill="#1e1e1e">candidate lines and ask Nemotron again,</text>
+<text x="1542" y="468.8" font-size="15" xml:space="preserve" fill="#1e1e1e">12 times each, until the few lines that</text>
+<text x="1542" y="487.5" font-size="15" xml:space="preserve" fill="#1e1e1e">still make it leak remain.</text>
+<text x="1530" y="550.4" font-size="13" xml:space="preserve" fill="#1e1e1e">Out of time? lines found by text search, marked</text>
+<text x="1530" y="566.6" font-size="13" xml:space="preserve" fill="#1e1e1e">unconfirmed</text>
+<line x1="1472" y1="310" x2="1528" y2="290" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<text x="1530" y="594.0" font-size="20" xml:space="preserve" fill="#1e1e1e">5  OUTPUT</text>
+<rect x="1530" y="605" width="340" height="233" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+<text x="1542" y="633.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Works today</text>
+<text x="1542" y="656.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• terminal report with file:line, exit</text>
+<text x="1542" y="675.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  code 1 on HIJACKED</text>
+<text x="1542" y="693.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• JSON results, batch summary</text>
+<text x="1542" y="712.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• --clean: a copy without the culprit</text>
+<text x="1542" y="731.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  code, scanned again</text>
+<text x="1542" y="750.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• GitHub Action + SARIF: warnings on</text>
+<text x="1542" y="768.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  the exact lines of a pull request</text>
+<text x="1542" y="787.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• local web page: scan a GitHub URL,</text>
+<text x="1542" y="806.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  browse saved results</text>
+<line x1="1472" y1="500" x2="1528" y2="660" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<line x1="1472" y1="640" x2="1528" y2="700" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
+<rect x="60" y="865" width="1010" height="110" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2"/>
+<text x="72" y="893.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Why not just read the repo?</text>
+<text x="72" y="917.2" font-size="15" xml:space="preserve" fill="#1e1e1e">On 11 built attacks, Agent Trap flagged 11 and a plain code scanner 2: instructions hidden as base64 or fetched at run time</text>
+<text x="72" y="936.0" font-size="15" xml:space="preserve" fill="#1e1e1e">can't be seen by reading. On real malware from PyPI (Datadog dataset), 4 packages were caught HIJACKED, one sending the fake</text>
+<text x="72" y="954.8" font-size="15" xml:space="preserve" fill="#1e1e1e">API keys to webhook.site, with the exact setup.py lines.</text>
+<text x="1130" y="881.1" font-size="17" xml:space="preserve" fill="#1e1e1e">Legend</text>
+<text x="1130" y="906.3" font-size="14" xml:space="preserve" fill="#1e1e1e">red = proof   yellow = warning   green = safe, or works today</text>
+<text x="1130" y="923.8" font-size="14" xml:space="preserve" fill="#1e1e1e">purple = uses the AI model   dashed outline = the locked room</text>
 </svg>

@@ -250,3 +250,18 @@ def test_a_search_that_runs_out_of_time_stops_instead_of_detonating_again(monkey
     run = scan.replay_runner([], {}, deadline)
     with pytest.raises(scan.OutOfTime):
         run({"setup.py": "x"})
+
+
+def test_text_search_finds_the_lines_that_name_the_destination_and_read_the_identity():
+    from agenttrap.localizer import UNCONFIRMED
+
+    files = {
+        "setup.py": "import socket\nh = socket.gethostname()\nurl = 'http://p1s.uk/x'\nprint('hi')",
+        "README.md": "nothing here",
+    }
+    found = scan.textual_suspects(files, "http://p1s.uk/x?h=1", "$HOSTNAME")
+    assert [(c.file, c.line, c.tag) for c in found] == [
+        ("setup.py", 2, UNCONFIRMED),
+        ("setup.py", 3, UNCONFIRMED),
+    ]
+    assert scan.textual_suspects(files, "http://other.test/", "$AWS") == []

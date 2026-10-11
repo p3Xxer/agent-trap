@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from typing import Literal
 from urllib.parse import urlparse
 
-from agenttrap.canary import HOSTNAME, USERNAME
-from agenttrap.localizer import Culprit
+from agenttrap.canary import HOSTNAME, IDENTITY_WORDS, USERNAME
+from agenttrap.localizer import UNCONFIRMED, Culprit
 from agenttrap.scan import ScanResult, base_name
 
 Level = Literal["error", "warning", "note"]
@@ -77,12 +77,6 @@ class Finding:
         return RULES[self.rule][0]
 
 
-# Other ways code names the machine's identity, which never contains the word "HOSTNAME" or "USER"
-# in the sandbox's random values.
-_IDENTITY_WORDS = {
-    "$HOSTNAME": ("hostname", "gethostname", "platform.node", "uname", "getfqdn"),
-    "$USER": ("user", "getuser", "logname", "whoami"),
-}
 _SCAFFOLDING = re.compile(
     r"import\s.*|from\s+\S+\s+import\s.*|try:|except\b.*:|finally:|else:|pass|[)\]}]+,?"
 )
@@ -98,7 +92,7 @@ def split_culprits(
     scaffolding (imports, try/except, closing brackets) is left out of the supporting lines.
     """
     host = urlparse(destination).hostname or destination
-    words = _IDENTITY_WORDS.get(canary, ())
+    words = IDENTITY_WORDS.get(canary, ())
     markers = [m for m in (host, canary.removeprefix("~/").removeprefix("$"), *words) if m]
     key = [c for c in culprits if any(m.lower() in c.text.lower() for m in markers)]
     if not key:
@@ -193,6 +187,11 @@ def _leak_message(canary: str, destination: str, key: list[Culprit], why_not: st
         f"While an AI agent set up and tested this repository, {_what(canary)} "
         f"was sent to {destination}."
     )
+    if any(c.tag == UNCONFIRMED for c in key):
+        return message + (
+            " These lines mention the address or read the machine's identity (found by searching "
+            "the code; the full re-run search ran out of time, so this is not confirmed)."
+        )
     if key:
         return message + " These lines make that happen."
     return message + f" Agent Trap could not pinpoint the line ({why_not})."

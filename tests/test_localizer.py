@@ -91,3 +91,47 @@ def test_tag(line, expected):
 
 def test_culprit_is_hashable():
     assert hash(Culprit("a", 1, "x", "plaintext"))
+
+
+# ---- testing several versions at the same time ------------------------------
+
+
+def test_testing_in_parallel_finds_the_same_culprits_as_one_at_a_time():
+    needed = {3, 11}
+
+    def fails(subset):
+        return needed <= set(subset)
+
+    assert sorted(ddmin(range(16), fails, workers=4)) == sorted(ddmin(range(16), fails))
+
+
+def test_parallel_search_really_runs_tests_at_the_same_time():
+    import threading
+    import time
+
+    running, peak, lock = 0, 0, threading.Lock()
+
+    def fails(subset):
+        nonlocal running, peak
+        with lock:
+            running += 1
+            peak = max(peak, running)
+        time.sleep(0.05)
+        with lock:
+            running -= 1
+        return 5 in subset
+
+    assert ddmin(range(16), fails, workers=4) == [5]
+    assert peak > 1
+
+
+def test_parallel_search_never_tests_the_same_subset_twice():
+    seen, lock = [], __import__("threading").Lock()
+
+    def fails(subset):
+        with lock:
+            seen.append(frozenset(subset))
+        return 5 in subset
+
+    ddmin(range(16), fails, workers=4)
+    assert len(seen) == len(set(seen))

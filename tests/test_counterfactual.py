@@ -291,7 +291,7 @@ def test_code_that_steals_is_still_found_by_replaying_commands(monkeypatch):
         return {CANARY} if version.get("setup.py") else set()
 
     monkeypatch.setattr(scan, "replay_runner", lambda steps, served, deadline=None: runner)
-    monkeypatch.setattr(scan, "localize", lambda f, r, c: ["found by replay"])
+    monkeypatch.setattr(scan, "localize", lambda f, r, c, workers=1: ["found by replay"])
     monkeypatch.setattr(scan, "localize_by_asking", lambda *a, **k: calls.append(a) or ([], ""))
     assert scan.localize_leak(files, run_with_leak(make_trace()), CANARY, {}, llm=object()) == (
         ["found by replay"],

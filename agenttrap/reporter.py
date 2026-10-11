@@ -21,6 +21,7 @@ NOTES = {
     "base64": "hidden as base64: a text scanner sees only random characters",
     "runtime-fetch": "network call made by the repo's own code while it runs",
     "unicode": "hidden with invisible unicode characters",
+    "unconfirmed": "found by searching the code for the address; not confirmed by re-running",
     "agent-instruction": "an AI agent obeyed this text; on its own it was enough",
 }
 

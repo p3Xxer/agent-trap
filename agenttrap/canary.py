@@ -13,6 +13,11 @@ from pathlib import Path
 
 HOSTNAME = "$HOSTNAME"  # canary names of the machine's identity; the sandbox is started with it
 USERNAME = "$USER"
+# Other ways code names the machine's identity (the random values never appear in the code itself)
+IDENTITY_WORDS = {
+    HOSTNAME: ("hostname", "gethostname", "platform.node", "uname", "getfqdn"),
+    USERNAME: ("getuser", "whoami", "logname", '"user"', "'user'", "username"),
+}
 
 _UPPER_DIGITS = string.ascii_uppercase + string.digits
 _ALNUM = string.ascii_letters + string.digits

@@ -35,13 +35,14 @@ from agenttrap.agent import (
     review_code,
     run_agent,
 )
+from agenttrap.canary import IDENTITY_WORDS
 from agenttrap.cleaner import Removal, clean, write_copy
 from agenttrap.counterfactual import localize_by_asking
 from agenttrap.detector import Flag, Leak, Request, Verdict, command_flags, find_leaks, judge
 from agenttrap.egress import Egress, Observed, contact_flags, unexpected_hosts
 from agenttrap.intel import HostIntel
 from agenttrap.llm import LLM
-from agenttrap.localizer import Culprit, Files, Runner, localize
+from agenttrap.localizer import UNCONFIRMED, Culprit, Files, Runner, localize
 from agenttrap.sandbox import Sandbox
 
 ALLOWED_HOSTS = {"pypi.org", "files.pythonhosted.org", "registry.npmjs.org"}
@@ -240,6 +241,8 @@ class OutOfTime(Exception):
     """The search for the culprit used up its time."""
 
 
+MAX_SUSPECTS = 8
+LOCALIZE_WORKERS = 3  # detonations at once; each needs about 2 GB of the Docker machine's memory
 LOCALIZE_SECONDS = 420  # each detonation takes seconds, and a search needs dozens of them
 
 
@@ -287,6 +290,21 @@ def _replay(steps: list, box: Sandbox) -> None:
                 curl_via(box)(request)
 
 
+def textual_suspects(files: Mapping[str, str], destination: str, canary_name: str) -> list[Culprit]:
+    """Lines that name the place the secret went, or read the machine's identity, found by plain
+    text search. A quick answer for when the exact search takes too long; it is not confirmed by
+    re-running, and is marked so."""
+    host = urlparse(destination).hostname or ""
+    words = IDENTITY_WORDS.get(canary_name, ())
+    found = []
+    for path, text in files.items():
+        for number, line in enumerate(text.split("\n"), 1):
+            lowered = line.lower()
+            if (host and host in lowered) or any(word in lowered for word in words):
+                found.append(Culprit(path, number, line, UNCONFIRMED))
+    return found[:MAX_SUSPECTS]
+
+
 def localize_leak(
     files: Mapping[str, str],
     run: RunResult,
@@ -305,8 +323,12 @@ def localize_leak(
     runner = replay_runner(run.trace.steps, served, time.time() + LOCALIZE_SECONDS)
     try:
         if canary_name in runner(files) and canary_name not in runner({n: "" for n in files}):
-            return localize(files, runner, canary_name), ""
+            return localize(files, runner, canary_name, workers=LOCALIZE_WORKERS), ""
     except OutOfTime:
+        leak = next(x for x in run.leaks if base_name(x.canary) == canary_name)
+        found = textual_suspects(files, leak.destination, canary_name)
+        if found:
+            return found, ""
         return [], f"the search for the culprit line stopped after {LOCALIZE_SECONDS} seconds"
     if llm is None:
         return [], "the leak does not depend on the repository's code when replaying the commands"

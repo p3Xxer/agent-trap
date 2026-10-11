@@ -12,7 +12,8 @@ from __future__ import annotations
 import base64
 import binascii
 import re
-from collections.abc import Callable, Hashable, Mapping, Sequence
+from collections.abc import Callable, Hashable, Iterator, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import TypeVar
 
@@ -30,13 +31,25 @@ class Culprit:
     tag: str  # plaintext | base64 | runtime-fetch | unicode
 
 
-def ddmin(items: Sequence[T], fails: Callable[[Sequence[T]], bool]) -> list[T]:
+def ddmin(items: Sequence[T], fails: Callable[[Sequence[T]], bool], workers: int = 1) -> list[T]:
     """Zeller's ddmin: a minimal subset of `items` for which `fails` is still true.
 
     `fails(items)` must be true. Each distinct subset is tested at most once, since every test
-    may be a costly agent run.
+    may be a costly agent run. With `workers` > 1 the candidates of one round are tested at the
+    same time; the first one in order that still fails is taken, exactly as in the sequential
+    search, so the answer is the same and only the waiting is shorter.
     """
     seen: dict[frozenset[T], bool] = {}
+
+    def first_failing(candidates: Iterator[list[T]]) -> list[T] | None:
+        if workers <= 1:
+            return next((c for c in candidates if test(c)), None)
+        found = list(candidates)
+        todo = {frozenset(c): c for c in found if frozenset(c) not in seen}
+        with ThreadPoolExecutor(workers) as pool:
+            for key, result in zip(todo, pool.map(fails, todo.values()), strict=True):
+                seen[key] = result
+        return next((c for c in found if seen[frozenset(c)]), None)
 
     def test(subset: Sequence[T]) -> bool:
         key = frozenset(subset)
@@ -47,12 +60,12 @@ def ddmin(items: Sequence[T], fails: Callable[[Sequence[T]], bool]) -> list[T]:
     items, n = list(items), 2
     while len(items) >= 2:
         chunks = _split(items, n)
-        reduced = next((c for c in chunks if test(c)), None)
+        reduced = first_failing(iter(chunks))
         if reduced is not None:
             items, n = reduced, 2
             continue
         complements = ([x for c in chunks if c is not chunk for x in c] for chunk in chunks)
-        reduced = next((c for c in complements if test(c)), None)
+        reduced = first_failing(complements)
         if reduced is not None:
             items, n = reduced, max(n - 1, 2)
             continue
@@ -82,7 +95,11 @@ def repeat(run: Runner, k: int) -> Runner:
 
 
 def localize(
-    files: Files, run: Runner, canary: str, candidates: Sequence[str] | None = None
+    files: Files,
+    run: Runner,
+    canary: str,
+    candidates: Sequence[str] | None = None,
+    workers: int = 1,
 ) -> list[Culprit]:
     """Culprit lines for one leaked canary: ddmin over files, then over lines in each culprit.
 
@@ -101,13 +118,13 @@ def localize(
         blanked = set(candidates) - set(kept)
         return {f: "" if f in blanked else text for f, text in files.items()}
 
-    culprit_files = ddmin(candidates, lambda kept: leaks(keep_files(kept)))
+    culprit_files = ddmin(candidates, lambda kept: leaks(keep_files(kept)), workers)
     base = keep_files(culprit_files)
-    return [c for path in culprit_files for c in _localize_lines(base, path, leaks)]
+    return [c for path in culprit_files for c in _localize_lines(base, path, leaks, workers)]
 
 
 def _localize_lines(
-    base: dict[str, str], path: str, leaks: Callable[[Files], bool]
+    base: dict[str, str], path: str, leaks: Callable[[Files], bool], workers: int = 1
 ) -> list[Culprit]:
     """ddmin over the non-blank lines of one culprit file, with the other culprits intact."""
     lines = base[path].splitlines()
@@ -118,13 +135,16 @@ def _localize_lines(
         return {**base, path: text}
 
     candidates = [i for i, line in enumerate(lines) if line.strip()]
-    kept = ddmin(candidates, lambda subset: leaks(keep_lines(subset)))
+    kept = ddmin(candidates, lambda subset: leaks(keep_lines(subset)), workers)
     return [Culprit(path, i + 1, lines[i], tag(lines[i])) for i in kept]
 
 
 _BASE64 = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
 _FETCH = re.compile(r"urlopen|requests\.(get|post)|httpx\.|\bcurl\b|\bwget\b|\bfetch\(")
 _INVISIBLE = re.compile("[​-‏⁠-⁤﻿\U000e0000-\U000e007f]")
+
+
+UNCONFIRMED = "unconfirmed"  # found by text search, not by re-running the repository
 
 
 def tag(line: str) -> str:

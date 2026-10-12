@@ -138,6 +138,24 @@ check and gets warnings on the exact lines. See [docs/github-action.md](docs/git
     nebius-api-key: ${{ secrets.NEBIUS_API_KEY }}
 ```
 
+## Results
+
+| Test | What we ran | Result |
+| --- | --- | --- |
+| [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (HIJACKED)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. The other 6 flagged SUSPICIOUS; 1 SAFE |
+| [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **2/11** for a tool that only reads the code. All 5 code attacks proven with the exact file and line |
+| [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called HIJACKED |
+| Our clean test repos | 8 harmless repos written to look risky | 0/8 called HIJACKED; 1 flagged SUSPICIOUS (it calls its own web service) |
+
+A scan takes 1 to 2 minutes and costs under two cents of model use.
+
+**Try it on a real link:** [p3Xxer/malicious-repo-agent-trap](https://github.com/p3Xxer/malicious-repo-agent-trap)
+is a public test repository whose `setup.py` steals keys during install (aimed at a name that
+cannot exist, so it is harmless elsewhere). Paste it into the web page and it comes back HIJACKED
+with the lines.
+
+![How one scan works](docs/architecture.svg)
+
 ## Evaluation
 
 `python eval/run_eval.py` scans every repository in `fixtures/manifest.json` (11 attack repos and

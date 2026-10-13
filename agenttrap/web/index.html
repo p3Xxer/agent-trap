@@ -386,7 +386,7 @@ function renderList() {
     },
       h("span", { class: `vi-${item.status}` }, icon(VERDICT_ICON[item.status] === "check" ? "check" : VERDICT_ICON[item.status] || "dot", 20)),
       h("span", { class: "item-body" },
-        h("span", { class: "name" }, item.name),
+        h("span", { class: "name" }, friendlyName(item.name)),
         h("span", { class: "meta" }, relTime(item.created)))))));
 }
 
@@ -418,7 +418,21 @@ function lineLink(file, line) {
   return h("button", { type: "button", class: "num", title: `Jump to line ${line}`, onclick: () => jumpTo(file, line) }, line);
 }
 
-function chip(location) { return h("span", { class: "chip" }, `${location.file}:${location.line}`); }
+// Older results kept the temporary folder a scan was unpacked into; it means nothing to a reader.
+const cleanPath = (path) => String(path)
+  .replace(/^(?:private\/)?(?:tmp|var\/folders\/[^/]+\/[^/]+\/T)\/tmp[^/]+\/(?:[^/]+\/)?/, "");
+// "batch/s3transfer-sl-0.12.5/s3transfer_sl-0.12.5" -> "s3transfer_sl-0.12.5"
+const displayName = (name) => String(name || "").replace(/^batch\//, "").split("/").slice(-1)[0] || String(name || "");
+// Our own test repositories are saved as "attacks/x" or just "x": show what they do instead.
+const friendlyName = (name) => {
+  const n = String(name || "");
+  const id = Object.keys(DEMO_LABELS).find((k) => k === n || k.endsWith(`/${n}`));
+  if (id) return `Test repo: ${DEMO_LABELS[id]}`;
+  return looksLikeRepo(n) ? n : displayName(n);
+};
+const looksLikeRepo = (name) => /^[\w.-]+\/[\w.-]+$/.test(String(name)) && !String(name).startsWith("batch/");
+
+function chip(location) { return h("span", { class: "chip" }, `${cleanPath(location.file)}:${location.line}`); }
 
 function codeBlock(file, excerpt, hits, related) {
   const rows = excerpt.lines.map((text, index) => {
@@ -428,7 +442,7 @@ function codeBlock(file, excerpt, hits, related) {
       h("span", { class: "no" }, number), h("span", { class: "src" }, text || " "));
   });
   const more = excerpt.start + excerpt.lines.length - 1 < excerpt.total_lines;
-  return h("div", { class: "code" }, h("div", { class: "code-inner" }, h("div", { class: "file" }, file), rows,
+  return h("div", { class: "code" }, h("div", { class: "code-inner" }, h("div", { class: "file" }, cleanPath(file)), rows,
     more ? h("div", { class: "file small" }, "… rest of the file not shown") : null));
 }
 
@@ -495,7 +509,7 @@ function shortPath(text) {
   const at = String(text).indexOf(":");
   const path = at < 0 ? String(text) : String(text).slice(0, at);
   const rest = at < 0 ? "" : String(text).slice(at);
-  return path.split("/").slice(-2).join("/") + rest;
+  return cleanPath(path).split("/").slice(-2).join("/") + rest;
 }
 
 // up to three short reasons a SUSPICIOUS result is suspicious
@@ -559,14 +573,18 @@ function verdictCard(doc, groups, findings) {
   body.append(h("div", { class: "v-repo" },
     /^https:\/\//i.test(source)
       ? h("a", { class: "source", href: source, target: "_blank", rel: "noopener noreferrer" }, doc.name)
-      : h("span", { class: "repo-name" }, doc.name),
+      : h("span", { class: "repo-name" }, friendlyName(doc.name)),
     h("span", { class: `badge ${doc.status}` }, doc.status)));
 
   if (groups.length) {
     for (const g of groups) body.append(h("p", { class: "sentence" }, leakSentence(g)));
-    body.append(h("p", { class: "note" }, "These were fake keys we planted — nothing real was leaked."));
+    const sent = groups.flatMap((g) => g.secrets || []);
+    const identity = sent.some((x) => /machine name|user name/.test(x));
+    const keys = sent.some((x) => !/machine name|user name/.test(x));
+    const what = keys && identity ? "fake keys and a fake machine identity" : keys ? "fake keys" : "a fake machine identity";
+    body.append(h("p", { class: "note" }, `${keys ? "These were" : "This was"} ${what} we planted — nothing real was leaked.`));
   } else if (doc.status === "SAFE") {
-    body.append(h("p", { class: "sentence" }, "We installed it, ran its tests and let an AI agent work on it. Nothing it did sent a planted key out of the sandbox."));
+    body.append(h("p", { class: "sentence" }, "We installed it, ran its tests and let an AI agent work on it. No planted key left the sandbox."));
     const base = doc.baseline;
     if (base && base.installed === false) body.append(h("p", { class: "note" }, "Note: it did not install in the sandbox, so less of its code ran."));
     if (base && "tests" in base && !base.tests) body.append(h("p", { class: "note" }, "Note: its tests could not run in the sandbox."));
@@ -581,7 +599,7 @@ function verdictCard(doc, groups, findings) {
     body.append(h("p", { class: "sentence" }, f.message));
 
   const chips = [];
-  if (doc.status !== "SAFE" && doc.static_scan && !doc.static_scan.count)
+  if (doc.status === "HIJACKED" && doc.static_scan && !doc.static_scan.count)
     chips.push(h("span", { class: "tag", title: "A scanner that only reads the code found nothing here" }, "Code scanners would miss this"));
   if (chips.length) body.append(h("div", { class: "chips" }, chips));
 
@@ -612,10 +630,15 @@ function whereCard(doc, groups, findings) {
     if (!byFile.has(l.file)) byFile.set(l.file, new Set());
     byFile.get(l.file).add(l.line);
   }
-  const card = h("div", { class: "card" }, h("h2", { class: "section" }, "Where it happens"),
-    h("div", { class: "legend" }, h("span", {}, h("span", { class: "key hit" }), "these lines steal the secrets")));
+  // Red means proven: a key was seen leaving. Without a leak these are only the AI agent's opinion.
+  const proven = groups.length > 0;
+  const card = h("div", { class: "card" },
+    h("h2", { class: "section" }, proven ? "Where it happens" : "Code the AI agent flagged"),
+    h("div", { class: "legend" }, proven
+      ? h("span", {}, h("span", { class: "key hit" }), "these lines steal the secrets")
+      : h("span", {}, h("span", { class: "key rel" }), "flagged by the AI agent: a warning, not proof")));
   for (const [file, numbers] of byFile)
-    card.append(h("div", { class: "file-row" }, h("span", { class: "filename" }, file),
+    card.append(h("div", { class: "file-row" }, h("span", { class: "filename" }, cleanPath(file)),
       [...numbers].sort((a, b) => a - b).map((n) => lineLink(file, n))));
   if (lineGroups.some((g) => g.unconfirmed))
     card.append(h("p", { class: "muted small" }, "Found by searching the code; not double-checked by re-running it."));
@@ -628,7 +651,7 @@ function whereCard(doc, groups, findings) {
   for (const [file, excerpt] of files) {
     const hits = linesOf(coloured, file, "locations");
     for (const g of lineGroups) for (const l of g.lines || []) if (l.file === file) hits.add(l.line);
-    card.append(codeBlock(file, excerpt, hits, new Set()));  // only the stealing lines are marked
+    card.append(proven ? codeBlock(file, excerpt, hits, new Set()) : codeBlock(file, excerpt, new Set(), hits));
   }
   const check = fixCheck(doc);
   if (check) card.append(check);
@@ -642,11 +665,18 @@ function hostRows(doc) {
     if (UNLOOKABLE.test(host)) continue;
     const info = (doc.host_intel || {})[host];
     const parts = [];
-    if (info?.registered) parts.push(`registered ${info.registered} (${info.age_days} days ago)`);
+    if (info?.registered) parts.push(`domain registered ${registeredWhen(info.registered, info.age_days)}`);
     if (info?.reports?.length) parts.push(`public reports: ${info.reports.map((r) => `${r.title} (${r.url})`).join("; ")}`);
     if (parts.length) rows.push(h("li", {}, h("strong", {}, `Who is behind ${host}`), h("br"), parts.join(" · ")));
   }
   return rows;
+}
+
+function registeredWhen(date, days) {
+  const month = new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const n = Number(days);
+  const ago = !Number.isFinite(n) ? "" : n < 60 ? `${n} days ago` : n < 730 ? `${Math.round(n / 30)} months ago` : `${Math.round(n / 365)} years ago`;
+  return ago ? `in ${month} (${ago})` : `in ${month}`;
 }
 
 function detailsBlock(doc) {
@@ -654,9 +684,8 @@ function detailsBlock(doc) {
 
   const noticed = [
     ...(doc.injections || []).map((item) => h("li", {}, item.where ? chip(splitWhere(item.where)) : null,
-      `— asks the AI agent to: ${item.asked_for}`)),
-    ...(doc.concerns || []).map((item) => h("li", {}, chip(splitWhere(item.where)), `— ${item.behavior}`,
-      item.quote ? h("span", { class: "mono1" }, String(item.quote).split("\n")[0].slice(0, 120)) : null)),
+      ` — asks the AI agent to: ${item.asked_for}`)),
+    ...(doc.concerns || []).map((item) => h("li", {}, chip(splitWhere(item.where)), ` — ${item.behavior}`)),
   ];
   if (noticed.length)
     body.append(h("h3", {}, "What the AI agent noticed"),
@@ -666,7 +695,7 @@ function detailsBlock(doc) {
   if (hosts.length) body.append(h("h3", {}, "Outside servers"), h("ul", {}, hosts));
 
   const flagged = doc.static_scan?.count ?? 0;
-  if (doc.static_scan) {
+  if (doc.static_scan && flagged) {
     body.append(h("h3", {}, "Code scanners"),
       h("p", {}, flagged ? `A scanner that only reads the code flagged ${flagged} line${flagged === 1 ? "" : "s"}:`
                           : "A scanner that only reads the code found nothing."),
@@ -704,7 +733,30 @@ function renderStatic() {
     h("h3", {}, title), h("p", {}, text))));
 }
 
+// What each of our test repositories does, in words a visitor understands.
+const DEMO_LABELS = {
+  "attacks/install_time_exfil": "Steals the AWS key when installed",
+  "attacks/install_time_exfil_https": "Steals the AWS key when installed (over HTTPS)",
+  "attacks/env_secret_exfil": "Steals API keys from the environment",
+  "attacks/import_time_exfil": "Steals the AWS key when imported",
+  "attacks/test_time_exfil": "Steals the AWS key when its tests run",
+  "attacks/sample_multi": "Hides instructions in base64 and downloads",
+  "attacks/agentdojo/direct": "README asks the AI to send the key",
+  "attacks/agentdojo/ignore_previous": "README: “ignore your instructions”",
+  "attacks/agentdojo/system_message": "README fakes a system message",
+  "attacks/agentdojo/important_instructions": "README: “important instructions”",
+  "attacks/agentdojo/injecagent": "README: “ignore all previous instructions”",
+  "benign/invoice_clean": "A plain invoice library",
+  "benign/multi_module": "A library with many modules",
+  "benign/reads_env": "Reads settings from the environment",
+  "benign/reads_home_config": "Reads its config from your home folder",
+  "benign/contacts_package_index": "Looks up packages on PyPI",
+  "benign/uses_localhost": "Talks to a server on localhost",
+  "benign/security_docs": "Docs that talk about stealing keys",
+  "benign/fetches_exchange_rates": "Calls its own web service",
+};
 const demoLabel = (id) => {
+  if (DEMO_LABELS[id]) return DEMO_LABELS[id];
   const text = id.replace(/^(attacks|benign)\//, "").replace(/[_/]+/g, " ").trim();
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
@@ -735,7 +787,7 @@ function renderHero() {
     h("div", { class: "try" }, h("span", {}, "Try:"),
       quick("A repo that steals keys", "#ff6b70", "https://github.com/p3Xxer/malicious-repo-agent-trap"),
       quick("A normal library", "#4fdc8f", "https://github.com/pallets/markupsafe")),
-    h("p", { class: "helper" }, `Public GitHub repositories up to ${state.limits?.max_repo_mb ?? 50} MB · about 2 minutes · nothing runs on your computer`));
+    h("p", { class: "helper" }, `Public GitHub repositories up to ${state.limits?.max_repo_mb ?? 50} MB · about 2 minutes · the code only ever runs inside the sandbox`));
 }
 
 function renderDemos() {
@@ -822,7 +874,7 @@ async function init() {
   state.live = !!config?.live;
   state.demos = config?.demos || [];
   state.limits = config?.limits || null;
-  $("mode").textContent = state.live ? "live on this machine" : "saved results only";
+  $("mode").textContent = state.live ? "Running on your computer" : "Saved results only";
   $("mode").classList.toggle("live", state.live);
   state.results = (await getJson("api/results")) || (await getJson("results/index.json")) || [];
   renderList();

@@ -445,11 +445,33 @@ function listOf(items) {
 
 const prettySecret = (name) => String(name).replace(/^the (?:sandbox's )?fake\s+/i, "");
 
-// Old saved results have no leak_groups: fall back to the leak findings, each with its own message.
+// Canary names as older saved results wrote them, and how a person would say them.
+const PLAIN_SECRETS = {
+  "~/.aws/credentials": "AWS key", "~/.ssh/id_rsa": "SSH key", "~/.config/gh/hosts.yml": "GitHub token",
+  "~/.npmrc": "npm token", "$OPENAI_API_KEY": "OpenAI key", "$ANTHROPIC_API_KEY": "Anthropic key",
+  "$HOSTNAME": "machine name", "$USER": "user name",
+};
+
+// Old saved results have no leak_groups: rebuild one group per destination from the leak findings'
+// messages, so they read like new results instead of one sentence per secret.
 function leakGroups(doc) {
   if (Array.isArray(doc.leak_groups)) return doc.leak_groups;
-  return (doc.findings || []).filter((f) => f.rule === "agent-trap/secret-leak")
-    .map((f) => ({ message: f.message, lines: f.locations || [] }));
+  const groups = new Map();
+  for (const f of (doc.findings || []).filter((x) => x.rule === "agent-trap/secret-leak")) {
+    const text = String(f.message || "");
+    const secret = (text.match(/(?:secret|identity \()\s*(\$[A-Z_]+|~\/[^\s,)]+)/) || [])[1];
+    const destination = (text.match(/(?:sent to|sending [^.]*? to) (\S+?)\.(?:\s|$)/) || [])[1];
+    if (!secret || !destination) return (doc.findings || []).filter((x) => x.rule === "agent-trap/secret-leak")
+      .map((x) => ({ message: x.message, lines: x.locations || [] }));  // a message we cannot read
+    let host = destination;
+    try { host = new URL(destination).hostname; } catch { /* keep it as written */ }
+    const group = groups.get(host) || { destination_host: host, destination, secrets: [], lines: [], phase: "unknown" };
+    group.secrets.push(PLAIN_SECRETS[secret] || secret);
+    for (const l of f.locations || [])
+      if (!group.lines.some((x) => x.file === l.file && x.line === l.line)) group.lines.push(l);
+    groups.set(host, group);
+  }
+  return [...groups.values()];
 }
 
 // One plain sentence for everything sent to one destination.
@@ -462,6 +484,7 @@ function leakSentence(group) {
   if (group.tricked) return `Text in ${where} tricks an AI agent into sending ${secrets} to ${host}.`;
   // An AI agent that installs the repo sets off the same code, so that is still "when installed".
   if (group.phase === "install" || group.phase === "both") return `When installed, ${where} sends ${secrets} to ${host}.`;
+  if (group.phase === "unknown") return `The code in ${where} sends ${secrets} to ${host}.`;
   return `When an AI agent works on it, ${where} gets it to send ${secrets} to ${host}.`;
 }
 

@@ -103,6 +103,7 @@
   /* how it works */
   .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   @media (max-width: 760px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+  .steps > .card { margin-top: 0; }  /* side by side, so no gap above the 2nd and 3rd */
   .step { transition: transform .15s, box-shadow .15s; }
   .step:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
   .step-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }

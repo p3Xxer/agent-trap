@@ -124,11 +124,10 @@ def test_a_leak_only_in_an_agent_run_names_the_task():
     assert message.startswith("While an AI agent was working on this repository (task: setup),")
 
 
-def test_a_leak_in_both_kinds_of_run_says_so():
+def test_a_leak_that_also_happens_when_the_agent_installs_it_is_still_an_install_leak():
     message = message_for([run_of("baseline", leak()), run_of("test", leak())])
-    assert message.startswith(
-        "While the project was installed and tested, and again while an AI agent was working on it,"
-    )
+    assert message.startswith("While the project was installed and tested, the fake AWS key")
+    assert "AI agent" not in message
 
 
 def test_the_machine_identity_is_named_plainly():

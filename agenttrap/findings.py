@@ -252,11 +252,8 @@ def when_leaked(phase: Phase, tasks: tuple[str, ...] = ()) -> str:
     """Who was running when the secret left, as the start of a sentence."""
     if phase == "install":
         return "While the project was installed and tested (no AI involved),"
-    if phase == "both":
-        return (
-            "While the project was installed and tested, and again while an AI agent was "
-            "working on it,"
-        )
+    if phase == "both":  # an AI agent installing it sets off the same code
+        return "While the project was installed and tested,"
     task = f" (task: {', '.join(tasks)})" if tasks else ""
     return f"While an AI agent was working on this repository{task},"
 

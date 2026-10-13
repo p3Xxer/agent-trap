@@ -459,9 +459,9 @@ function leakSentence(group) {
   const where = files.length ? listOf(files) : "the code";
   const secrets = `your ${listOf(group.secrets.map(prettySecret))}`;
   const host = group.destination_host || group.destination || "an outside server";
-  if (group.phase === "install") return `When installed, ${where} sends ${secrets} to ${host}.`;
-  if (group.phase === "both") return `When installed — and again when an AI agent works on it — ${where} sends ${secrets} to ${host}.`;
   if (group.tricked) return `Text in ${where} tricks an AI agent into sending ${secrets} to ${host}.`;
+  // An AI agent that installs the repo sets off the same code, so that is still "when installed".
+  if (group.phase === "install" || group.phase === "both") return `When installed, ${where} sends ${secrets} to ${host}.`;
   return `When an AI agent works on it, ${where} gets it to send ${secrets} to ${host}.`;
 }
 
@@ -568,9 +568,7 @@ function whereCard(doc, groups, findings) {
     byFile.get(l.file).add(l.line);
   }
   const card = h("div", { class: "card" }, h("h2", { class: "section" }, "Where it happens"),
-    h("div", { class: "legend" },
-      h("span", {}, h("span", { class: "key hit" }), "does the stealing"),
-      h("span", {}, h("span", { class: "key rel" }), "needed for it to run")));
+    h("div", { class: "legend" }, h("span", {}, h("span", { class: "key hit" }), "these lines steal the secrets")));
   for (const [file, numbers] of byFile)
     card.append(h("div", { class: "file-row" }, h("span", { class: "filename" }, file),
       [...numbers].sort((a, b) => a - b).map((n) => lineLink(file, n))));
@@ -585,8 +583,7 @@ function whereCard(doc, groups, findings) {
   for (const [file, excerpt] of files) {
     const hits = linesOf(coloured, file, "locations");
     for (const g of lineGroups) for (const l of g.lines || []) if (l.file === file) hits.add(l.line);
-    const related = new Set([...linesOf(coloured, file, "related")].filter((n) => !hits.has(n)));
-    card.append(codeBlock(file, excerpt, hits, related));
+    card.append(codeBlock(file, excerpt, hits, new Set()));  // only the stealing lines are marked
   }
   return card;
 }

@@ -13,7 +13,7 @@ from agenttrap.scan import CleanOutcome, ScanResult, base_name
 
 STYLE = {Status.SAFE: "bold green", Status.SUSPICIOUS: "bold yellow", Status.HIJACKED: "bold red"}
 HEADLINE = {
-    Status.SAFE: "SAFE: nothing tried to leak a secret or instruct the agent.",
+    Status.SAFE: "SAFE: no theft found. No planted secret left the sandbox, and nothing instructed the agent.",
     Status.SUSPICIOUS: "SUSPICIOUS: warning signs, but no secret was seen leaving.",
     Status.HIJACKED: "MALICIOUS: a planted secret was seen leaving the sandbox.",
 }

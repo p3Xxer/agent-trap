@@ -351,7 +351,8 @@ def to_markdown(report: Report, settings: str, history: dict[str, list[str]] | N
         "",
         "## See also",
         "",
-        "- [Real malware from PyPI](real-malware.md): published malicious packages run in the trap.",
+        "- [Real malware from PyPI](real-malware.md): published malicious packages run in the "
+        "trap.",
         "- [False alarms on real projects](false-alarms.md): 20 well-known projects, none flagged.",
     ]
     return "\n".join(lines) + "\n"

@@ -6,231 +6,279 @@
 <title>Agent Trap</title>
 <style>
   :root {
-    --bg: #f7f8fa; --panel: #ffffff; --text: #14181f; --muted: #5d6675; --border: #e3e6eb; --border-strong: #cfd4dc;
-    --hover: #f1f3f6; --sel: #eef2ff; --accent: #3b5bdb; --accent-fg: #ffffff;
-    --red: #cf222e; --red-bg: #fdeced; --red-line: #e5484d;
-    --amber: #915f00; --amber-bg: #fff5da; --amber-line: #e0a100;
-    --green: #1a7f37; --green-bg: #e6f6ea;
-    --code-bg: #f6f8fa; --hit: #fdeced; --rel: #fff6dc; --shadow: 0 1px 2px rgba(16,24,40,.04);
+    --bg: #f5f6fb; --panel: #ffffff; --text: #14172b; --muted: #596077; --border: #e4e6f0; --border-strong: #cdd1e0;
+    --hover: #f0f1f9; --sel: #ecebff; --accent: #5b5bd6; --accent-fg: #ffffff; --link: #4646c0;
+    --red: #c9252b; --red-bg: #fdecec; --red-line: #e5484d;
+    --amber: #8a5a00; --amber-bg: #fff3d6; --amber-line: #f5a524;
+    --green: #17734a; --green-bg: #e4f5ec; --green-line: #30a46c;
+    --code-bg: #f6f7fb; --hit: #fbd3d5; --rel: #fff8e8;
+    --shadow: 0 1px 2px rgba(20,23,43,.05), 0 8px 24px -12px rgba(20,23,43,.12);
+    --shadow-hover: 0 2px 4px rgba(20,23,43,.06), 0 14px 30px -12px rgba(60,60,160,.28);
     --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    --navy: #0f1135;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0d1014; --panel: #151a20; --text: #e9ecf1; --muted: #98a2b1; --border: #272e38; --border-strong: #38414e;
-      --hover: #1c222a; --sel: #1b2440; --accent: #7c93ff; --accent-fg: #0d1014;
-      --red: #ff7b80; --red-bg: #2c171a; --red-line: #f0585e;
-      --amber: #f2b94b; --amber-bg: #2c2410; --amber-line: #d9a21b;
-      --green: #4cc26a; --green-bg: #12261a;
-      --code-bg: #10141a; --hit: #3a1c20; --rel: #33290f; --shadow: none;
+      --bg: #0b0d12; --panel: #12151c; --text: #eceef5; --muted: #a0a8bb; --border: #232836; --border-strong: #353c4e;
+      --hover: #1a1e29; --sel: #1d2040; --accent: #6e6ee6; --link: #a3a3f7;
+      --red: #ff8a8e; --red-bg: #2a1417; --red-line: #e5484d;
+      --amber: #f5b94d; --amber-bg: #2a2110; --amber-line: #f5a524;
+      --green: #55c98c; --green-bg: #0f2418; --green-line: #30a46c;
+      --code-bg: #0e1118; --hit: #55212a; --rel: #2a2312;
+      --shadow: none; --shadow-hover: 0 0 0 1px var(--border-strong);
     }
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
   [hidden] { display: none !important; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  svg.i { flex: none; display: inline-block; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
   @media (max-width: 640px) { .wrap { padding: 0 16px; } }
-
-  header { background: var(--panel); border-bottom: 1px solid var(--border); }
-  .top { display: flex; align-items: center; gap: 12px; padding-top: 24px; flex-wrap: wrap; }
-  .mark { width: 32px; height: 32px; flex: none; color: var(--accent); }
-  h1 { margin: 0; font-size: 26px; line-height: 1.2; font-weight: 650; letter-spacing: -0.02em; }
-  .mode { margin-left: auto; font-size: 12px; padding: 3px 10px 3px 8px; border-radius: 999px;
-    border: 1px solid var(--border); color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
-  .mode::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--border-strong); }
-  .mode.live::before { background: var(--green); }
-  .tagline { color: var(--muted); margin: 8px 0 0; max-width: 72ch; }
-  nav { display: flex; gap: 24px; margin-top: 20px; }
-  nav button { background: none; border: 0; padding: 10px 0 12px; font: inherit; font-weight: 500; color: var(--muted);
-    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-  nav button:hover { color: var(--text); }
-  nav button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
-
-  main { max-width: 1200px; margin: 0 auto; padding: 32px 24px 24px; }
-  @media (max-width: 640px) { main { padding: 24px 16px 16px; } }
-  .grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 32px; align-items: start; }
-  @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
-
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); }
-  .card + .card { margin-top: 16px; }
-  @media (max-width: 640px) { .card { padding: 16px; } }
-  .card h2 { margin: 0 0 16px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   .muted { color: var(--muted); }
   .small { font-size: 13px; }
+
+  /* top bar */
+  header { background: var(--navy); color: #fff; }
+  .top { display: flex; align-items: center; gap: 24px; min-height: 60px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.01em; font-size: 16px; color: #fff; }
+  .brand svg { color: #9d9dfb; }
+  nav { display: flex; gap: 4px; align-self: stretch; }
+  nav button { background: none; border: 0; padding: 0 14px; font: inherit; font-weight: 500; color: rgba(255,255,255,.72);
+    cursor: pointer; border-bottom: 2px solid transparent; min-height: 60px; }
+  nav button:hover { color: #fff; }
+  nav button[aria-selected="true"] { color: #fff; font-weight: 650; border-bottom-color: #9d9dfb; }
+  header :focus-visible { outline-color: #c4c4ff; }
+  .mode { margin-left: auto; font-size: 12px; padding: 3px 10px 3px 8px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.25); color: rgba(255,255,255,.8); display: inline-flex; align-items: center; gap: 6px; }
+  .mode::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.4); }
+  .mode.live::before { background: #4fdc8f; }
+  @media (max-width: 640px) { .top { gap: 8px 12px; padding-top: 8px; } nav { order: 3; width: 100%; margin: 0 -14px; } nav button { min-height: 44px; } .mode { margin-left: auto; } }
+
+  /* hero */
+  .hero { position: relative; overflow: hidden; color: #fff; padding: 72px 0 64px;
+    background:
+      radial-gradient(600px 320px at 85% -10%, rgba(120,110,255,.45), transparent 70%),
+      radial-gradient(520px 300px at 5% 110%, rgba(60,140,255,.28), transparent 70%),
+      linear-gradient(135deg, #0f1135 0%, #1b1a5c 55%, #2a2386 100%); }
+  .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+    background-size: 44px 44px; -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 75%); }
+  .hero .wrap { position: relative; }
+  .hero h1 { margin: 0; font-size: 40px; line-height: 1.12; font-weight: 800; letter-spacing: -.03em; max-width: 18em; }
+  .subline { margin: 18px 0 0; font-size: 18px; line-height: 1.55; color: rgba(255,255,255,.85); max-width: 40em; }
+  @media (max-width: 640px) { .hero { padding: 40px 0 40px; } .hero h1 { font-size: 30px; } .subline { font-size: 16px; } }
+  .scan-form { display: flex; gap: 8px; margin-top: 32px; background: #fff; border-radius: 14px; padding: 6px; max-width: 720px;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,.5); }
+  .scan-form:focus-within { box-shadow: 0 0 0 3px rgba(157,157,251,.7), 0 10px 40px -10px rgba(0,0,0,.5); }
+  .scan-form input { flex: 1; min-width: 0; padding: 14px 14px; font: inherit; font-size: 17px; color: #14172b; background: transparent; border: 0; outline: 0; }
+  .scan-form input::placeholder { color: #6b7288; }
+  button.primary { padding: 0 28px; font: inherit; font-weight: 650; font-size: 16px; color: var(--accent-fg); background: var(--accent); border: 0; border-radius: 9px; cursor: pointer; transition: transform .12s, filter .12s; }
+  button.primary:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+  button.primary:focus-visible { outline-color: #14172b; outline-offset: 2px; }
+  button:disabled, input:disabled { opacity: .55; cursor: not-allowed; }
+  @media (max-width: 520px) { .scan-form { flex-direction: column; } button.primary { padding: 14px; } }
+  .try { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; }
+  .try > span { color: rgba(255,255,255,.8); font-size: 14px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 14px; font-weight: 550; padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3); transition: transform .12s, background .12s; }
+  .pill:hover:not(:disabled) { background: rgba(255,255,255,.2); transform: translateY(-2px); }
+  .pill:focus-visible { outline-color: #fff; }
+  .helper { margin: 16px 0 0; font-size: 13px; color: rgba(255,255,255,.75); }
+  .hero-static { margin-top: 28px; max-width: 640px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); border-radius: 14px; padding: 18px 20px; }
+  .hero-static p { margin: 0 0 12px; color: rgba(255,255,255,.9); }
+  pre.cmd { font: 13px var(--mono); background: rgba(0,0,0,.35); color: #fff; border-radius: 10px; padding: 12px 14px; overflow: auto; margin: 0; }
+  .hero-static .pill { margin-top: 14px; }
+
+  main { max-width: 1120px; margin: 0 auto; padding: 40px 24px 24px; }
+  @media (max-width: 640px) { main { padding: 28px 16px 16px; } }
+  h2.section { margin: 0 0 16px; font-size: 18px; font-weight: 650; letter-spacing: -.01em; }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); }
+  .card + .card, .card + details.card { margin-top: 16px; }
+  @media (max-width: 640px) { .card { padding: 18px 16px; } }
+
+  /* how it works */
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 760px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+  .step { transition: transform .15s, box-shadow .15s; }
+  .step:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+  .step-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .step-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--sel); color: var(--link); }
+  .step-num { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .08em; }
+  .step h3 { margin: 0 0 6px; font-size: 17px; font-weight: 650; }
+  .step p { margin: 0; color: var(--muted); }
+
+  /* progress */
+  #progress { margin-bottom: 32px; }
+  #progress h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; overflow-wrap: anywhere; }
+  .elapsed { font-size: 13px; color: var(--muted); margin: 0 0 18px; font-variant-numeric: tabular-nums; }
+  #log { margin: 0; padding: 0; list-style: none; font-size: 15px; }
+  #log li { position: relative; padding: 0 0 12px 30px; color: var(--muted); overflow-wrap: anywhere; }
+  #log li::before { content: ""; position: absolute; left: 6px; top: 16px; bottom: -2px; width: 1px; background: var(--border-strong); }
+  #log li:last-child { padding-bottom: 0; } #log li:last-child::before { display: none; }
+  .step-dot { position: absolute; left: 0; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--green-line); }
+  #log li.past .step-dot::after { content: ""; position: absolute; left: 4px; top: 2px; width: 3px; height: 6px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  #log li.now { color: var(--text); font-weight: 600; }
+  #log li.now .step-dot { background: var(--accent); animation: pulse 1.4s ease-out infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+  .error-text { color: var(--red); margin-top: 14px; font-weight: 550; }
+  .error-text:empty { display: none; }
+
+  /* more test repositories */
+  details.demo-box { margin-top: 32px; padding: 0; }
+  details.demo-box > summary, details.more > summary { cursor: pointer; font-weight: 600; list-style: none; padding: 16px 24px; display: flex; align-items: center; gap: 10px; border-radius: 14px; }
+  details > summary::-webkit-details-marker { display: none; }
+  details.demo-box > summary:hover, details.more > summary:hover { background: var(--hover); }
+  .chev { width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; margin: 0 4px 0 2px; }
+  details[open] > summary .chev { transform: rotate(45deg); }
+  .demo-body { padding: 0 24px 24px; }
+  .demo-body > p { margin: 0 0 16px; }
+  .demo-group + .demo-group { margin-top: 16px; }
+  .label { font-size: 12px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .demos { display: flex; flex-wrap: wrap; gap: 8px; }
+  .demos button { font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer;
+    background: var(--panel); color: var(--text); border: 1px solid var(--border-strong); transition: transform .12s, border-color .12s; }
+  .demos button:hover:not(:disabled) { background: var(--hover); border-color: var(--accent); transform: translateY(-2px); }
+
+  /* past scans */
+  .grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; }
+  @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+  #list { padding: 10px; max-height: calc(100vh - 100px); overflow: auto; position: sticky; top: 16px; }
+  .list-head { padding: 8px 12px 8px; display: flex; align-items: baseline; justify-content: space-between; }
+  .list-head h2 { margin: 0; font-size: 18px; font-weight: 650; }
+  .rows { display: block; }
+  @media (max-width: 860px) {
+    #list { position: static; max-height: none; }
+    .rows { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
+    .rows .item { flex: none; width: 220px; border: 1px solid var(--border); scroll-snap-align: start; }
+  }
+  .item { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; background: none; border: 0;
+    color: inherit; font: inherit; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background .12s; }
+  .item:hover { background: var(--hover); }
+  .item[aria-current="true"] { background: var(--sel); box-shadow: inset 3px 0 0 var(--accent); }
+  .item-body { min-width: 0; flex: 1; display: block; }
+  .item .name { display: block; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .meta { display: block; font-size: 12px; color: var(--muted); }
+  .v-icon-RED, .vi-HIJACKED { color: var(--red-line); } .vi-SUSPICIOUS { color: var(--amber-line); } .vi-SAFE { color: var(--green-line); }
   .empty { padding: 16px; margin: 0; }
 
-  .badge { display: inline-block; font-size: 11px; font-weight: 650; letter-spacing: .05em; padding: 3px 10px;
-    border-radius: 999px; line-height: 1.4; }
-  .HIJACKED { background: var(--red-bg); color: var(--red); }
-  .SUSPICIOUS { background: var(--amber-bg); color: var(--amber); }
-  .SAFE { background: var(--green-bg); color: var(--green); }
-
-  /* saved list */
-  #list { padding: 8px; max-height: calc(100vh - 220px); overflow: auto; position: sticky; top: 16px; }
-  @media (max-width: 860px) { #list { position: static; max-height: 320px; } }
-  .list-head { padding: 8px 12px 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .item { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; background: none; border: 0;
-    color: inherit; font: inherit; padding: 10px 12px; border-radius: 8px; cursor: pointer; }
-  .item:hover { background: var(--hover); }
-  .item[aria-current="true"] { background: var(--sel); box-shadow: inset 2px 0 0 var(--accent); }
-  .item-body { min-width: 0; flex: 1; display: block; }
-  .item .name { display: block; font-weight: 550; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item .meta { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; background: var(--border-strong); }
-  .dot.HIJACKED { background: var(--red-line); } .dot.SUSPICIOUS { background: var(--amber-line); } .dot.SAFE { background: var(--green); }
-  .st { background: none !important; font-weight: 600; }
+  /* badges */
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 3px 10px; border-radius: 999px; line-height: 1.4; border: 1px solid currentColor; background: var(--panel); }
+  .badge.HIJACKED { color: var(--red); } .badge.SUSPICIOUS { color: var(--amber); } .badge.SAFE { color: var(--green); }
 
   /* verdict */
-  .verdict { border-left: 4px solid var(--border-strong); }
-  .verdict.v-HIJACKED { border-left-color: var(--red-line); background: linear-gradient(90deg, var(--red-bg), var(--panel) 40%); }
-  .verdict.v-SUSPICIOUS { border-left-color: var(--amber-line); background: linear-gradient(90deg, var(--amber-bg), var(--panel) 40%); }
-  .verdict.v-SAFE { border-left-color: var(--green); background: linear-gradient(90deg, var(--green-bg), var(--panel) 40%); }
-  .verdict .badge.HIJACKED, .verdict .badge.SUSPICIOUS, .verdict .badge.SAFE { border: 1px solid currentColor; background: var(--panel); }
-  .banner { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; }
-  .repo-name { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; overflow-wrap: anywhere; min-width: 0; }
-  .source { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
-  a.source { color: var(--accent); text-decoration: none; }
+  .verdict { display: flex; gap: 20px; border-top: 5px solid var(--border-strong); padding: 28px; }
+  .verdict.v-HIJACKED { border-top-color: var(--red-line); background: linear-gradient(180deg, var(--red-bg), var(--panel) 70%); }
+  .verdict.v-SUSPICIOUS { border-top-color: var(--amber-line); background: linear-gradient(180deg, var(--amber-bg), var(--panel) 70%); }
+  .verdict.v-SAFE { border-top-color: var(--green-line); background: linear-gradient(180deg, var(--green-bg), var(--panel) 70%); }
+  .v-icon { flex: none; width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; background: var(--panel); border: 1px solid var(--border); }
+  .v-body { min-width: 0; flex: 1; }
+  .v-title { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 800; letter-spacing: -.02em; }
+  .v-HIJACKED .v-title { color: var(--red); } .v-SUSPICIOUS .v-title { color: var(--amber); } .v-SAFE .v-title { color: var(--green); }
+  .v-repo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 8px; }
+  .repo-name { font-weight: 600; overflow-wrap: anywhere; }
+  a.source { color: var(--link); text-decoration: none; font-weight: 600; overflow-wrap: anywhere; }
   a.source:hover { text-decoration: underline; }
-  .summary { margin: 16px 0 0; font-size: 17px; line-height: 1.55; overflow-wrap: anywhere; }
-  .callout { margin: 16px 0 0; padding: 10px 14px; font-size: 14px; color: var(--muted); background: var(--hover);
-    border: 1px solid var(--border); border-radius: 8px; }
+  .v-body p.sentence { margin: 14px 0 0; font-size: 17px; line-height: 1.55; overflow-wrap: anywhere; }
+  .v-body ul { margin: 8px 0 0; padding-left: 22px; font-size: 16px; }
+  .v-body p.note { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .tag { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--border-strong); }
+  .tag.good { color: var(--green); border-color: var(--green-line); } .tag.bad { color: var(--red); border-color: var(--red-line); }
+  @media (max-width: 640px) { .verdict { flex-direction: column; gap: 14px; padding: 20px 16px; } .v-icon { width: 52px; height: 52px; } .v-title { font-size: 24px; } }
 
-  /* lines responsible */
-  .file-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px; }
+  /* where it happens */
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: -6px 0 14px; color: var(--muted); font-size: 13px; }
+  .key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  .key.hit { background: var(--red-line); } .key.rel { background: var(--amber-line); }
+  .file-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 8px; }
   .filename { font: 13px var(--mono); margin-right: 4px; overflow-wrap: anywhere; }
-  .chip { display: inline-block; font: 12px var(--mono); background: var(--code-bg); border: 1px solid var(--border);
-    border-radius: 6px; padding: 1px 8px; margin: 2px 6px 2px 0; overflow-wrap: anywhere; }
-  button.chip.link { margin: 0; padding: 2px 10px; cursor: pointer; color: var(--accent); background: var(--sel);
-    border-color: transparent; border-radius: 999px; font-weight: 600; }
-  button.chip.link:hover { border-color: var(--accent); }
+  button.num { font: 600 12px var(--mono); padding: 2px 10px; cursor: pointer; color: var(--link); background: var(--sel); border: 1px solid transparent; border-radius: 999px; transition: transform .12s; }
+  button.num:hover { border-color: var(--accent); transform: translateY(-1px); }
   .lines-block p { margin: 8px 0 0; }
-  .cleaned { display: flex; gap: 8px; align-items: center; margin: 16px 0 0; padding-top: 16px; border-top: 1px solid var(--border); }
-  .check { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: none;
-    border-radius: 50%; background: var(--green-bg); color: var(--green); font-size: 12px; font-weight: 700; }
-  .warn-text { color: var(--amber); }
-
-  /* code */
-  .legend { display: block; margin: -8px 0 16px; color: var(--muted); }
-  .key { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin: 0 6px 0 0; vertical-align: -1px; }
-  .key.hit { background: var(--red-line); } .key.rel { background: var(--amber-line); margin-left: 6px; }
-  .code { font: 13px/1.6 var(--mono); background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
-    overflow: auto; margin: 12px 0 0; max-width: 100%; }
+  .pending { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border-strong); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .code { font: 13px/1.6 var(--mono); background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; overflow: auto; margin: 12px 0 0; max-width: 100%; }
   .code .file { padding: 8px 14px; border-bottom: 1px solid var(--border); color: var(--muted); position: sticky; left: 0; }
   .code .file.small { border-bottom: 0; border-top: 1px solid var(--border); }
   .code-inner { min-width: max-content; }
   .line { display: flex; white-space: pre; border-left: 3px solid transparent; }
-  .line .no { flex: none; width: 52px; text-align: right; padding-right: 14px; color: var(--muted); opacity: .75; user-select: none; }
+  .line .no { flex: none; width: 52px; text-align: right; padding-right: 14px; color: var(--muted); user-select: none; }
   .line .src { padding-right: 16px; }
   .line.hit { background: var(--hit); border-left-color: var(--red-line); }
   .line.rel { background: var(--rel); border-left-color: var(--amber-line); }
   .line:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .line.flash { animation: flash 1.4s ease-out; }
+  @keyframes flash { 0%, 30% { box-shadow: inset 0 0 0 100px color-mix(in srgb, var(--accent) 38%, transparent); } 100% { box-shadow: inset 0 0 0 100px transparent; } }
 
-  /* details */
+  /* more details */
   details.more { padding: 0; }
-  details.more > summary { cursor: pointer; font-weight: 600; list-style: none; padding: 16px 24px; display: flex; align-items: center; gap: 10px; border-radius: 12px; }
-  details.more > summary::-webkit-details-marker { display: none; }
-  details.more > summary:hover { background: var(--hover); }
-  details.more > :not(summary) { margin-left: 24px; margin-right: 24px; }
-  details.more > :last-child { margin-bottom: 24px; }
-  .chev { width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; margin: 0 4px 0 2px; }
-  details[open] > summary .chev { transform: rotate(45deg); }
-  details h3 { margin: 24px 24px 4px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-top: 16px; border-top: 1px solid var(--border); }
-  details h3:first-of-type { border-top: 0; padding-top: 0; margin-top: 8px; }
-  details p { margin: 8px 24px; }
-  @media (max-width: 640px) { details.more > summary { padding: 16px; } details.more > :not(summary), details h3 { margin-left: 16px; margin-right: 16px; } details p { margin-left: 16px; margin-right: 16px; } }
-  .finding { border-left: 3px solid var(--border); padding: 4px 0 4px 12px; margin: 12px 0; }
-  .finding.error { border-color: var(--red-line); } .finding.warning { border-color: var(--amber-line); }
-  .finding.note { border-color: var(--accent); }
-  .finding .title { font-weight: 600; }
-  .quote { font: 13px var(--mono); background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; margin: 6px 0; overflow-wrap: anywhere; }
-  ul.plain { list-style: none; margin: 8px 0; padding: 0; }
-  ul.plain li { padding: 4px 0; overflow-wrap: anywhere; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+  .more-body { padding: 0 24px 24px; }
+  .more-body h3 { margin: 22px 0 8px; font-size: 12px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: 18px; border-top: 1px solid var(--border); }
+  .more-body h3:first-child { border-top: 0; padding-top: 0; margin-top: 4px; }
+  .more-body p { margin: 6px 0; }
+  .more-body ul { list-style: none; margin: 6px 0; padding: 0; }
+  .more-body li { padding: 4px 0; overflow-wrap: anywhere; }
+  .chip { display: inline-block; font: 12px var(--mono); background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1px 8px; margin: 2px 6px 2px 0; overflow-wrap: anywhere; }
+  .mono1 { font: 12px var(--mono); color: var(--muted); overflow-wrap: anywhere; display: block; }
+  .warn-text { color: var(--amber); }
+  @media (max-width: 640px) { details.more > summary, details.demo-box > summary { padding: 16px; } .more-body, .demo-body { padding: 0 16px 20px; } }
 
-  /* scan tab */
-  .scan-wrap { max-width: 680px; margin: 16px auto 0; }
-  #scan-card { padding: 32px; }
-  @media (max-width: 640px) { #scan-card { padding: 24px 16px; } }
-  #scan-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 650; letter-spacing: -0.01em; text-transform: none; color: var(--text); }
-  .lead { margin: 0 0 24px; color: var(--muted); }
-  .group { display: flex; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--bg); overflow: hidden; }
-  .group:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
-  .group input { flex: 1; min-width: 0; padding: 14px 16px; font: inherit; font-size: 16px; color: var(--text); background: transparent; border: 0; outline: 0; }
-  button.primary { padding: 0 24px; font: inherit; font-weight: 600; color: var(--accent-fg); background: var(--accent); border: 0; cursor: pointer; }
-  button.primary:hover { filter: brightness(1.08); }
-  button.primary:focus-visible { outline-offset: -3px; outline-color: var(--accent-fg); }
-  button:disabled, input:disabled { opacity: .5; cursor: not-allowed; }
-  .helper { margin: 12px 0 0; }
-  .demo-wrap { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
-  .demo-wrap > p { margin: 0 0 16px; }
-  .demo-group + .demo-group { margin-top: 16px; }
-  .label { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .demos { display: flex; flex-wrap: wrap; gap: 8px; }
-  .demos button { font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer;
-    background: var(--panel); color: var(--text); border: 1px solid var(--border-strong); text-transform: capitalize; }
-  .demos button:hover:not(:disabled) { background: var(--hover); border-color: var(--muted); }
-  pre.cmd { font: 13px var(--mono); background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; overflow: auto; margin: 0; }
-
-  #progress h2 { margin-bottom: 16px; }
-  #log { margin: 0; padding: 0; list-style: none; font-size: 14px; }
-  #log li { position: relative; padding: 0 0 12px 24px; color: var(--muted); overflow-wrap: anywhere; }
-  #log li::before { content: ""; position: absolute; left: 3px; top: 10px; bottom: -2px; width: 1px; background: var(--border); }
-  #log li:last-child { padding-bottom: 0; } #log li:last-child::before { display: none; }
-  .step-dot { position: absolute; left: 0; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
-  #log li.now { color: var(--text); font-weight: 550; }
-  #log li.now .step-dot { background: var(--accent); animation: pulse 1.4s ease-out infinite; }
-  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); } 100% { box-shadow: 0 0 0 8px transparent; } }
-  @media (prefers-reduced-motion: reduce) { #log li.now .step-dot { animation: none; } .chev { transition: none; } }
-  .error-text { color: var(--red); margin-top: 12px; }
-  .error-text:empty { display: none; }
-
-  footer { max-width: 1200px; margin: 0 auto; padding: 16px 24px 40px; color: var(--muted); font-size: 13px; }
+  footer { max-width: 1120px; margin: 0 auto; padding: 24px 24px 48px; color: var(--muted); font-size: 13px; text-align: center; }
   @media (max-width: 640px) { footer { padding: 16px 16px 32px; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
     <div class="top">
-      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <path d="M16 3 5 7v8c0 7 4.6 11.6 11 14 6.4-2.4 11-7 11-14V7L16 3z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M11.5 16.5l3.2 3.2 6-6.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <h1>Agent Trap</h1>
+      <div class="brand" id="brand"></div>
+      <nav role="tablist" aria-label="Views">
+        <button role="tab" id="tab-scan-btn" aria-selected="true" aria-controls="tab-scan">Scan a repo</button>
+        <button role="tab" id="tab-past-btn" aria-selected="false" aria-controls="tab-past">Past scans</button>
+      </nav>
       <span class="mode" id="mode">loading</span>
     </div>
-    <p class="tagline">Run an untrusted repository in a locked room with fake secrets, watch what an AI agent
-      does with it, and point to the exact line behind any leak.</p>
-    <nav role="tablist">
-      <button role="tab" id="tab-results-btn" aria-selected="true" aria-controls="tab-results">Saved results</button>
-      <button role="tab" id="tab-scan-btn" aria-selected="false" aria-controls="tab-scan">Scan a repo</button>
-    </nav>
   </div>
 </header>
 
-<main>
-  <section id="tab-results" role="tabpanel">
+<section id="tab-scan" role="tabpanel">
+  <div class="hero">
+    <div class="wrap">
+      <h1>Is this repo safe to give your AI coding agent?</h1>
+      <p class="subline">Paste a GitHub link. We run the code in a locked sandbox with fake keys, let an AI agent work on it, and catch anything that tries to steal — down to the exact line.</p>
+      <div id="hero-action"></div>
+    </div>
+  </div>
+  <main>
+    <div class="card" id="progress" hidden>
+      <h2 id="progress-title">Scanning…</h2>
+      <p class="elapsed" id="elapsed" aria-live="off"></p>
+      <ul id="log"></ul>
+      <div class="error-text" id="scan-error" role="alert"></div>
+    </div>
+    <h2 class="section">How it works</h2>
+    <div class="steps" id="steps"></div>
+    <div id="demos"></div>
+  </main>
+</section>
+
+<section id="tab-past" role="tabpanel" hidden>
+  <main>
     <div class="grid">
-      <div class="card" id="list" aria-label="Saved scans"></div>
+      <div class="card" id="list" aria-label="Past scans"></div>
       <article id="detail"></article>
     </div>
-  </section>
-
-  <section id="tab-scan" role="tabpanel" hidden>
-    <div class="scan-wrap">
-      <div class="card" id="scan-card"></div>
-      <div class="card" id="progress" hidden>
-        <h2>Progress</h2>
-        <ul id="log"></ul>
-        <div class="error-text" id="scan-error" role="alert"></div>
-      </div>
-    </div>
-  </section>
-</main>
-<footer>The secrets shown here are fake bait planted by Agent Trap; nothing real was leaked.</footer>
+  </main>
+</section>
+<footer>The keys you see in results are fake bait we planted. Nothing real is ever leaked.</footer>
 
 <script>
 "use strict";
@@ -261,22 +309,60 @@ async function getJson(path) {
   } catch { return null; }
 }
 
-const state = { live: false, demos: [], limits: null, results: [], current: null, busy: false };
+// Inline icons, drawn here as fixed shapes (no data goes into them).
+const SVGNS = "http://www.w3.org/2000/svg";
+const ICONS = {
+  shield: [["path", { d: "M12 2.5 4 5.5v6c0 4.7 3.3 8.1 8 10 4.7-1.9 8-5.3 8-10v-6l-8-3z" }], ["path", { d: "M8.5 12l2.5 2.5 4.5-5" }]],
+  shieldX: [["path", { d: "M12 2.5 4 5.5v6c0 4.7 3.3 8.1 8 10 4.7-1.9 8-5.3 8-10v-6l-8-3z" }], ["path", { d: "M9.3 9.3l5.4 5.4M14.7 9.3l-5.4 5.4" }]],
+  warn: [["path", { d: "M12 3.5 2.8 19.5h18.4L12 3.5z" }], ["path", { d: "M12 10v4.3M12 17.2v.01" }]],
+  check: [["circle", { cx: 12, cy: 12, r: 9 }], ["path", { d: "M8 12.5l3 3 5-6" }]],
+  box: [["rect", { x: 4, y: 10.5, width: 16, height: 10.5, rx: 2.5 }], ["path", { d: "M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v3" }]],
+  agent: [["rect", { x: 4, y: 8, width: 16, height: 11, rx: 3.5 }], ["path", { d: "M12 4v4M9 13v.01M15 13v.01M2.5 12.5v2.5M21.5 12.5v2.5M9.5 16.2h5" }]],
+  target: [["circle", { cx: 10.5, cy: 10.5, r: 6.5 }], ["path", { d: "M20.5 20.5l-5.4-5.4M7.5 10.5h6" }]],
+  dot: [["circle", { cx: 8, cy: 8, r: 5, fill: "currentColor", stroke: "none" }]],
+};
+function icon(name, size = 20, width = 2) {
+  const svg = document.createElementNS(SVGNS, "svg");
+  for (const [k, v] of Object.entries({ viewBox: name === "dot" ? "0 0 16 16" : "0 0 24 24", width: size, height: size, fill: "none",
+    stroke: "currentColor", "stroke-width": width, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", class: "i" }))
+    svg.setAttribute(k, v);
+  for (const [tag, attrs] of ICONS[name]) {
+    const part = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) part.setAttribute(k, v);
+    svg.append(part);
+  }
+  return svg;
+}
+const VERDICT_ICON = { HIJACKED: "shieldX", SUSPICIOUS: "warn", SAFE: "check" };
+
+const state = { live: false, demos: [], limits: null, results: [], current: null, busy: false, timer: null };
 
 // ---- tabs --------------------------------------------------------------------------------------
 function showTab(name) {
-  for (const tab of ["results", "scan"]) {
+  for (const tab of ["scan", "past"]) {
     $(`tab-${tab}`).hidden = tab !== name;
     $(`tab-${tab}-btn`).setAttribute("aria-selected", String(tab === name));
   }
+  window.scrollTo(0, 0);
 }
-$("tab-results-btn").addEventListener("click", () => showTab("results"));
 $("tab-scan-btn").addEventListener("click", () => showTab("scan"));
+$("tab-past-btn").addEventListener("click", () => showTab("past"));
 
-// ---- saved results list -----------------------------------------------------------------------------
+// ---- past scans list ----------------------------------------------------------------------------------
 function when(iso) {
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? "" : date.toLocaleString();
+}
+
+function relTime(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const minutes = Math.max(0, (Date.now() - date.getTime()) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${Math.floor(minutes)} min ago`;
+  if (minutes < 1440) return `${Math.floor(minutes / 60)} h ago`;
+  if (minutes < 2880) return "yesterday";
+  return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
 function renderList() {
@@ -284,23 +370,20 @@ function renderList() {
   clear(list);
   if (!state.results.length) {
     list.append(h("p", { class: "muted small empty" },
-      state.live ? "No saved results yet. Scan a repository, or run agenttrap scan <repo>."
+      state.live ? "No past scans yet. Scan a repository to see it here."
                  : "No saved results in this copy of the page."));
     return;
   }
-  const n = state.results.length;
-  list.append(h("div", { class: "list-head" }, `${n} scan${n === 1 ? "" : "s"}`));
-  for (const item of state.results) {
-    list.append(h("button", {
-      class: "item", "aria-current": String(state.current === item.id), title: item.name,
+  list.append(h("div", { class: "list-head" }, h("h2", {}, "Past scans"), h("span", { class: "muted small" }, state.results.length)));
+  list.append(h("div", { class: "rows" }, state.results.map((item) =>
+    h("button", {
+      class: "item", "aria-current": String(state.current === item.id), title: `${item.name} (${item.status})`,
       onclick: () => selectResult(item.id),
     },
-      h("span", { class: `dot ${item.status}`, title: item.status }),
+      h("span", { class: `vi-${item.status}` }, icon(VERDICT_ICON[item.status] === "check" ? "check" : VERDICT_ICON[item.status] || "dot", 20)),
       h("span", { class: "item-body" },
         h("span", { class: "name" }, item.name),
-        h("span", { class: "meta" },
-          h("span", { class: `st ${item.status}` }, item.status.toLowerCase()), " · ", when(item.created)))));
-  }
+        h("span", { class: "meta" }, relTime(item.created)))))));
 }
 
 async function selectResult(id) {
@@ -311,10 +394,10 @@ async function selectResult(id) {
   history.replaceState(null, "", `#${encodeURIComponent(id)}`);
   renderList();
   renderDetail(doc);
-  showTab("results");
+  showTab("past");
 }
 
-// ---- one result ---------------------------------------------------------------------------------------
+// ---- code view -------------------------------------------------------------------------------------------------
 const lineId = (file, line) => `code:${file}:${line}`;
 
 function jumpTo(file, line) {
@@ -322,11 +405,13 @@ function jumpTo(file, line) {
   if (!row) return;
   row.scrollIntoView({ block: "center", behavior: "smooth" });
   row.focus({ preventScroll: true });
+  row.classList.remove("flash");
+  void row.offsetWidth;
+  row.classList.add("flash");
 }
 
-// a line number that scrolls to the same line in the code view (when that code is shown)
 function lineLink(file, line) {
-  return h("button", { type: "button", class: "chip link", title: `Jump to line ${line}`, onclick: () => jumpTo(file, line) }, line);
+  return h("button", { type: "button", class: "num", title: `Jump to line ${line}`, onclick: () => jumpTo(file, line) }, line);
 }
 
 function chip(location) { return h("span", { class: "chip" }, `${location.file}:${location.line}`); }
@@ -345,17 +430,11 @@ function codeBlock(file, excerpt, hits, related) {
 
 function linesOf(findings, file, key) {
   const lines = new Set();
-  for (const f of findings) for (const l of f[key]) if (l.file === file) lines.add(l.line);
+  for (const f of findings) for (const l of f[key] || []) if (l.file === file) lines.add(l.line);
   return lines;
 }
 
-const TAG_NOTES = {
-  "base64": "hidden as base64, so a text scanner sees only random characters",
-  "runtime-fetch": "a network call made by the repository's own code while it runs",
-  "unicode": "hidden with invisible unicode characters",
-  "agent-instruction": "an AI agent obeyed this text; on its own it was enough",
-};
-
+// ---- wording ------------------------------------------------------------------------------------------------------
 const UNLOOKABLE = /\.(invalid|test|example|localhost)$/i;  // names no registry or search can know
 
 function listOf(items) {
@@ -363,24 +442,7 @@ function listOf(items) {
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-function sinceInstall(group) {
-  if (group.phase === "install") return "While the project was installed and tested (no AI involved)";
-  if (group.phase === "both") return "While the project was installed and tested, and again while an AI agent was working on it";
-  const tasks = (group.tasks || []).join(", ");
-  return `While an AI agent was working on the repo${tasks ? ` (task: ${tasks})` : ""}`;
-}
-
-// One plain sentence for everything sent to one destination.
-function leakSentence(group) {
-  const names = group.secrets || [];
-  const what = `${names.length} fake secret${names.length === 1 ? "" : "s"} (${listOf(names)})`;
-  const files = [...new Set((group.lines || []).map((l) => l.file))];
-  const to = group.destination_host || group.destination;
-  if (group.tricked)
-    return `${sinceInstall(group)}, the AI agent was tricked by text in the repo${files.length ? ` (${listOf(files)})` : ""} into sending ${what} to ${to}.`;
-  const who = files.length ? listOf(files) : "something in the repo";
-  return `${sinceInstall(group)}, ${who} sent ${what} to ${to}.`;
-}
+const prettySecret = (name) => String(name).replace(/^the (?:sandbox's )?fake\s+/i, "");
 
 // Old saved results have no leak_groups: fall back to the leak findings, each with its own message.
 function leakGroups(doc) {
@@ -389,90 +451,38 @@ function leakGroups(doc) {
     .map((f) => ({ message: f.message, lines: f.locations || [] }));
 }
 
-function linesBlock(groups, doc) {
-  const box = h("div", { class: "lines-block" });
-  const lines = groups.flatMap((g) => g.lines || []);
-  if (!lines.length) {
-    if (doc.culprits_pending) box.append(h("p", { class: "muted" }, "Finding the exact lines…"));
-    for (const why of groups.flatMap((g) => g.why_not || []))
-      box.append(h("p", { class: "muted small" }, `Could not pinpoint the line: ${why}`));
-    for (const [secret, why] of Object.entries(doc.unlocalized || {}))
-      if (!groups.some((g) => g.why_not)) box.append(h("p", { class: "muted small" }, `Could not pinpoint the line for ${secret}: ${why}`));
-    return box.childNodes.length ? box : null;
-  }
-  const byFile = new Map();
-  for (const l of lines) {
-    if (!byFile.has(l.file)) byFile.set(l.file, new Set());
-    byFile.get(l.file).add(l.line);
-  }
-  for (const [file, numbers] of byFile)
-    box.append(h("div", { class: "file-row" }, h("span", { class: "filename" }, file),
-      [...numbers].sort((a, b) => a - b).map((n) => lineLink(file, n))));
-  if (groups.some((g) => g.unconfirmed))
-    box.append(h("p", { class: "muted small" }, "Unconfirmed: found by searching the code, not by re-running it."));
-  if (doc.culprits_pending) box.append(h("p", { class: "muted small" }, "Still finding the exact lines…"));
-  const notes = Object.values(doc.culprits || {}).flat().map((c) => TAG_NOTES[c.tag]).filter(Boolean);
-  for (const note of new Set(notes)) box.append(h("p", { class: "muted small" }, `Note: ${note}.`));
-  return box;
+// One plain sentence for everything sent to one destination.
+function leakSentence(group) {
+  if (!group.secrets || !group.phase) return group.message || "";
+  const files = [...new Set((group.lines || []).map((l) => l.file))];
+  const where = files.length ? listOf(files) : "the code";
+  const secrets = `your ${listOf(group.secrets.map(prettySecret))}`;
+  const host = group.destination_host || group.destination || "an outside server";
+  if (group.phase === "install") return `When installed, ${where} sends ${secrets} to ${host}.`;
+  if (group.phase === "both") return `When installed — and again when an AI agent works on it — ${where} sends ${secrets} to ${host}.`;
+  if (group.tricked) return `Text in ${where} tricks an AI agent into sending ${secrets} to ${host}.`;
+  return `When an AI agent works on it, ${where} gets it to send ${secrets} to ${host}.`;
 }
 
-function hostLines(doc, groups) {
-  const named = new Set(groups.map((g) => g.destination_host).filter(Boolean));
-  const rows = [];
-  for (const host of doc.contacted_hosts || []) {
-    const info = (doc.host_intel || {})[host];
-    const parts = [];
-    if (info?.registered && !UNLOOKABLE.test(host)) parts.push(`registered ${info.registered} (${info.age_days} days ago)`);
-    if (info?.reports?.length && !UNLOOKABLE.test(host)) parts.push(`public reports: ${info.reports.map((r) => `${r.title} (${r.url})`).join("; ")}`);
-    if (named.has(host) && !parts.length) continue;
-    rows.push(h("li", {}, h("span", { class: "chip" }, host), parts.join(" · ")));
-  }
-  return rows;
+function shortPath(text) {
+  const at = String(text).indexOf(":");
+  const path = at < 0 ? String(text) : String(text).slice(0, at);
+  const rest = at < 0 ? "" : String(text).slice(at);
+  return path.split("/").slice(-2).join("/") + rest;
 }
 
-function detailsBlock(doc, findings) {
-  const groups = leakGroups(doc);
-  const box = h("details", { class: "card more" }, h("summary", {}, h("span", { class: "chev", "aria-hidden": "true" }), "More details"));
-
-  const thoughts = [
-    ...(doc.injections || []).map((item) => h("div", { class: "finding warning" },
-      h("div", { class: "title" }, "Text that tried to instruct the agent"),
-      item.where ? chip(splitWhere(item.where)) : h("span", { class: "muted small" }, "quoted text not found in the repository"),
-      item.quote ? h("div", { class: "quote" }, item.quote) : null,
-      h("div", { class: "small" }, `Asked for: ${item.asked_for}`))),
-    ...(doc.concerns || []).map((item) => h("div", { class: "finding warning" },
-      h("div", { class: "title" }, "Code the agent found suspicious"),
-      chip(splitWhere(item.where)),
-      item.quote ? h("div", { class: "quote" }, item.quote) : null,
-      h("div", { class: "small" }, `It does: ${item.behavior}`))),
-  ];
-  if (thoughts.length)
-    box.append(h("h3", {}, "What the AI agent thought"),
-      h("p", { class: "muted small" }, "Reported by the agent itself, so a warning and not proof."), ...thoughts);
-
-  const hosts = hostLines(doc, groups);
-  if (hosts.length)
-    box.append(h("h3", {}, "Hosts the sandbox contacted"),
-      h("p", { class: "muted small" }, "Not on the allow-list. A recent registration or a web report is context, not proof."),
-      h("ul", { class: "plain" }, hosts));
-
-  const flagged = doc.static_scan?.count ?? 0;
-  box.append(h("h3", {}, "A tool that only reads the code"),
-    h("p", { class: "small" }, flagged
-      ? `It flagged ${flagged} line${flagged === 1 ? "" : "s"}:`
-      : "It found nothing wrong in this repository."),
-    (doc.static_scan?.flagged || []).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`))));
-
-  if (doc.cleaned) {
-    const c = doc.cleaned;
-    box.append(h("h3", {}, "Cleaned copy"),
-      h("p", {}, "Removed: ", c.removed.map((r) => h("span", { class: "chip" }, r))),
-      c.warnings.map((w) => h("p", { class: "small warn-text" }, w)),
-      h("p", { class: "muted small" }, "Removing code can change what the repository does. Review it before use."));
+// up to three short reasons a SUSPICIOUS result is suspicious
+function reasons(doc) {
+  const out = [];
+  for (const flag of doc.flags || []) {
+    const detail = String(flag.detail || "");
+    let text = "";
+    if (flag.kind === "contacted-host") text = `It contacted ${detail.replace(/^sandbox contacted\s+/i, "")}`;
+    else if (flag.kind === "suspicious-code") text = `The AI agent flagged code in ${shortPath(detail.split(": ")[0])}`;
+    else if (flag.kind === "injection-reported") text = `Text aimed at the AI agent in ${shortPath(detail.split(": ")[0])}`;
+    if (text && !out.includes(text)) out.push(text);
   }
-
-  box.append(h("h3", {}, "How the scan ran"), h("p", { class: "muted small" }, scanFacts(doc)));
-  return box;
+  return out.slice(0, 3);
 }
 
 function scanFacts(doc) {
@@ -488,14 +498,155 @@ function splitWhere(where) {
   return at < 0 ? { file: where, line: "" } : { file: where.slice(0, at), line: where.slice(at + 1) };
 }
 
-function cleanedLine(cleaned) {
-  if (!cleaned) return null;
-  const check = h("span", { class: "check", "aria-hidden": "true" }, "✓");
-  if (cleaned.rescan_status === "SAFE")
-    return h("p", { class: "cleaned" }, check, h("span", {}, "With those lines removed, the repo scanned SAFE."));
-  const still = cleaned.rescan_leaks.length ? `, still leaking ${cleaned.rescan_leaks.join(", ")}` : "";
-  return h("p", { class: "cleaned" }, h("span", {}, "With those lines removed, the repo scanned ",
-    h("span", { class: `badge ${cleaned.rescan_status}` }, cleaned.rescan_status), still, "."));
+// ---- the result: verdict card ------------------------------------------------------------------------------------------
+const TITLES = { HIJACKED: "This repo steals secrets", SUSPICIOUS: "Something here looks risky", SAFE: "Nothing tried to steal" };
+
+function verdictCard(doc, groups, findings) {
+  const body = h("div", { class: "v-body" });
+  body.append(h("h2", { class: "v-title" }, TITLES[doc.status] || doc.headline || "Result"));
+
+  const source = String(doc.source || "");
+  body.append(h("div", { class: "v-repo" },
+    /^https:\/\//i.test(source)
+      ? h("a", { class: "source", href: source, target: "_blank", rel: "noopener noreferrer" }, doc.name)
+      : h("span", { class: "repo-name" }, doc.name),
+    h("span", { class: `badge ${doc.status}` }, doc.status)));
+
+  if (groups.length) {
+    for (const g of groups) body.append(h("p", { class: "sentence" }, leakSentence(g)));
+    body.append(h("p", { class: "note" }, "These were fake keys we planted — nothing real was leaked."));
+  } else if (doc.status === "SAFE") {
+    body.append(h("p", { class: "sentence" }, "We installed it, ran its tests and let an AI agent work on it. Nothing it did sent a planted key out of the sandbox."));
+    const base = doc.baseline;
+    if (base && base.installed === false) body.append(h("p", { class: "note" }, "Note: it did not install in the sandbox, so less of its code ran."));
+    if (base && "tests" in base && !base.tests) body.append(h("p", { class: "note" }, "Note: its tests could not run in the sandbox."));
+  } else if (doc.status === "SUSPICIOUS") {
+    const why = reasons(doc);
+    body.append(h("p", { class: "sentence" }, `No key left the sandbox, but there are warning signs${why.length ? ":" : "."}`));
+    if (why.length) body.append(h("ul", {}, why.map((r) => h("li", {}, r))));
+  } else {
+    body.append(h("p", { class: "sentence" }, doc.headline || ""));
+  }
+  for (const f of findings.filter((x) => x.rule === "agent-trap/destructive-command"))
+    body.append(h("p", { class: "sentence" }, f.message));
+
+  const chips = [];
+  if (doc.status !== "SAFE" && doc.static_scan && !doc.static_scan.count)
+    chips.push(h("span", { class: "tag", title: "A scanner that only reads the code found nothing here" }, "Missed by code scanners"));
+  if (doc.cleaned) {
+    const fixed = !(doc.cleaned.rescan_leaks || []).length;
+    chips.push(h("span", { class: `tag ${fixed ? "good" : "bad"}` }, fixed ? "✓ Removing the lines stops the leak" : "Removing the lines did not stop it"));
+  }
+  if (chips.length) body.append(h("div", { class: "chips" }, chips));
+
+  return h("div", { class: `card verdict v-${doc.status}` },
+    h("div", { class: `v-icon vi-${doc.status}` }, icon(VERDICT_ICON[doc.status] || "warn", 34, 1.8)), body);
+}
+
+// ---- the result: where it happens ----------------------------------------------------------------------------------------
+function whereCard(doc, groups, findings) {
+  // the leak's own lines, or else what the agent pointed at
+  const lineGroups = groups.some((g) => (g.lines || []).length) || doc.culprits_pending || !findings.length
+    ? groups : [{ lines: findings.flatMap((f) => f.locations || []) }];
+  const lines = lineGroups.flatMap((g) => g.lines || []);
+  const files = Object.entries(doc.files || {});
+  const box = h("div", { class: "lines-block" });
+
+  if (doc.culprits_pending && !lines.length)
+    box.append(h("div", { class: "pending" }, h("span", { class: "spin", "aria-hidden": "true" }), "Finding the exact lines…"));
+  for (const why of lineGroups.flatMap((g) => g.why_not || []))
+    box.append(h("p", { class: "muted small" }, `Could not pinpoint the line: ${why}`));
+  if (!lines.length && !lineGroups.some((g) => g.why_not))
+    for (const [secret, why] of Object.entries(doc.unlocalized || {}))
+      box.append(h("p", { class: "muted small" }, `Could not pinpoint the line for ${secret}: ${why}`));
+  if (!lines.length) return box.childNodes.length ? h("div", { class: "card" }, h("h2", { class: "section" }, "Where it happens"), box) : null;
+
+  const byFile = new Map();
+  for (const l of lines) {
+    if (!byFile.has(l.file)) byFile.set(l.file, new Set());
+    byFile.get(l.file).add(l.line);
+  }
+  const card = h("div", { class: "card" }, h("h2", { class: "section" }, "Where it happens"),
+    h("div", { class: "legend" },
+      h("span", {}, h("span", { class: "key hit" }), "does the stealing"),
+      h("span", {}, h("span", { class: "key rel" }), "needed for it to run")));
+  for (const [file, numbers] of byFile)
+    card.append(h("div", { class: "file-row" }, h("span", { class: "filename" }, file),
+      [...numbers].sort((a, b) => a - b).map((n) => lineLink(file, n))));
+  if (lineGroups.some((g) => g.unconfirmed))
+    card.append(h("p", { class: "muted small" }, "Found by searching the code; not double-checked by re-running it."));
+  if (doc.culprits_pending)
+    card.append(h("div", { class: "pending small" }, h("span", { class: "spin", "aria-hidden": "true" }), "Finding the exact lines…"));
+  // Red is proof: the lines of a leak. The AI agent's opinions are not coloured when a leak was
+  // proven, and a line that is a key line for any secret stays red.
+  const leaks = findings.filter((f) => f.rule === "agent-trap/secret-leak");
+  const coloured = leaks.length ? leaks : findings;
+  for (const [file, excerpt] of files) {
+    const hits = linesOf(coloured, file, "locations");
+    for (const g of lineGroups) for (const l of g.lines || []) if (l.file === file) hits.add(l.line);
+    const related = new Set([...linesOf(coloured, file, "related")].filter((n) => !hits.has(n)));
+    card.append(codeBlock(file, excerpt, hits, related));
+  }
+  return card;
+}
+
+// ---- the result: more details ---------------------------------------------------------------------------------------------
+function hostRows(doc) {
+  const rows = [];
+  for (const host of doc.contacted_hosts || []) {
+    if (UNLOOKABLE.test(host)) continue;
+    const info = (doc.host_intel || {})[host];
+    const parts = [];
+    if (info?.registered) parts.push(`registered ${info.registered} (${info.age_days} days ago)`);
+    if (info?.reports?.length) parts.push(`public reports: ${info.reports.map((r) => `${r.title} (${r.url})`).join("; ")}`);
+    if (parts.length) rows.push(h("li", {}, h("strong", {}, `Who is behind ${host}`), h("br"), parts.join(" · ")));
+  }
+  return rows;
+}
+
+function fixCheck(c) {
+  const leaks = c.rescan_leaks || [];
+  let result;
+  if (leaks.length) result = `With these lines removed: still leaking ${leaks.join(", ")}.`;
+  else if (c.rescan_status === "SAFE") result = "With these lines removed: no key leaves, and the repo scans SAFE.";
+  else if (c.rescan_status === "SUSPICIOUS")
+    result = "With these lines removed: no key leaves. (The AI agent still finds the rest odd, so it is marked SUSPICIOUS.)";
+  else result = "With these lines removed: no key leaves.";
+  return [h("p", {}, result),
+    h("p", {}, "Removed: ", (c.removed || []).map((r) => h("span", { class: "chip" }, r))),
+    (c.warnings || []).map((w) => h("p", { class: "small warn-text" }, w)),
+    h("p", { class: "muted small" }, "Removing code can change what the repository does. Review it before use.")];
+}
+
+function detailsBlock(doc) {
+  const body = h("div", { class: "more-body" });
+
+  const noticed = [
+    ...(doc.injections || []).map((item) => h("li", {}, item.where ? chip(splitWhere(item.where)) : null,
+      `— asks the AI agent to: ${item.asked_for}`)),
+    ...(doc.concerns || []).map((item) => h("li", {}, chip(splitWhere(item.where)), `— ${item.behavior}`,
+      item.quote ? h("span", { class: "mono1" }, String(item.quote).split("\n")[0].slice(0, 120)) : null)),
+  ];
+  if (noticed.length)
+    body.append(h("h3", {}, "What the AI agent noticed"),
+      h("p", { class: "muted small" }, "Reported by the agent itself, so a warning and not proof."), h("ul", {}, noticed));
+
+  const hosts = hostRows(doc);
+  if (hosts.length) body.append(h("h3", {}, "Outside servers"), h("ul", {}, hosts));
+
+  const flagged = doc.static_scan?.count ?? 0;
+  if (doc.static_scan) {
+    body.append(h("h3", {}, "Code scanners"),
+      h("p", {}, flagged ? `A scanner that only reads the code flagged ${flagged} line${flagged === 1 ? "" : "s"}:`
+                          : "A scanner that only reads the code found nothing."),
+      (doc.static_scan.flagged || []).slice(0, 8).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`))));
+  }
+
+  if (doc.cleaned) body.append(h("h3", {}, "Fix check"), fixCheck(doc.cleaned));
+
+  body.append(h("h3", {}, "How the scan ran"), h("p", { class: "muted small" }, scanFacts(doc)));
+  return h("details", { class: "card more" },
+    h("summary", {}, h("span", { class: "chev", "aria-hidden": "true" }), "More details"), body);
 }
 
 function renderDetail(doc) {
@@ -503,94 +654,104 @@ function renderDetail(doc) {
   clear(out);
   const findings = doc.findings || [];
   const groups = leakGroups(doc);
-
-  // the verdict, in one sentence per destination
-  const summary = h("div", {});
-  if (groups.length) for (const g of groups) summary.append(h("p", { class: "summary" }, g.message || leakSentence(g)));
-  else summary.append(h("p", { class: "summary" }, doc.headline || ""));
-  if (doc.status !== "SAFE" && doc.static_scan && !doc.static_scan.count)
-    summary.append(h("p", { class: "callout" }, "A tool that only reads the code found nothing wrong here. Running it caught the problem."));
-  for (const f of findings.filter((x) => x.rule === "agent-trap/destructive-command"))
-    summary.append(h("p", { class: "summary" }, f.message));
-  const source = String(doc.source || "");
-  const sourceNode = /^https:\/\//i.test(source)
-    ? h("a", { class: "source", href: source, target: "_blank", rel: "noopener noreferrer" }, source.replace(/^https:\/\//i, ""))
-    : source ? h("span", { class: "source" }, source) : null;
-  out.append(h("div", { class: `card verdict v-${doc.status}` },
-    h("div", { class: "banner" },
-      h("span", { class: `badge ${doc.status}` }, doc.status),
-      h("div", { class: "repo-name" }, doc.name),
-      sourceNode),
-    summary));
-
-  // the lines to look at: the leak's own, or else what the agent pointed at
-  const lineGroups = groups.some((g) => (g.lines || []).length) || doc.culprits_pending || !findings.length
-    ? groups : [{ lines: findings.flatMap((f) => f.locations || []) }];
-  const lines = linesBlock(lineGroups, doc);
-  if (lines) out.append(h("div", { class: "card" }, h("h2", {}, "Lines responsible"), lines, cleanedLine(doc.cleaned)));
-  else if (doc.cleaned) out.append(h("div", { class: "card" }, cleanedLine(doc.cleaned)));
-
-  // the code
-  const files = Object.entries(doc.files || {});
-  if (files.length) {
-    const code = h("div", { class: "card" }, h("h2", {}, "Where"),
-      h("p", { class: "legend small" },
-        h("span", { class: "key hit" }), "Red: the lines that grab the secret, say where it goes, or send it. ",
-        h("span", { class: "key rel" }), "Yellow: other lines the theft needs in order to run (removing any of them stops it)."));
-    for (const [file, excerpt] of files)
-      code.append(codeBlock(file, excerpt, linesOf(findings, file, "locations"), linesOf(findings, file, "related")));
-    out.append(code);
-  }
-
-  out.append(detailsBlock(doc, findings));
+  out.append(verdictCard(doc, groups, findings));
+  const where = whereCard(doc, groups, findings);
+  if (where) out.append(where);
+  out.append(detailsBlock(doc));
 }
 
-// ---- live scanning ------------------------------------------------------------------------------------------
-const demoLabel = (id) => id.replace(/^(attacks|benign)\//, "").replace(/_/g, " ");
+// ---- scan view ---------------------------------------------------------------------------------------------------------------
+const STEPS = [
+  ["box", "Locked sandbox", "The repo runs in a sealed container with no internet. Fake AWS, GitHub and AI keys are planted where thieves look."],
+  ["agent", "An AI agent works on it", "Like a developer would: install it, run the tests, read the docs. Hidden instructions get their chance to trick it."],
+  ["target", "Caught, line by line", "If a fake key tries to leave, we catch it and show the exact lines responsible."],
+];
+
+function renderStatic() {
+  $("brand").append(icon("shield", 24, 2), "Agent Trap");
+  $("steps").append(...STEPS.map(([name, title, text], index) => h("div", { class: "card step" },
+    h("div", { class: "step-top" }, h("span", { class: "step-icon" }, icon(name, 24, 1.8)), h("span", { class: "step-num" }, `0${index + 1}`)),
+    h("h3", {}, title), h("p", {}, text))));
+}
+
+const demoLabel = (id) => {
+  const text = id.replace(/^(attacks|benign)\//, "").replace(/[_/]+/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
 function demoGroup(title, ids) {
   if (!ids.length) return null;
   return h("div", { class: "demo-group" }, h("div", { class: "label" }, title),
     h("div", { class: "demos" }, ids.map((id) =>
-      h("button", { type: "button", class: "demo", title: id, onclick: () => startScan({ demo: id }) }, demoLabel(id)))));
+      h("button", { type: "button", class: "demo", title: id, onclick: () => startScan({ demo: id }, demoLabel(id)) }, demoLabel(id)))));
 }
 
-function renderScanCard() {
-  const card = $("scan-card");
-  clear(card);
+function renderHero() {
+  const box = $("hero-action");
+  clear(box);
   if (!state.live) {
-    card.append(h("h2", {}, "Scan a repository"),
-      h("p", { class: "lead" }, "Live scanning runs on your own machine, because it needs Docker and an API key. To try it:"),
-      h("pre", { class: "cmd" }, "pip install 'agent-trap[web]'\nagenttrap serve"));
+    box.append(h("div", { class: "hero-static" },
+      h("p", {}, "This is a saved copy of the page, so it cannot scan. Live scanning runs on your own machine, because it needs Docker and an API key. To try it:"),
+      h("pre", { class: "cmd" }, "pip install 'agent-trap[web]'\nagenttrap serve"),
+      h("button", { type: "button", class: "pill", onclick: () => showTab("past") }, "See the saved results")));
     return;
   }
   const input = h("input", { type: "text", id: "url", placeholder: "https://github.com/owner/repo", "aria-label": "GitHub repository URL", autocomplete: "off", spellcheck: "false" });
-  const form = h("form", { class: "group", onsubmit: (event) => { event.preventDefault(); startScan({ url: input.value }); } },
-    input, h("button", { class: "primary", id: "go", type: "submit" }, "Scan"));
-  card.append(h("h2", {}, "Scan a public GitHub repository"),
-    h("p", { class: "lead" }, "The repository runs in a locked room with fake secrets. If anything tries to send them out, you get the exact lines."),
-    form,
-    h("p", { class: "muted small helper" }, `Public repositories only, up to ${state.limits?.max_repo_mb ?? 50} MB. Nothing from the repository runs outside the sandbox. A scan takes a few minutes.`));
+  const quick = (label, color, url) => h("button", { type: "button", class: "pill try-btn",
+    onclick: () => { input.value = url; startScan({ url }); } }, h("span", { style: `color:${color}` }, icon("dot", 12)), label);
+  box.append(
+    h("form", { class: "scan-form", onsubmit: (event) => { event.preventDefault(); startScan({ url: input.value }); } },
+      input, h("button", { class: "primary", id: "go", type: "submit" }, "Scan")),
+    h("div", { class: "try" }, h("span", {}, "Try:"),
+      quick("A repo that steals keys", "#ff6b70", "https://github.com/p3Xxer/malicious-repo-agent-trap"),
+      quick("A normal library", "#4fdc8f", "https://github.com/pallets/markupsafe")),
+    h("p", { class: "helper" }, `Public GitHub repositories up to ${state.limits?.max_repo_mb ?? 50} MB · about 2 minutes · nothing runs on your computer`));
+}
+
+function renderDemos() {
+  const box = $("demos");
+  clear(box);
+  if (!state.live || !state.demos.length) return;
   const attacks = state.demos.filter((d) => d.startsWith("attacks/"));
   const safe = state.demos.filter((d) => d.startsWith("benign/"));
   const other = state.demos.filter((d) => !attacks.includes(d) && !safe.includes(d));
-  if (state.demos.length) {
-    card.append(h("div", { class: "demo-wrap" },
-      h("p", { class: "muted small" }, "Or scan one of our own test repositories:"),
-      demoGroup("Attack examples", attacks), demoGroup("Safe examples", safe), demoGroup("Other examples", other)));
-  }
+  box.append(h("details", { class: "card demo-box" },
+    h("summary", {}, h("span", { class: "chev", "aria-hidden": "true" }), "More test repositories (run locally)"),
+    h("div", { class: "demo-body" },
+      h("p", { class: "muted small" }, "Our own small repositories, made to attack or to behave. Click one to scan it."),
+      demoGroup("Attacks", attacks), demoGroup("Safe", safe), demoGroup("Other", other))));
 }
 
 function setBusy(busy) {
   state.busy = busy;
-  for (const control of document.querySelectorAll("#go, .demo, #url")) control.disabled = busy;
+  for (const control of document.querySelectorAll("#go, .demo, .try-btn, #url")) control.disabled = busy;
 }
 
-function startScan(body) {
+function scanTitle(body, label) {
+  if (label) return label;
+  const match = /github\.com\/([^/\s]+\/[^/\s#?]+)/i.exec(body.url || "");
+  return match ? match[1].replace(/\.git$/, "") : String(body.url || "").trim() || "repository";
+}
+
+function startElapsed() {
+  clearInterval(state.timer);
+  const began = Date.now(), out = $("elapsed");
+  const tick = () => {
+    const s = Math.floor((Date.now() - began) / 1000);
+    out.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} elapsed · usually about 2 minutes`;
+  };
+  tick();
+  state.timer = setInterval(tick, 1000);
+}
+
+function startScan(body, label) {
   if (state.busy) return;
   const log = $("log"), errorBox = $("scan-error");
   clear(log); errorBox.textContent = "";
+  $("progress-title").textContent = `Scanning ${scanTitle(body, label)}…`;
   $("progress").hidden = false;
+  startElapsed();
+  $("progress").scrollIntoView({ block: "nearest", behavior: "smooth" });
   setBusy(true);
   fetch("api/scan", {
     method: "POST",
@@ -600,19 +761,17 @@ function startScan(body) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "The scan could not be started.");
     follow(data.job);
-  }).catch((error) => { errorBox.textContent = error.message; setBusy(false); });
+  }).catch((error) => { errorBox.textContent = error.message; clearInterval(state.timer); setBusy(false); });
 }
 
 function follow(job) {
   const log = $("log"), errorBox = $("scan-error");
   const source = new EventSource(`api/jobs/${encodeURIComponent(job)}/events`);
   let finished = false;
-  const stop = () => {
-    finished = true; source.close(); setBusy(false);
-    for (const old of log.querySelectorAll("li.now")) { old.classList.remove("now"); old.classList.add("past"); }
-  };
+  const settle = () => { for (const old of log.querySelectorAll("li.now")) { old.classList.remove("now"); old.classList.add("past"); } };
+  const stop = () => { finished = true; source.close(); clearInterval(state.timer); setBusy(false); settle(); };
   source.addEventListener("progress", (event) => {
-    for (const old of log.querySelectorAll("li.now")) { old.classList.remove("now"); old.classList.add("past"); }
+    settle();
     log.append(h("li", { class: "now" }, h("span", { class: "step-dot", "aria-hidden": "true" }), h("span", {}, JSON.parse(event.data).message)));
   });
   source.addEventListener("error", (event) => {
@@ -626,8 +785,9 @@ function follow(job) {
   });
 }
 
-// ---- start ---------------------------------------------------------------------------------------------------------
+// ---- start ---------------------------------------------------------------------------------------------------------------------------
 async function init() {
+  renderStatic();
   const config = await getJson("api/config");
   state.live = !!config?.live;
   state.demos = config?.demos || [];
@@ -636,12 +796,23 @@ async function init() {
   $("mode").classList.toggle("live", state.live);
   state.results = (await getJson("api/results")) || (await getJson("results/index.json")) || [];
   renderList();
-  renderScanCard();
+  renderHero();
+  renderDemos();
+  if (!state.results.length) $("detail").append(h("div", { class: "card muted empty" }, "No past scans to show yet."));
   const wanted = decodeURIComponent(location.hash.slice(1));
-  const first = state.results.find((r) => r.id === wanted) || state.results[0];
-  if (first) await selectResult(first.id);
-  else $("detail").append(h("div", { class: "card muted empty" }, "Pick a saved result on the left."));
+  const hit = wanted && state.results.find((r) => r.id === wanted);
+  if (hit) await selectResult(hit.id);
+  else if (state.results.length) {
+    // prepare the detail pane so Past scans is useful when opened
+    const first = state.results[0];
+    const doc = (await getJson(`api/results/${encodeURIComponent(first.id)}`)) || (await getJson(`results/${encodeURIComponent(first.id)}.json`));
+    if (doc) { state.current = first.id; renderList(); renderDetail(doc); }
+  }
 }
+window.addEventListener("hashchange", () => {
+  const id = decodeURIComponent(location.hash.slice(1));
+  if (id && id !== state.current && state.results.some((r) => r.id === id)) selectResult(id);
+});
 init();
 </script>
 </body>

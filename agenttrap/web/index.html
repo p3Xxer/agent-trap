@@ -103,6 +103,9 @@
   /* how it works */
   .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   @media (max-width: 760px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+  .fix-check { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+  .fix-check.good { background: color-mix(in srgb, #30a46c 12%, transparent); }
+  .fix-check.bad { background: color-mix(in srgb, #e5484d 12%, transparent); }
   .steps > .card { margin-top: 0; }  /* side by side, so no gap above the 2nd and 3rd */
   .step { transition: transform .15s, box-shadow .15s; }
   .step:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
@@ -517,6 +520,29 @@ function scanFacts(doc) {
   return `${how} ${took} · AI cost $${Number(doc.cost_usd || 0).toFixed(3)} · ${when(doc.created)}`;
 }
 
+// "setup.py:1", "setup.py:8-26" -> "setup.py lines 1 and 8–26"
+function removedLines(removed) {
+  const byFile = new Map();
+  for (const item of removed || []) {
+    const at = String(item).lastIndexOf(":");
+    const file = at < 0 ? String(item) : String(item).slice(0, at);
+    const span = at < 0 ? "" : String(item).slice(at + 1).replace("-", "–");
+    if (!byFile.has(file)) byFile.set(file, []);
+    if (span) byFile.get(file).push(span);
+  }
+  return listOf([...byFile].map(([file, spans]) =>
+    spans.length ? `${file} line${spans.length > 1 || spans[0].includes("–") ? "s" : ""} ${listOf(spans)}` : file));
+}
+
+// Proof that the right code was found: it was deleted and the repo scanned again.
+function fixCheck(doc) {
+  if (!doc.cleaned) return null;
+  const fixed = !(doc.cleaned.rescan_leaks || []).length;
+  return h("p", { class: `fix-check ${fixed ? "good" : "bad"}` }, h("strong", {}, "Fix check: "),
+    `we deleted ${removedLines(doc.cleaned.removed)} and scanned again. `,
+    fixed ? "No key was stolen." : "Keys were still stolen, so the lines above are not the whole story.");
+}
+
 function splitWhere(where) {
   const at = String(where).lastIndexOf(":");
   return at < 0 ? { file: where, line: "" } : { file: where.slice(0, at), line: where.slice(at + 1) };
@@ -556,11 +582,7 @@ function verdictCard(doc, groups, findings) {
 
   const chips = [];
   if (doc.status !== "SAFE" && doc.static_scan && !doc.static_scan.count)
-    chips.push(h("span", { class: "tag", title: "A scanner that only reads the code found nothing here" }, "Missed by code scanners"));
-  if (doc.cleaned) {
-    const fixed = !(doc.cleaned.rescan_leaks || []).length;
-    chips.push(h("span", { class: `tag ${fixed ? "good" : "bad"}` }, fixed ? "✓ Removing the lines stops the leak" : "Removing the lines did not stop it"));
-  }
+    chips.push(h("span", { class: "tag", title: "A scanner that only reads the code found nothing here" }, "Code scanners would miss this"));
   if (chips.length) body.append(h("div", { class: "chips" }, chips));
 
   return h("div", { class: `card verdict v-${doc.status}` },
@@ -608,6 +630,8 @@ function whereCard(doc, groups, findings) {
     for (const g of lineGroups) for (const l of g.lines || []) if (l.file === file) hits.add(l.line);
     card.append(codeBlock(file, excerpt, hits, new Set()));  // only the stealing lines are marked
   }
+  const check = fixCheck(doc);
+  if (check) card.append(check);
   return card;
 }
 
@@ -623,20 +647,6 @@ function hostRows(doc) {
     if (parts.length) rows.push(h("li", {}, h("strong", {}, `Who is behind ${host}`), h("br"), parts.join(" · ")));
   }
   return rows;
-}
-
-function fixCheck(c) {
-  const leaks = c.rescan_leaks || [];
-  let result;
-  if (leaks.length) result = `With these lines removed: still leaking ${leaks.join(", ")}.`;
-  else if (c.rescan_status === "SAFE") result = "With these lines removed: no key leaves, and the repo scans SAFE.";
-  else if (c.rescan_status === "SUSPICIOUS")
-    result = "With these lines removed: no key leaves. (The AI agent still finds the rest odd, so it is marked SUSPICIOUS.)";
-  else result = "With these lines removed: no key leaves.";
-  return [h("p", {}, result),
-    h("p", {}, "Removed: ", (c.removed || []).map((r) => h("span", { class: "chip" }, r))),
-    (c.warnings || []).map((w) => h("p", { class: "small warn-text" }, w)),
-    h("p", { class: "muted small" }, "Removing code can change what the repository does. Review it before use.")];
 }
 
 function detailsBlock(doc) {
@@ -663,7 +673,6 @@ function detailsBlock(doc) {
       (doc.static_scan.flagged || []).slice(0, 8).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`))));
   }
 
-  if (doc.cleaned) body.append(h("h3", {}, "Fix check"), fixCheck(doc.cleaned));
 
   body.append(h("h3", {}, "How the scan ran"), h("p", { class: "muted small" }, scanFacts(doc)));
   return h("details", { class: "card more" },

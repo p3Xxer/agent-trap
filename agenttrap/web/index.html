@@ -337,6 +337,8 @@ function icon(name, size = 20, width = 2) {
   }
   return svg;
 }
+// HIJACKED is the stored value; people see MALICIOUS.
+const LABEL = (status) => (status === "HIJACKED" ? "MALICIOUS" : status);
 const VERDICT_ICON = { HIJACKED: "shieldX", SUSPICIOUS: "warn", SAFE: "check" };
 
 const state = { live: false, demos: [], limits: null, results: [], current: null, busy: false, timer: null };
@@ -381,7 +383,7 @@ function renderList() {
   list.append(h("div", { class: "list-head" }, h("h2", {}, "Past scans"), h("span", { class: "muted small" }, state.results.length)));
   list.append(h("div", { class: "rows" }, state.results.map((item) =>
     h("button", {
-      class: "item", "aria-current": String(state.current === item.id), title: `${item.name} (${item.status})`,
+      class: "item", "aria-current": String(state.current === item.id), title: `${item.name} (${LABEL(item.status)})`,
       onclick: () => selectResult(item.id),
     },
       h("span", { class: `vi-${item.status}` }, icon(VERDICT_ICON[item.status] === "check" ? "check" : VERDICT_ICON[item.status] || "dot", 20)),
@@ -574,7 +576,7 @@ function verdictCard(doc, groups, findings) {
     /^https:\/\//i.test(source)
       ? h("a", { class: "source", href: source, target: "_blank", rel: "noopener noreferrer" }, doc.name)
       : h("span", { class: "repo-name" }, friendlyName(doc.name)),
-    h("span", { class: `badge ${doc.status}` }, doc.status)));
+    h("span", { class: `badge ${doc.status}` }, LABEL(doc.status))));
 
   if (groups.length) {
     for (const g of groups) body.append(h("p", { class: "sentence" }, leakSentence(g)));

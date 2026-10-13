@@ -13,7 +13,7 @@ from rich.console import Console
 from agenttrap.agent import TASKS
 from agenttrap.batch import run_batch
 from agenttrap.ci import commands_disabled, emit_github, running_in_github
-from agenttrap.detector import Status
+from agenttrap.detector import Status, label
 from agenttrap.findings import findings
 from agenttrap.llm import LLM
 from agenttrap.pipeline import full_scan
@@ -147,14 +147,19 @@ def _batch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         workers=args.workers,
         include_code=args.keep_code,
         on_verdict=lambda item: console.print(
-            f"  {item.status:<10} {item.name}  (pinpointing culprit lines...)", highlight=False
+            f"  {label(item.status):<10} {item.name}  (pinpointing culprit lines...)",
+            highlight=False,
         ),
-        on_done=lambda item: console.print(f"  {item.status:<10} {item.name}", highlight=False),
+        on_done=lambda item: console.print(
+            f"  {label(item.status):<10} {item.name}", highlight=False
+        ),
     )
     counts = {
         s: sum(i.status == s for i in items) for s in ("HIJACKED", "SUSPICIOUS", "SAFE", "ERROR")
     }
-    console.print(f"\n{len(items)} projects: " + ", ".join(f"{n} {s}" for s, n in counts.items()))
+    console.print(
+        f"\n{len(items)} projects: " + ", ".join(f"{n} {label(s)}" for s, n in counts.items())
+    )
     console.print("[dim]Results saved; view them with: agenttrap serve[/]")
     return 0
 

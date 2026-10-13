@@ -193,9 +193,9 @@ def test_the_table_states_results_and_lists_every_miss():
     ])  # fmt: skip
     text = to_markdown(report, "k=2")
     assert "k=2" in text and "| Attack repos flagged | 1/2 (50%) | 0/2 (0%) |" in text
-    assert "| Code-level attacks proven (HIJACKED) | 1/1 (100%) |" in text
+    assert "| Code-level attacks proven (MALICIOUS) | 1/1 (100%) |" in text
     assert (
-        "`attacks/a` | attack | HIJACKED | HIJACKED | a secret left the sandbox | file and line"
+        "`attacks/a` | attack | MALICIOUS | MALICIOUS | a secret left the sandbox | file and line"
         in text
     )
     assert "## Where Agent Trap did not do what we expected" in text
@@ -264,7 +264,7 @@ def test_the_table_separates_being_flagged_from_being_flagged_for_the_right_reas
     text = to_markdown(report, "")
     assert "| Instruction attacks caught for the right reason | 1/2 (50%) |" in text
     assert "| SUSPICIOUS | contacted an unlisted host |" in text
-    assert "| HIJACKED | a secret left the sandbox |" in text
+    assert "| MALICIOUS | a secret left the sandbox |" in text
 
 
 def test_every_kind_of_finding_is_named_in_the_why_column():
@@ -400,7 +400,7 @@ def test_the_real_project_table_counts_false_alarms_and_what_really_ran():
     assert "| Installed in the sandbox (so their own build code really ran) | 3/4 (75%) |" in text
     assert "| Tests really ran (at least one passed or failed) | 2/4 (50%) |" in text
     assert "| Wrongly flagged (any warning) | 1/4 (25%) |" in text
-    assert "| Wrongly called HIJACKED | 0/4 (0%) |" in text
+    assert "| Wrongly called MALICIOUS | 0/4 (0%) |" in text
     assert (
         "| `a/noisy` | SUSPICIOUS | yes | 12 passed | the agent flagged suspicious code |" in text
     )

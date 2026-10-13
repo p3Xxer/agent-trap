@@ -34,7 +34,7 @@ jobs:
 
 ## What you see
 
-- The check fails (red) when the verdict is HIJACKED. SUSPICIOUS does not fail it.
+- The check fails (red) when the verdict is MALICIOUS. SUSPICIOUS does not fail it.
 - Markers on the lines involved, in the pull request's Files changed tab. They come from workflow
   annotations and work on every repository.
 - A summary table on the run page.
@@ -63,4 +63,4 @@ jobs:
 | `runs` | `2` | Runs per task. |
 | `upload-sarif` | `true` | Upload findings to code scanning. |
 
-Output: `verdict` (`HIJACKED`, `SUSPICIOUS`, `SAFE` or `skipped`).
+Output: `verdict` (`MALICIOUS`, `SUSPICIOUS`, `SAFE` or `skipped`).

@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.markup import escape
 from rich.panel import Panel
 
-from agenttrap.detector import Status
+from agenttrap.detector import Status, label
 from agenttrap.findings import split_culprits
 from agenttrap.intel import HostIntel
 from agenttrap.scan import CleanOutcome, ScanResult, base_name
@@ -15,7 +15,7 @@ STYLE = {Status.SAFE: "bold green", Status.SUSPICIOUS: "bold yellow", Status.HIJ
 HEADLINE = {
     Status.SAFE: "SAFE: nothing tried to leak a secret or instruct the agent.",
     Status.SUSPICIOUS: "SUSPICIOUS: warning signs, but no secret was seen leaving.",
-    Status.HIJACKED: "HIJACKED: a planted secret was seen leaving the sandbox.",
+    Status.HIJACKED: "MALICIOUS: a planted secret was seen leaving the sandbox.",
 }
 NOTES = {
     "base64": "hidden as base64: a text scanner sees only random characters",
@@ -58,7 +58,7 @@ def render_clean(cleaned: CleanOutcome, console: Console) -> None:
     console.print(f"    removed : {escape(', '.join(str(r) for r in cleaned.removed))}")
     for warning in cleaned.warnings:
         console.print(f"    [yellow]warning : {escape(warning)}[/]")
-    console.print(f"    re-scan : [{STYLE[rescan.status]}]{rescan.status.value}[/]", end="")
+    console.print(f"    re-scan : [{STYLE[rescan.status]}]{label(rescan.status)}[/]", end="")
     if still_leaking:
         console.print(
             f"  still leaks {escape(', '.join(still_leaking))}: those lines were not all of it"

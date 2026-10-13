@@ -29,7 +29,7 @@ inputs:
 
 outputs:
   verdict:
-    description: HIJACKED, SUSPICIOUS, SAFE, or skipped when no API key was available.
+    description: MALICIOUS, SUSPICIOUS, SAFE, or skipped when no API key was available.
     value: ${{ steps.scan.outputs.verdict }}
 
 runs:
@@ -61,7 +61,7 @@ runs:
         set +e
         agenttrap scan "$SCAN_PATH" --k "$SCAN_RUNS" --sarif agenttrap.sarif --json agenttrap.json
         code=$?
-        verdict=$(python -c "import json; print(json.load(open('agenttrap.json'))['status'])" 2>/dev/null)
+        verdict=$(python -c "import json; s = json.load(open('agenttrap.json'))['status']; print('MALICIOUS' if s == 'HIJACKED' else s)" 2>/dev/null)
         echo "verdict=${verdict:-error}" >> "$GITHUB_OUTPUT"
         exit $code
 

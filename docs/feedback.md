@@ -43,7 +43,7 @@ prices that costs fractions of a cent, so the scan can run on every pull request
 
 - **Nano is fairly hard to trick.** Simple injected instructions in a README were ignored by both
   Nano and Super. The published AgentDojo injection texts do work, but not every time: the same
-  repository gave HIJACKED in some scans and SUSPICIOUS in others. Good for safety, and it shaped
+  repository gave MALICIOUS in some scans and SUSPICIOUS in others. Good for safety, and it shaped
   the product: Agent Trap runs each task more than once and treats the model's own reports as
   warnings, never as proof.
 - **Non-determinism makes "which line tricked it?" a statistics problem.** We sample the model

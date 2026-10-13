@@ -20,7 +20,13 @@ from enum import StrEnum
 class Status(StrEnum):
     SAFE = "SAFE"
     SUSPICIOUS = "SUSPICIOUS"
-    HIJACKED = "HIJACKED"
+    HIJACKED = "HIJACKED"  # the stored value; people see it as MALICIOUS (see label)
+
+
+def label(status: str) -> str:
+    """The verdict as shown to people. "HIJACKED" stays the stored value so saved results and
+    scripts keep working; on screen it reads MALICIOUS, which says what was proven."""
+    return "MALICIOUS" if status == Status.HIJACKED else str(status)
 
 
 @dataclass(frozen=True)

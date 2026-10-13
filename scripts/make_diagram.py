@@ -187,7 +187,7 @@ text(1130, 150, "3  JUDGE THE EVIDENCE", 20, wrap=False)
 text(
     1130,
     178,
-    "plain rules decide this; an AI opinion alone can never make a repo HIJACKED",
+    "plain rules decide this; an AI opinion alone can never make a repo MALICIOUS",
     14,
     340,
 )
@@ -197,7 +197,7 @@ card(
     340,
     185,
     "red",
-    "HIJACKED = proof",
+    "MALICIOUS = proof",
     "• a fake secret or the fake machine name was seen leaving: in a request or a DNS name, "
     "plain, base64, hex or hashed\n"
     "• a destructive command really ran (rm -rf, curl | sh)",
@@ -230,7 +230,7 @@ card(
 
 # ---- 4 pinpoint + 5 output -----------------------------------------------------------------------
 text(1530, 150, "4  PINPOINT THE LINE", 20, wrap=False)
-text(1530, 178, "only when HIJACKED; the verdict is shown first", 14, wrap=False)
+text(1530, 178, "only when MALICIOUS; the verdict is shown first", 14, wrap=False)
 card(
     1530,
     205,
@@ -261,7 +261,7 @@ card(
     233,
     "green",
     "Works today",
-    "• terminal report with file:line, exit code 1 on HIJACKED\n• JSON results, batch summary\n"
+    "• terminal report with file:line, exit code 1 on MALICIOUS\n• JSON results, batch summary\n"
     "• --clean: a copy without the culprit code, scanned again\n"
     "• GitHub Action + SARIF: warnings on the exact lines of a pull request\n"
     "• local web page: scan a GitHub URL, browse saved results",
@@ -277,7 +277,7 @@ text(
     903,
     "On 11 built attacks, Agent Trap flagged 11 and a plain code scanner 2: instructions hidden "
     "as base64 or fetched at run time can't be seen by reading. On real malware from PyPI "
-    "(Datadog dataset), 4 packages were caught HIJACKED, one sending the fake API keys to "
+    "(Datadog dataset), 4 packages were caught MALICIOUS, one sending the fake API keys to "
     "webhook.site, with the exact setup.py lines.",
     15,
     986,

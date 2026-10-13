@@ -31,7 +31,7 @@ still reached. An AI agent does not behave the same way every time, so the comma
 agent task twice by default (`--k`); the web page runs each once so a live scan takes about two
 minutes.
 
-A verdict of HIJACKED needs proof: a planted fake secret seen leaving the sandbox, or a destructive
+A verdict of MALICIOUS needs proof: a planted fake secret seen leaving the sandbox, or a destructive
 command actually run. SAFE means nothing was seen leaving in these runs, not that the code is
 proven harmless: code waiting for a date, another operating system or a real internet connection
 will not show itself here.
@@ -52,7 +52,7 @@ agenttrap scan path/to/repo            # needs Docker running and NEBIUS_API_KEY
 agenttrap scan path/to/repo --k 3 --json result.json
 ```
 
-Add `--clean OUT_DIR` to get a copy of a HIJACKED repo with the culprit code removed, plus a second
+Add `--clean OUT_DIR` to get a copy of a MALICIOUS repo with the culprit code removed, plus a second
 scan of that copy to show whether the leak is gone. The original is never modified, and `OUT_DIR`
 must not exist or be empty. In Python files whole statements are removed (a removed statement
 becomes `pass`, so line numbers and syntax hold); in other files exactly the culprit lines are
@@ -78,9 +78,10 @@ a stealer in `setup.py` would be missed some of the time.
 
 Each scan is saved to `.agenttrap/results/`, where the web page finds it.
 
-The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
+The exit code is 1 if the verdict is MALICIOUS, so it can gate CI. (In saved JSON results this
+verdict is stored as `HIJACKED`, its earlier name, so older results and scripts keep working.) Verdicts:
 
-- **HIJACKED**: a planted secret was seen leaving the sandbox in plain HTTP, or the agent ran a
+- **MALICIOUS**: a planted secret was seen leaving the sandbox in plain HTTP, or the agent ran a
   clearly destructive command. The report names the culprit file and line.
 - **SUSPICIOUS**: no proof, but the agent reported text trying to instruct it, or the sandbox
   tried to reach a host that is not on the allow-list.
@@ -94,7 +95,7 @@ The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 | `agenttrap/sandbox.py` | Throwaway Docker container on an internal network with no route out |
 | `agenttrap/egress.py`, `sinkhole.py`, `mitm_addon.py` | Network monitor: a per-run private network with a mitmproxy container (reads HTTP and HTTPS, answers every request itself) and a DNS/TCP sinkhole for anything that bypasses the proxy. Nothing is forwarded |
 | `agenttrap/agent.py` | The bait agent: a Nemotron tool-use loop run inside the sandbox, plus a post-task debrief |
-| `agenttrap/detector.py` | Canary-leak matching and the SAFE / SUSPICIOUS / HIJACKED verdict |
+| `agenttrap/detector.py` | Canary-leak matching and the SAFE / SUSPICIOUS / MALICIOUS verdict |
 | `agenttrap/localizer.py` | Delta debugging (ddmin): culprit file, then culprit line |
 | `agenttrap/cleaner.py` | Copy of the repo without the culprit code, for a verification re-scan |
 | `agenttrap/intel.py` | Host lookups run on every scan: domain age (RDAP) and public reports (Tavily) |
@@ -142,16 +143,16 @@ check and gets warnings on the exact lines. See [docs/github-action.md](docs/git
 
 | Test | What we ran | Result |
 | --- | --- | --- |
-| [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (HIJACKED)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. The other 6 flagged SUSPICIOUS; 1 SAFE |
+| [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (MALICIOUS)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. The other 6 flagged SUSPICIOUS; 1 SAFE |
 | [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **2/11** for a tool that only reads the code. All 5 code attacks proven with the exact file and line |
-| [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called HIJACKED |
-| Our clean test repos | 8 harmless repos written to look risky | 0/8 called HIJACKED; 1 flagged SUSPICIOUS (it calls its own web service) |
+| [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
+| Our clean test repos | 8 harmless repos written to look risky | 0/8 called MALICIOUS; 1 flagged SUSPICIOUS (it calls its own web service) |
 
 A scan takes 1 to 2 minutes and costs under two cents of model use.
 
 **Try it on a real link:** [p3Xxer/malicious-repo-agent-trap](https://github.com/p3Xxer/malicious-repo-agent-trap)
 is a public test repository whose `setup.py` steals keys during install (aimed at a name that
-cannot exist, so it is harmless elsewhere). Paste it into the web page and it comes back HIJACKED
+cannot exist, so it is harmless elsewhere). Paste it into the web page and it comes back MALICIOUS
 with the lines.
 
 ![How one scan works](docs/architecture.svg)
@@ -175,7 +176,7 @@ default no line of the scanned code is saved in the results.
 
 ## What Agent Trap does and does not do
 
-- **Proven (HIJACKED):** a planted fake secret really leaves the sandbox, found by running the
+- **Proven (MALICIOUS):** a planted fake secret really leaves the sandbox, found by running the
   project's install, import and test steps and the agent's own work. For code that steals, the
   culprit file and line are found by replaying commands. When the agent itself was tricked by text,
   the lines are found by asking the model again with and without them (`counterfactual.py`).

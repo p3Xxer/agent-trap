@@ -244,7 +244,7 @@ class OutOfTime(Exception):
 MAX_SUSPECTS = 8
 TASK_WORDS = {"setup": "set it up", "test": "test it", "summary": "summarize it"}
 LOCALIZE_WORKERS = 3  # detonations at once; each needs about 2 GB of the Docker machine's memory
-LOCALIZE_SECONDS = 420  # each detonation takes seconds, and a search needs dozens of them
+LOCALIZE_SECONDS = 150  # keeps a whole scan within about 5 minutes; a longer search falls back to text search
 
 
 def replay_runner(

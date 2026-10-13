@@ -91,7 +91,6 @@
   .hero-static .pill { margin-top: 14px; }
 
   /* product preview (static, authored) */
-  a.stat { color: inherit; text-decoration: none; } a.stat:hover strong { text-decoration: underline; text-underline-offset: 4px; }
   .preview { margin: 56px auto 0; max-width: 640px; perspective: 1400px; }
   .win { position: relative; border-radius: 16px; background: #0c0d10; border: 1px solid rgba(255,255,255,.1); overflow: hidden;
     box-shadow: 0 30px 80px -30px rgba(124,124,255,.35), 0 0 0 1px rgba(0,0,0,.4), 0 24px 48px -24px rgba(0,0,0,.8);
@@ -112,14 +111,6 @@
   .preview-cap { margin: 16px 0 0; text-align: center; font-size: 12px; letter-spacing: .02em; color: #6b707a; }
   @media (max-width: 640px) { .preview { margin-top: 36px; } .win { transform: none; } .win-code { font-size: 11px; } }
 
-  /* stats strip */
-  .stats { border-bottom: 1px solid var(--border); }
-  .stats-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding: 36px 24px; max-width: 1120px; margin: 0 auto; }
-  .stat { padding: 0 20px; border-left: 1px solid var(--border); }
-  .stat:first-child { border-left: 0; padding-left: 0; }
-  .stat strong { display: block; font-size: 44px; line-height: 1.1; font-weight: 500; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
-  .stat span { display: block; margin-top: 6px; font-size: 13px; line-height: 1.45; color: var(--muted); }
-  @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 0; padding: 28px 16px; } .stat:nth-child(odd) { border-left: 0; padding-left: 0; } .stat strong { font-size: 36px; } }
 
   main { max-width: 1120px; margin: 0 auto; padding: 48px 24px 24px; }
   @media (max-width: 640px) { main { padding: 32px 16px 16px; } }
@@ -317,15 +308,6 @@
       </figure>
     </div>
   </div>
-  <section class="stats" aria-label="Results so far">
-    <div class="stats-grid">
-      <a class="stat" href="https://github.com/p3Xxer/agent-trap/blob/main/docs/real-malware.md"><strong>4 of 11</strong><span>real PyPI malware samples caught stealing</span></a>
-      <a class="stat" href="https://github.com/p3Xxer/agent-trap/blob/main/docs/false-alarms.md"><strong>0 / 20</strong><span>popular open-source projects falsely flagged</span></a>
-      <a class="stat" href="https://github.com/p3Xxer/agent-trap/blob/main/docs/evaluation.md"><strong>11 / 11</strong><span>our test attacks caught (code scanners: 2 / 11)</span></a>
-      <div class="stat"><strong>1–8 min</strong><span>per scan (longer when there is something to pinpoint)</span></div>
-      <div class="stat"><strong>~1–3¢</strong><span>AI cost per scan</span></div>
-    </div>
-  </section>
   <main>
     <div class="card" id="progress" hidden>
       <h2 id="progress-title">Scanning…</h2>

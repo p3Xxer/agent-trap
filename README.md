@@ -148,7 +148,7 @@ check and gets warnings on the exact lines. See [docs/github-action.md](docs/git
 | [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
 | Our clean test repos | 8 harmless repos written to look risky | 0/8 called MALICIOUS; 1 flagged SUSPICIOUS (it calls its own web service) |
 
-A scan takes 1 to 2 minutes for a clean repository and up to about 8 when there are culprit lines to
+A scan takes 1 to 2 minutes for a clean repository and up to about 5 when there are culprit lines to
 pinpoint, and costs about 1 to 3 cents of model use.
 
 **Try it on a real link:** [p3Xxer/malicious-repo-agent-trap](https://github.com/p3Xxer/malicious-repo-agent-trap)

@@ -617,7 +617,7 @@ function splitWhere(where) {
 }
 
 // ---- the result: verdict card ------------------------------------------------------------------------------------------
-const TITLES = { HIJACKED: "This repo steals secrets", SUSPICIOUS: "Something here looks risky", SAFE: "Nothing tried to steal" };
+const TITLES = { HIJACKED: "This repo steals secrets", SUSPICIOUS: "Something here looks risky", SAFE: "No theft found" };
 
 function verdictCard(doc, groups, findings) {
   const body = h("div", { class: "v-body" });

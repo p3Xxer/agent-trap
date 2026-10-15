@@ -212,3 +212,29 @@ def test_warnings_on_stderr_do_not_hide_new_events(monkeypatch):
     out += lines({"kind": "dns", "name": "new.test"})
     err += ["warning: two", "warning: three"]
     assert "new.test" in net.observed(mark).hosts
+
+
+def test_runs_starting_together_create_the_interception_ca_only_once(monkeypatch, tmp_path):
+    import threading
+    import time
+
+    from agenttrap import egress
+    from agenttrap.sandbox import CommandResult
+
+    made = []
+
+    def docker(*args, **_):
+        made.append(args)
+        time.sleep(0.05)  # creating the CA takes a while, which is when others would join in
+        (tmp_path / "mitmproxy-ca-cert.pem").write_text("cert")
+        return CommandResult(0, "", "")
+
+    monkeypatch.setattr(egress, "_docker", docker)
+    monkeypatch.setattr(egress, "CA_DIR", tmp_path)
+    monkeypatch.setattr(egress, "CA_CERT", tmp_path / "mitmproxy-ca-cert.pem")
+    runs = [threading.Thread(target=egress.ensure_ca) for _ in range(4)]
+    for run in runs:
+        run.start()
+    for run in runs:
+        run.join()
+    assert len(made) == 1

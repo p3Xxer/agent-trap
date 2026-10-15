@@ -186,6 +186,7 @@
   @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
   #list { padding: 10px; max-height: calc(100vh - 100px); overflow: auto; position: sticky; top: 16px; }
   .list-head { padding: 8px 12px 10px; display: flex; align-items: baseline; justify-content: space-between; }
+  .group-label { padding: 14px 12px 6px; font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   .list-head h2 { margin: 0; font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .rows { display: block; }
   @media (max-width: 860px) {
@@ -440,15 +441,40 @@ function renderList() {
     return;
   }
   list.append(h("div", { class: "list-head" }, h("h2", {}, "Past scans"), h("span", { class: "muted small" }, state.results.length)));
-  list.append(h("div", { class: "rows" }, state.results.map((item) =>
-    h("button", {
+  for (const [title, items] of groupedResults())
+    list.append(h("div", { class: "group-label" }, title), h("div", { class: "rows" }, items.map(rowFor)));
+}
+
+// Real malware we did not write is the strongest evidence, so it comes first; our own test
+// repositories come last. Within a group: MALICIOUS, then SUSPICIOUS, then SAFE, newest first.
+const GROUPS = ["Real malware from PyPI", "Public projects", "Our test repositories"];
+const SEVERITY = { HIJACKED: 0, SUSPICIOUS: 1, SAFE: 2 };
+
+function groupOf(name) {
+  const n = String(name || "");
+  if (n.startsWith("batch/")) return 0;
+  const ours = n.startsWith("p3Xxer/") || n === "malicious-repo-agent-trap"
+    || Object.keys(DEMO_LABELS).some((k) => k === n || k.endsWith(`/${n}`));
+  return ours ? 2 : 1;
+}
+
+function groupedResults() {
+  const sorted = [...state.results].sort((a, b) =>
+    groupOf(a.name) - groupOf(b.name)
+    || (SEVERITY[a.status] ?? 3) - (SEVERITY[b.status] ?? 3)
+    || String(b.created).localeCompare(String(a.created)));
+  return GROUPS.map((title, i) => [title, sorted.filter((r) => groupOf(r.name) === i)]).filter(([, items]) => items.length);
+}
+
+function rowFor(item) {
+  return h("button", {
       class: "item", "aria-current": String(state.current === item.id), title: `${item.name} (${LABEL(item.status)})`,
       onclick: () => selectResult(item.id),
     },
       h("span", { class: `vi-${item.status}` }, icon(VERDICT_ICON[item.status] === "check" ? "check" : VERDICT_ICON[item.status] || "dot", 20)),
       h("span", { class: "item-body" },
         h("span", { class: "name" }, friendlyName(item.name)),
-        h("span", { class: "meta" }, relTime(item.created)))))));
+        h("span", { class: "meta" }, relTime(item.created))));
 }
 
 async function selectResult(id) {
@@ -974,7 +1000,7 @@ async function init() {
   if (hit) await selectResult(hit.id);
   else if (state.results.length) {
     // prepare the detail pane so Past scans is useful when opened
-    const first = state.results[0];
+    const first = groupedResults()[0][1][0];
     const doc = await getResult(first.id);
     if (doc) { state.current = first.id; renderList(); renderDetail(doc); }
   }

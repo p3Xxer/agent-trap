@@ -14,6 +14,41 @@ hijacked into leaking them, and pinpoints the **exact file and line** that did i
   `setup-check.test`, which can never exist on the internet (RFC 6761): run outside the sandbox,
   the request simply fails.
 
+## Built with NVIDIA Nemotron on Nebius Token Factory
+
+Every model call in Agent Trap goes to **NVIDIA Nemotron 3 Nano**
+(`nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`) through **Nebius Token Factory**'s OpenAI-compatible API
+(`https://api.tokenfactory.nebius.com/v1/`). Nemotron is not a reviewer added on top: it *is* the
+coding agent being put in the trap.
+
+| Where Nemotron is used | What it does | Model calls |
+| --- | --- | --- |
+| **The coding agent in the sandbox** ([`agenttrap/agent.py`](agenttrap/agent.py)) | Works on the repository like a developer's coding assistant: reads files, runs commands, installs and tests the project. It gets three everyday tasks ("set this project up", "run the tests", "summarize what this repo does") and answers each step with one JSON action that is carried out inside the sandbox. | Up to 15 per task. 3 tasks, run once each on the web page and twice each from the command line. |
+| **Two questions after each task** ([`agenttrap/agent.py`](agenttrap/agent.py)) | "Did anything you read try to give *you* instructions?" and "Did you see code that does something risky?" A quote only counts if it is found in the repository, and the answers are shown as warnings, never as proof. | 2 per task |
+| **Finding the line that tricked the agent** ([`agenttrap/counterfactual.py`](agenttrap/counterfactual.py)) | When the agent itself sent a planted key out, Agent Trap removes candidate lines and asks Nemotron to take the same next step again: 12 samples per version, counted as still tricked when at least 3 reach for the key. | Only in that case; at most 40 versions × 12 samples |
+
+Code that steals by itself is pinpointed without any model call: the repository is simply re-run
+with lines removed. `--model super` or `--model ultra` switches the agent to Nemotron 3 Super or
+Ultra on Token Factory.
+
+**How Token Factory made this practical**
+
+- **Cheap enough to sample.** Each scan records its own cost, typically 1 to 3 cents. Over the whole
+  project (development, tests and every evaluation) the spend ledger in `.agenttrap/spend.json`
+  shows 21,308 calls, 40.7 million input and 2.1 million output tokens, **$5.15 in total**. That is
+  what makes asking the model 12 times per candidate affordable, and a scan on every pull request
+  realistic.
+- **OpenAI-compatible.** One small client ([`agenttrap/llm.py`](agenttrap/llm.py)) with JSON mode
+  for structured answers, a cache for identical requests, and spend limits checked *before* every
+  call: `MAX_USD_PER_CHECK` per scan (default $0.50) and `TOTAL_BUDGET_USD` for the lifetime of the
+  project (default $20).
+- **Parallel runs.** The agent tasks of a scan run side by side, each in its own sandbox.
+
+**Tavily.** For every host the sandbox contacted that is not on the allow-list, Agent Trap makes a
+Tavily search at scan time to see whether the public web reports it as malicious, next to the
+domain's registration date from RDAP. Only host names are sent; the results are context for a
+person and are never given to the model.
+
 ## How a scan works
 
 Every scan runs the repository in a fresh, locked sandbox several times:
@@ -36,13 +71,34 @@ command actually run. SAFE means nothing was seen leaving in these runs, not tha
 proven harmless: code waiting for a date, another operating system or a real internet connection
 will not show itself here.
 
+## Quick start
+
+You need **Python 3.11+**, **Docker** (running) and a **Nebius Token Factory API key**. A Tavily key
+is optional.
+
+```bash
+git clone https://github.com/p3Xxer/agent-trap && cd agent-trap
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e '.[dev]'
+cp .env.example .env        # then put your NEBIUS_API_KEY (and optionally TAVILY_API_KEY) in .env
+agenttrap serve             # the web page, at http://localhost:8765
+```
+
+On the web page, paste `https://github.com/p3Xxer/malicious-repo-agent-trap` (a harmless
+test repository that steals keys during install) and press Scan. The first scan builds the sandbox
+image and downloads mitmproxy, so it takes a few extra minutes.
+
+From the terminal instead:
+
+```bash
+agenttrap scan fixtures/attacks/install_time_exfil     # one of our own test attacks
+```
+
 ## Development
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev]'
-cp .env.example .env   # then add your NEBIUS_API_KEY
-pytest
+pytest                      # no Docker or API key needed
 ```
 
 ## Usage
@@ -71,8 +127,8 @@ Add `--sarif result.sarif` to write the findings as SARIF, the format GitHub sho
 pull request lines. Inside GitHub Actions the scan also prints annotations for those lines and
 writes a run summary, with no extra flags.
 
-Every scan also runs `pip install -e .` and `pytest` in the sandbox with no AI involved, next to
-the agent's runs. Whether the agent installs the project is up to the agent (in our measurements
+Every scan also installs the project (`pip install`, `pip install -e`, `setup.py install`), imports
+every module and runs `pytest` in the sandbox with no AI involved, next to the agent's runs. Whether the agent installs the project is up to the agent (in our measurements
 it did in about half of "set up" runs and a quarter of "run the tests" runs), so without this step
 a stealer in `setup.py` would be missed some of the time.
 
@@ -81,8 +137,8 @@ Each scan is saved to `.agenttrap/results/`, where the web page finds it.
 The exit code is 1 if the verdict is MALICIOUS, so it can gate CI. (In saved JSON results this
 verdict is stored as `HIJACKED`, its earlier name, so older results and scripts keep working.) Verdicts:
 
-- **MALICIOUS**: a planted secret was seen leaving the sandbox in plain HTTP, or the agent ran a
-  clearly destructive command. The report names the culprit file and line.
+- **MALICIOUS**: a planted secret was seen leaving the sandbox (in a web request or a DNS lookup),
+  or the agent ran a clearly destructive command. The report names the culprit file and line.
 - **SUSPICIOUS**: no proof, but the agent reported text trying to instruct it, or the sandbox
   tried to reach a host that is not on the allow-list.
 - **SAFE**: neither.

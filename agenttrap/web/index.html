@@ -358,6 +358,13 @@ function h(tag, props = {}, ...kids) {
 const $ = (id) => document.getElementById(id);
 const clear = (node) => { while (node.firstChild) node.removeChild(node.firstChild); };
 
+// A saved result: from the local server when it is running, else from the files a saved copy
+// of the page ships with (results/<id>.json).
+function getResult(id) {
+  const name = encodeURIComponent(id);
+  return state.live ? getJson(`api/results/${name}`) : getJson(`results/${name}.json`);
+}
+
 async function getJson(path) {
   try {
     const response = await fetch(path, { headers: { Accept: "application/json" } });
@@ -445,8 +452,7 @@ function renderList() {
 }
 
 async function selectResult(id) {
-  const doc = (await getJson(`api/results/${encodeURIComponent(id)}`))
-    || (await getJson(`results/${encodeURIComponent(id)}.json`));
+  const doc = await getResult(id);
   if (!doc) return;
   state.current = id;
   history.replaceState(null, "", `#${encodeURIComponent(id)}`);
@@ -829,8 +835,8 @@ function renderHero() {
   clear(box);
   if (!state.live) {
     box.append(h("div", { class: "hero-static" },
-      h("p", {}, "This is a saved copy of the page, so it cannot scan. Live scanning runs on your own machine, because it needs Docker and an API key. To try it:"),
-      h("pre", { class: "cmd" }, "pip install 'agent-trap[web]'\nagenttrap serve"),
+      h("p", {}, "This is a saved copy of the page, so it cannot scan. Live scanning runs on your own machine, because it needs Docker and an API key. To try it, follow the Quick start:"),
+      h("pre", { class: "cmd" }, "git clone https://github.com/p3Xxer/agent-trap\ncd agent-trap && pip install -e .\nagenttrap serve"),
       h("button", { type: "button", class: "pill", onclick: () => showTab("past") }, "See the saved results")));
     return;
   }
@@ -932,8 +938,7 @@ async function renderWild() {
     .filter((r) => { const n = displayName(r.name); if (seen.has(n)) return false; seen.add(n); return true; })
     .slice(0, 4);
   if (!picks.length) return;
-  const docs = await Promise.all(picks.map((r) => getJson(`api/results/${encodeURIComponent(r.id)}`)
-    || getJson(`results/${encodeURIComponent(r.id)}.json`)));
+  const docs = await Promise.all(picks.map((r) => getResult(r.id)));
   const box = $("wild");
   clear(box);
   picks.forEach((item, index) => {
@@ -958,7 +963,7 @@ async function init() {
   state.limits = config?.limits || null;
   $("mode").textContent = state.live ? "Running on your computer" : "Saved results only";
   $("mode").classList.toggle("live", state.live);
-  state.results = (await getJson("api/results")) || (await getJson("results/index.json")) || [];
+  state.results = (await getJson(state.live ? "api/results" : "results/index.json")) || [];
   renderList();
   renderHero();
   renderDemos();
@@ -970,7 +975,7 @@ async function init() {
   else if (state.results.length) {
     // prepare the detail pane so Past scans is useful when opened
     const first = state.results[0];
-    const doc = (await getJson(`api/results/${encodeURIComponent(first.id)}`)) || (await getJson(`results/${encodeURIComponent(first.id)}.json`));
+    const doc = await getResult(first.id);
     if (doc) { state.current = first.id; renderList(); renderDetail(doc); }
   }
 }

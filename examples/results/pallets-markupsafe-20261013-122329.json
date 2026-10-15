@@ -1,0 +1,50 @@
+{
+  "format": 1,
+  "name": "pallets/markupsafe",
+  "source": "https://github.com/pallets/markupsafe",
+  "created": "2026-10-13T12:23:29+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "leak_groups": [],
+  "culprits": {},
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "39 passed, 41 skipped",
+    "exits": [
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "errors": [
+      [],
+      [
+        "missing-file"
+      ],
+      [],
+      [],
+      []
+    ]
+  },
+  "runs": 4,
+  "cost_usd": 0.02,
+  "seconds": 18.2,
+  "code_saved": true,
+  "id": "pallets-markupsafe-20261013-122329"
+}

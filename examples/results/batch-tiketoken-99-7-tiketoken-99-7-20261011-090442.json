@@ -1,0 +1,273 @@
+{
+  "format": 1,
+  "name": "batch/tiketoken-99.7/tiketoken-99.7",
+  "source": null,
+  "created": "2026-10-11T09:04:42+00:00",
+  "status": "HIJACKED",
+  "headline": "HIJACKED: a planted secret was seen leaving the sandbox.",
+  "leaks": [
+    "$HOSTNAME",
+    "$USER"
+  ],
+  "flags": [
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted dnipqouebm-psl.cn.oast-cn.byted-dast.com",
+      "hard": false
+    },
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted oqvignkp58-psl.i18n.oast-row.byted-dast.com",
+      "hard": false
+    },
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted sbfwstspuutiarcjzptfenn9u0dsxhjlu.oast.fun",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "main.py:26: The code constructs URLs with parameters that include the hostname, username, and current directory,",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "main.py:13: The code defines a list of URLs that appear to be tracking or beacon domains, then makes HTTP reques",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "main.py:28: Sending data from the user's machine to external servers via HTTP requests to byte-temp domains",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the sandbox's identity ($HOSTNAME, a random fake machine name) was sent to http://dnipqouebm-psl.cn.oast-cn.byted-dast.com/realtime_p/pypi/54336?package=tiketoken&hostname=build-b8d890c5da&username=dev-8fb6a925&dir=%2Fwork. These lines mention the address or read the machine's identity (found by searching the code; the full re-run search ran out of time, so this is not confirmed).",
+      "locations": [
+        {
+          "file": "main.py",
+          "line": 9,
+          "text": ""
+        },
+        {
+          "file": "main.py",
+          "line": 14,
+          "text": ""
+        },
+        {
+          "file": "main.py",
+          "line": 22,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the sandbox's identity ($USER, a random fake machine name) was sent to http://dnipqouebm-psl.cn.oast-cn.byted-dast.com/realtime_p/pypi/54336?package=tiketoken&hostname=build-b8d890c5da&username=dev-8fb6a925&dir=%2Fwork. These lines mention the address or read the machine's identity (found by searching the code; the full re-run search ran out of time, so this is not confirmed).",
+      "locations": [
+        {
+          "file": "main.py",
+          "line": 14,
+          "text": ""
+        }
+      ],
+      "related": [
+        {
+          "file": "main.py",
+          "line": 9,
+          "text": ""
+        },
+        {
+          "file": "main.py",
+          "line": 22,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: The code constructs URLs with parameters that include the hostname, username, and current directory, then makes HTTP requests to external servers without user consent or clear documentation of this behavior.",
+      "locations": [
+        {
+          "file": "main.py",
+          "line": 26,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: The code defines a list of URLs that appear to be tracking or beacon domains, then makes HTTP requests to these external servers using urllib, which involves sending data from the user's machine to external servers without clear documentation of the purpose or user consent.",
+      "locations": [
+        {
+          "file": "main.py",
+          "line": 13,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Sending data from the user's machine to external servers via HTTP requests to byte-temp domains",
+      "locations": [
+        {
+          "file": "main.py",
+          "line": 28,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted dnipqouebm-psl.cn.oast-cn.byted-dast.com, which is not on the allow-list. The domain was registered 2022-11-09.",
+      "locations": [],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted oqvignkp58-psl.i18n.oast-row.byted-dast.com, which is not on the allow-list. The domain was registered 2022-11-09.",
+      "locations": [],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted sbfwstspuutiarcjzptfenn9u0dsxhjlu.oast.fun, which is not on the allow-list. The domain was registered 2022-01-11.",
+      "locations": [],
+      "related": []
+    }
+  ],
+  "culprits": {
+    "$HOSTNAME": [
+      {
+        "file": "main.py",
+        "line": 9,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "main.py",
+        "line": 14,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "main.py",
+        "line": 22,
+        "text": "",
+        "tag": "unconfirmed"
+      }
+    ],
+    "$USER": [
+      {
+        "file": "main.py",
+        "line": 9,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "main.py",
+        "line": 14,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "main.py",
+        "line": 22,
+        "text": "",
+        "tag": "unconfirmed"
+      }
+    ]
+  },
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "concerns": [
+    {
+      "where": "main.py:26",
+      "quote": "",
+      "behavior": "The code constructs URLs with parameters that include the hostname, username, and current directory, then makes HTTP requests to external servers without user consent or clear documentation of this behavior."
+    },
+    {
+      "where": "main.py:13",
+      "quote": "",
+      "behavior": "The code defines a list of URLs that appear to be tracking or beacon domains, then makes HTTP requests to these external servers using urllib, which involves sending data from the user's machine to external servers without clear documentation of the purpose or user consent."
+    },
+    {
+      "where": "main.py:28",
+      "quote": "",
+      "behavior": "Sending data from the user's machine to external servers via HTTP requests to byte-temp domains"
+    }
+  ],
+  "contacted_hosts": [
+    "dnipqouebm-psl.cn.oast-cn.byted-dast.com",
+    "oqvignkp58-psl.i18n.oast-row.byted-dast.com",
+    "sbfwstspuutiarcjzptfenn9u0dsxhjlu.oast.fun"
+  ],
+  "host_intel": {
+    "dnipqouebm-psl.cn.oast-cn.byted-dast.com": {
+      "registered": "2022-11-09",
+      "age_days": 1432,
+      "reports": []
+    },
+    "oqvignkp58-psl.i18n.oast-row.byted-dast.com": {
+      "registered": "2022-11-09",
+      "age_days": 1432,
+      "reports": []
+    },
+    "sbfwstspuutiarcjzptfenn9u0dsxhjlu.oast.fun": {
+      "registered": "2022-01-11",
+      "age_days": 1734,
+      "reports": []
+    }
+  },
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "",
+    "exits": [
+      0,
+      0,
+      0,
+      0,
+      5
+    ],
+    "errors": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.02095,
+  "seconds": 478.6,
+  "code_saved": false,
+  "id": "batch-tiketoken-99-7-tiketoken-99-7-20261011-090442"
+}

@@ -1,0 +1,642 @@
+{
+  "format": 1,
+  "name": "batch/cloudx-base-1.2.1/cloudx-base-1.2.1",
+  "source": null,
+  "created": "2026-10-11T08:55:49+00:00",
+  "status": "HIJACKED",
+  "headline": "HIJACKED: a planted secret was seen leaving the sandbox.",
+  "leaks": [
+    "$HOSTNAME",
+    "$USER"
+  ],
+  "flags": [
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted reisv3.pythonanywhere.com",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "setup.py:3: The setup.py file contains code that sends data from the user's machine to an external server (https",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "setup.py:24: Sends a POST request to an external server (https://reisv3.pythonanywhere.com) during package instal",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the sandbox's identity ($HOSTNAME, a random fake machine name) was sent to https://reisv3.pythonanywhere.com/?site=aws.amazon.com&pkg=cloudx-base. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 14,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 25,
+          "text": ""
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 9,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 13,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 17,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 21,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 22,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 26,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 27,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 33,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 34,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 36,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 38,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 45,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the sandbox's identity ($USER, a random fake machine name) was sent to https://reisv3.pythonanywhere.com/?site=aws.amazon.com&pkg=cloudx-base. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 13,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 21,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 25,
+          "text": ""
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 9,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 14,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 17,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 22,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 26,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 27,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 33,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 34,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 36,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 38,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 45,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: The setup.py file contains code that sends data from the user's machine to an external server (https://reisv3.pythonanywhere.com) during package installation, including username, hostname, and other system information without explicit user consent or clear documentation of this behavior.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 3,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Sends a POST request to an external server (https://reisv3.pythonanywhere.com) during package installation, potentially leaking user information including hostname and username without explicit user consent",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted reisv3.pythonanywhere.com, which is not on the allow-list. The domain was registered 2011-03-24.",
+      "locations": [],
+      "related": []
+    }
+  ],
+  "culprits": {
+    "$HOSTNAME": [
+      {
+        "file": "setup.py",
+        "line": 2,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 3,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 4,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 5,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 6,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 7,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 9,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 13,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 14,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 17,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 22,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 24,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 25,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 26,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 27,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 30,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 32,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 33,
+        "text": "",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 34,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 35,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 36,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 38,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 45,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 47,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 48,
+        "text": "",
+        "tag": "plaintext"
+      }
+    ],
+    "$USER": [
+      {
+        "file": "setup.py",
+        "line": 2,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 3,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 4,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 5,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 6,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 7,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 9,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 13,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 14,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 17,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 22,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 24,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 25,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 26,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 27,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 30,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 32,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 33,
+        "text": "",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 34,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 35,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 36,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 38,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 45,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 47,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 48,
+        "text": "",
+        "tag": "plaintext"
+      }
+    ]
+  },
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "concerns": [
+    {
+      "where": "setup.py:3",
+      "quote": "",
+      "behavior": "The setup.py file contains code that sends data from the user's machine to an external server (https://reisv3.pythonanywhere.com) during package installation, including username, hostname, and other system information without explicit user consent or clear documentation of this behavior."
+    },
+    {
+      "where": "setup.py:24",
+      "quote": "",
+      "behavior": "Sends a POST request to an external server (https://reisv3.pythonanywhere.com) during package installation, potentially leaking user information including hostname and username without explicit user consent"
+    }
+  ],
+  "contacted_hosts": [
+    "reisv3.pythonanywhere.com"
+  ],
+  "host_intel": {
+    "reisv3.pythonanywhere.com": {
+      "registered": "2011-03-24",
+      "age_days": 5680,
+      "reports": []
+    }
+  },
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "",
+    "exits": [
+      0,
+      0,
+      0,
+      0,
+      5
+    ],
+    "errors": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.02439,
+  "seconds": 461.9,
+  "code_saved": false,
+  "id": "batch-cloudx-base-1-2-1-cloudx-base-1-2-1-20261011-085549"
+}

@@ -1,0 +1,99 @@
+{
+  "format": 1,
+  "name": "batch/env-loader-cli-0.1.0",
+  "source": null,
+  "created": "2026-10-11T06:56:29+00:00",
+  "status": "SUSPICIOUS",
+  "headline": "SUSPICIOUS: warning signs, but no secret was seen leaving.",
+  "leaks": [],
+  "flags": [
+    {
+      "kind": "suspicious-code",
+      "detail": "tmp/tmpveth6tka/env-loader-cli/env_loader/_core.py:26: Sends data from the user's machine to an external server at https://ddjidd564.github.io/defi-securit",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "tmp/tmpveth6tka/env-loader-cli/env_loader/_core.py:64: Sends data from the user's machine to external servers specified in whs (webhooks)",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Sends data from the user's machine to an external server at https://ddjidd564.github.io/defi-security-best-practices/config.json",
+      "locations": [
+        {
+          "file": "tmp/tmpveth6tka/env-loader-cli/env_loader/_core.py",
+          "line": 26,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Sends data from the user's machine to external servers specified in whs (webhooks)",
+      "locations": [
+        {
+          "file": "tmp/tmpveth6tka/env-loader-cli/env_loader/_core.py",
+          "line": 64,
+          "text": ""
+        }
+      ],
+      "related": []
+    }
+  ],
+  "culprits": {},
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "concerns": [
+    {
+      "where": "tmp/tmpveth6tka/env-loader-cli/env_loader/_core.py:26",
+      "quote": "",
+      "behavior": "Sends data from the user's machine to an external server at https://ddjidd564.github.io/defi-security-best-practices/config.json"
+    },
+    {
+      "where": "tmp/tmpveth6tka/env-loader-cli/env_loader/_core.py:64",
+      "quote": "",
+      "behavior": "Sends data from the user's machine to external servers specified in whs (webhooks)"
+    }
+  ],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": false,
+    "tests": "",
+    "exits": [
+      1,
+      1,
+      2,
+      0,
+      5
+    ],
+    "errors": [
+      [],
+      [],
+      [
+        "missing-file"
+      ],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.01777,
+  "seconds": 69.5,
+  "code_saved": false,
+  "id": "batch-env-loader-cli-0-1-0-20261011-065629"
+}

@@ -1,0 +1,574 @@
+{
+  "format": 1,
+  "name": "batch/keystackutilities-99.99.2/keystackutilities-99.99.2",
+  "source": null,
+  "created": "2026-10-11T08:54:00+00:00",
+  "status": "HIJACKED",
+  "headline": "HIJACKED: a planted secret was seen leaving the sandbox.",
+  "leaks": [
+    "$HOSTNAME",
+    "$USER"
+  ],
+  "flags": [
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted p1s.uk",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "setup.py:1: The code sends the user's machine hostname, username, and current directory to an external server (p",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "src/keystackUtilities/__init__.py:11: Constructs a URL to send machine information to an external server",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the sandbox's identity ($HOSTNAME, a random fake machine name) was sent to http://p1s.uk/dep-confusion/keystackUtilities/?h=build-d032b896ef&u=dev-fa8a1784&d=/work. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 11,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 9,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 12,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 13,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 14,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 16,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 18,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 19,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 28,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 30,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 33,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 35,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 42,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the sandbox's identity ($USER, a random fake machine name) was sent to http://p1s.uk/dep-confusion/keystackUtilities/?h=build-d032b896ef&u=dev-fa8a1784&d=/work. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 12,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 9,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 11,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 13,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 14,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 16,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 18,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 19,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 28,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 30,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 33,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 35,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 42,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: The code sends the user's machine hostname, username, and current directory to an external server (p1s.uk) via curl command, potentially exfiltrating system information without explicit user consent. This is embedded in package installation/development workflows.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 1,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Constructs a URL to send machine information to an external server",
+      "locations": [
+        {
+          "file": "src/keystackUtilities/__init__.py",
+          "line": 11,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted p1s.uk, which is not on the allow-list. The domain was registered 2025-11-08.",
+      "locations": [],
+      "related": []
+    }
+  ],
+  "culprits": {
+    "$HOSTNAME": [
+      {
+        "file": "setup.py",
+        "line": 1,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 2,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 3,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 7,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 9,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 10,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 11,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 13,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 14,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 16,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 17,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 18,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 19,
+        "text": "",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 22,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 28,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 30,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 33,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 35,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 42,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 45,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 46,
+        "text": "",
+        "tag": "plaintext"
+      }
+    ],
+    "$USER": [
+      {
+        "file": "setup.py",
+        "line": 1,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 2,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 3,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 7,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 9,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 10,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 11,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 13,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 14,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 16,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 17,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 18,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 19,
+        "text": "",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 22,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 28,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 30,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 33,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 35,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 42,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 45,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 46,
+        "text": "",
+        "tag": "plaintext"
+      }
+    ]
+  },
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "concerns": [
+    {
+      "where": "setup.py:1",
+      "quote": "",
+      "behavior": "The code sends the user's machine hostname, username, and current directory to an external server (p1s.uk) via curl command, potentially exfiltrating system information without explicit user consent. This is embedded in package installation/development workflows."
+    },
+    {
+      "where": "src/keystackUtilities/__init__.py:11",
+      "quote": "",
+      "behavior": "Constructs a URL to send machine information to an external server"
+    }
+  ],
+  "contacted_hosts": [
+    "p1s.uk"
+  ],
+  "host_intel": {
+    "p1s.uk": {
+      "registered": "2025-11-08",
+      "age_days": 337,
+      "reports": []
+    }
+  },
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "",
+    "exits": [
+      0,
+      0,
+      0,
+      0,
+      5
+    ],
+    "errors": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.01841,
+  "seconds": 353.0,
+  "code_saved": false,
+  "id": "batch-keystackutilities-99-99-2-keystackutilities-99-99-2-20261011-085400"
+}

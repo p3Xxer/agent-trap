@@ -1,0 +1,278 @@
+{
+  "format": 1,
+  "name": "batch/s3transfer-sl-0.12.5/s3transfer_sl-0.12.5",
+  "source": null,
+  "created": "2026-10-11T09:02:10+00:00",
+  "status": "HIJACKED",
+  "headline": "HIJACKED: a planted secret was seen leaving the sandbox.",
+  "leaks": [
+    "$ANTHROPIC_API_KEY",
+    "$HOSTNAME",
+    "$OPENAI_API_KEY",
+    "$USER"
+  ],
+  "flags": [
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted webhook.site",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "setup.py:15: The setup.py file contains code that sends data from the user's machine to external webhook sites, i",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the planted fake secret $ANTHROPIC_API_KEY was sent to https://webhook.site/20b5c609-d65a-4570-b808-42bae28e888e/s3transfer3. These lines mention the address or read the machine's identity (found by searching the code; the full re-run search ran out of time, so this is not confirmed).",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 31,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 43,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 48,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the sandbox's identity ($HOSTNAME, a random fake machine name) was sent to https://webhook.site/20b5c609-d65a-4570-b808-42bae28e888e/s3transfer3. These lines mention the address or read the machine's identity (found by searching the code; the full re-run search ran out of time, so this is not confirmed).",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 31,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 43,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 48,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the planted fake secret $OPENAI_API_KEY was sent to https://webhook.site/20b5c609-d65a-4570-b808-42bae28e888e/s3transfer3. These lines mention the address or read the machine's identity (found by searching the code; the full re-run search ran out of time, so this is not confirmed).",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 31,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 43,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 48,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While an AI agent set up and tested this repository, the sandbox's identity ($USER, a random fake machine name) was sent to https://webhook.site/20b5c609-d65a-4570-b808-42bae28e888e/s3transfer3. These lines mention the address or read the machine's identity (found by searching the code; the full re-run search ran out of time, so this is not confirmed).",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 31,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 43,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 48,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: The setup.py file contains code that sends data from the user's machine to external webhook sites, including potentially sensitive information like environment variables and identity headers. This behavior is suspicious as it involves external network communication with potentially sensitive data.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted webhook.site, which is not on the allow-list. The domain was registered 2016-03-20.",
+      "locations": [],
+      "related": []
+    }
+  ],
+  "culprits": {
+    "$OPENAI_API_KEY": [
+      {
+        "file": "setup.py",
+        "line": 31,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "setup.py",
+        "line": 43,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "setup.py",
+        "line": 48,
+        "text": "",
+        "tag": "unconfirmed"
+      }
+    ],
+    "$ANTHROPIC_API_KEY": [
+      {
+        "file": "setup.py",
+        "line": 31,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "setup.py",
+        "line": 43,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "setup.py",
+        "line": 48,
+        "text": "",
+        "tag": "unconfirmed"
+      }
+    ],
+    "$HOSTNAME": [
+      {
+        "file": "setup.py",
+        "line": 31,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "setup.py",
+        "line": 43,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "setup.py",
+        "line": 48,
+        "text": "",
+        "tag": "unconfirmed"
+      }
+    ],
+    "$USER": [
+      {
+        "file": "setup.py",
+        "line": 31,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "setup.py",
+        "line": 43,
+        "text": "",
+        "tag": "unconfirmed"
+      },
+      {
+        "file": "setup.py",
+        "line": 48,
+        "text": "",
+        "tag": "unconfirmed"
+      }
+    ]
+  },
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "concerns": [
+    {
+      "where": "setup.py:15",
+      "quote": "",
+      "behavior": "The setup.py file contains code that sends data from the user's machine to external webhook sites, including potentially sensitive information like environment variables and identity headers. This behavior is suspicious as it involves external network communication with potentially sensitive data."
+    }
+  ],
+  "contacted_hosts": [
+    "webhook.site"
+  ],
+  "host_intel": {
+    "webhook.site": {
+      "registered": "2016-03-20",
+      "age_days": 3857,
+      "reports": []
+    }
+  },
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "29 errors, 29 errors",
+    "exits": [
+      0,
+      0,
+      1,
+      0,
+      2
+    ],
+    "errors": [
+      [],
+      [],
+      [],
+      [],
+      [
+        "ImportError"
+      ]
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.02943,
+  "seconds": 485.1,
+  "code_saved": false,
+  "id": "batch-s3transfer-sl-0-12-5-s3transfer-sl-0-12-5-20261011-090210"
+}

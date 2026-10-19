@@ -66,23 +66,40 @@ for Nano it is.
 
 ## Suggestions
 
-For **Nebius Token Factory**:
+These come from what an agent that runs untrusted code, on every pull request, and has to produce
+evidence a person can trust, needs from the platform underneath it.
 
-1. **Return the cost of each request in the response**, or offer a pricing endpoint. To enforce
-   spend limits before each call we hard-code prices per model and keep them deliberately high,
-   because a wrong price is a budget that does not hold.
-2. **Support (or document) `n` for multiple samples from one prompt.** We send the same prompt
-   12 times and pay for its input tokens 12 times; with `n=12` the prompt would be read once.
-3. **Document model-specific switches**, such as turning Nemotron's thinking on or off, as
-   first-class API parameters with examples.
-4. **Say whether `seed` is honoured per model.** We send a seed, but we could not confirm it
-   makes results repeatable, so our evaluation repeats each scan and reports how often the
-   verdict changed instead.
+**1. Make repeated context cheap: prompt (prefix) caching for agent loops.** *(Token Factory)*
+An agent re-sends its whole conversation at every step, so most of what we pay for is input we
+already sent: 40.7 million input tokens against 2.1 million output. Our culprit search goes further
+and sends the *same* prompt 12 times to sample the model. Discounted, automatic reuse of a repeated
+prompt prefix, and a way to see when it was used, would cut the cost and latency of agent workloads
+more than any per-token price change. If it already exists, it deserves a prominent place in the
+docs for agent builders; we did not rely on it.
 
-For **NVIDIA Nemotron**:
+**2. A reproducible mode for evidence and CI.** *(Token Factory and Nemotron)*
+A security check that says MALICIOUS on one run and SUSPICIOUS on the next is hard to use as a
+pull-request gate, and hard to defend to the person whose code it flagged. We had to design around
+this: every task runs more than once, and proving which line tricked the agent takes 12 samples per
+candidate. We send a `seed`, but could not confirm it makes runs repeatable. A documented
+deterministic setting per model (what it guarantees, and on which hardware) would let tools like
+ours re-run a finding and show the same result.
 
-5. **Publish prompt-injection robustness numbers** for each model size, for example on
-   AgentDojo. Builders deciding which model to give tools to need that number, and in our tests
-   Nano held up better than we expected.
-6. **Publish the reproducibility story for agent workloads**: what changes between two
-   identical calls, and which settings reduce it.
+**3. Help agents tell data from instructions.** *(Nemotron)*
+Coding agents read files written by strangers. In our tests Nemotron ignored plain injected
+instructions entirely, which is a strong result, but it sometimes followed the published AgentDojo
+attack texts, and the same input could go either way. Two things would help everyone building
+agents on Nemotron: a way to mark content as untrusted data (a message role or field the model is
+trained never to take orders from), and published attack-success rates per model size on a public
+benchmark such as AgentDojo, including how much they vary between runs.
+
+**4. Spend limits enforced on the server, per key.** *(Token Factory)*
+Running a scan on every pull request means an API key stored in CI, which is exactly the kind of
+secret our tool exists to protect. Our spend limits live in our own client, so they do nothing if
+that key leaks or a bug loops. A hard monthly or daily cap per API key, set in the console and
+enforced by Token Factory, would let teams put an agent in CI without an open-ended bill.
+
+**5. First-class controls for agent settings.** *(Token Factory)*
+To keep agent steps short we switch off Nemotron's hidden reasoning with a chat-template option
+passed through `extra_body`. Settings like this decide cost and speed for agents; documenting them as
+regular, per-model API parameters, with examples, would save every team the search.

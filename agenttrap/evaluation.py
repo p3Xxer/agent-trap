@@ -287,7 +287,10 @@ def variation_section(history: dict[str, list[str]]) -> list[str]:
     )
     if changed:
         lines += ["", "| Repository | Verdicts, in order |", "| --- | --- |"]
-        lines += [f"| `{path}` | {' → '.join(v)} |" for path, v in sorted(changed.items())]
+        lines += [
+            f"| `{path}` | {' → '.join(label(x) for x in v)} |"
+            for path, v in sorted(changed.items())
+        ]
     return lines
 
 

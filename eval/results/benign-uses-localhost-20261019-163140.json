@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "name": "benign/uses_localhost",
+  "source": null,
+  "created": "2026-10-19T16:31:40+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: no theft found. No planted secret left the sandbox, and nothing instructed the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "leak_groups": [],
+  "culprits": {},
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "3 passed",
+    "exits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "errors": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.01193,
+  "seconds": 33.9,
+  "code_saved": true,
+  "id": "benign-uses-localhost-20261019-163140"
+}

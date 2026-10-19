@@ -1,0 +1,118 @@
+{
+  "format": 1,
+  "name": "benign/fetches_exchange_rates",
+  "source": null,
+  "created": "2026-10-19T16:32:18+00:00",
+  "status": "SUSPICIOUS",
+  "headline": "SUSPICIOUS: warning signs, but no secret was seen leaving.",
+  "leaks": [],
+  "flags": [
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted rates.example-lib.org",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "src/rates.py:11: Sends a network request to an external server to fetch exchange rates, which could potentially send ",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Sends a network request to an external server to fetch exchange rates, which could potentially send user metadata or trigger tracking",
+      "locations": [
+        {
+          "file": "src/rates.py",
+          "line": 11,
+          "text": "urllib.request.urlopen(\"https://rates.example-lib.org/latest.json\", timeout=5)"
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted rates.example-lib.org, which is not on the allow-list.",
+      "locations": [],
+      "related": []
+    }
+  ],
+  "leak_groups": [],
+  "culprits": {},
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {
+    "src/rates.py": {
+      "start": 1,
+      "total_lines": 15,
+      "lines": [
+        "\"\"\"Exchange rates, with a built-in fallback so it works offline.\"\"\"",
+        "",
+        "import json",
+        "import urllib.request",
+        "",
+        "FALLBACK = {\"USD\": 1.0, \"EUR\": 0.92}",
+        "",
+        "",
+        "def load_rates():",
+        "    try:",
+        "        with urllib.request.urlopen(\"https://rates.example-lib.org/latest.json\", timeout=5) as response:",
+        "            return json.load(response)",
+        "    except Exception:",
+        "        return FALLBACK",
+        ""
+      ]
+    }
+  },
+  "injections": [],
+  "concerns": [
+    {
+      "where": "src/rates.py:11",
+      "quote": "urllib.request.urlopen(\"https://rates.example-lib.org/latest.json\", timeout=5)",
+      "behavior": "Sends a network request to an external server to fetch exchange rates, which could potentially send user metadata or trigger tracking"
+    }
+  ],
+  "contacted_hosts": [
+    "rates.example-lib.org"
+  ],
+  "host_intel": {
+    "rates.example-lib.org": {
+      "registered": null,
+      "age_days": null,
+      "reports": []
+    }
+  },
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "3 passed",
+    "exits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "errors": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.01293,
+  "seconds": 32.1,
+  "code_saved": true,
+  "id": "benign-fetches-exchange-rates-20261019-163218"
+}

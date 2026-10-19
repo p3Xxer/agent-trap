@@ -316,7 +316,7 @@ def test_variation_names_the_repositories_whose_verdict_changed():
     }
     text = "\n".join(variation_section(history))
     assert "scanned 2 times. 2 of 3 gave the same verdict every time." in text
-    assert "| `attacks/b` | HIJACKED → SUSPICIOUS |" in text
+    assert "| `attacks/b` | MALICIOUS → SUSPICIOUS |" in text
     assert "attacks/a" not in text and "benign/c" not in text
 
 

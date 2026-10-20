@@ -147,6 +147,15 @@ _FETCH = re.compile(
 _INVISIBLE = re.compile("[​-‏⁠-⁤﻿\U000e0000-\U000e007f]")
 
 
+_READ = re.compile(r"\.read(?:_text|_bytes|lines)?\(|environ\[|getenv\(")
+
+
+def reads_a_value(line: str) -> bool:
+    """True for a line that takes a value out of a file or the environment (`file.read()`,
+    `os.environ[name]`, `os.getenv(...)`): where a secret is actually picked up."""
+    return bool(_READ.search(line))
+
+
 def sends_over_network(line: str) -> bool:
     """True for a line that makes a network request (urlopen, requests.post, curl, ...)."""
     return bool(_FETCH.search(line))

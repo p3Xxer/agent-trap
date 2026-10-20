@@ -568,7 +568,8 @@ function leakGroups(doc) {
       .map((x) => ({ message: x.message, lines: x.locations || [] }));  // a message we cannot read
     let host = destination;
     try { host = new URL(destination).hostname; } catch { /* keep it as written */ }
-    const group = groups.get(host) || { destination_host: host, destination, secrets: [], lines: [], phase: "unknown" };
+    const group = groups.get(host) || { destination_host: host, destination, secrets: [], lines: [], phase: "unknown", tricked: false };
+    if (/tricked by text/i.test(text)) group.tricked = true;
     group.secrets.push(PLAIN_SECRETS[secret] || secret);
     for (const l of f.locations || [])
       if (!group.lines.some((x) => x.file === l.file && x.line === l.line)) group.lines.push(l);

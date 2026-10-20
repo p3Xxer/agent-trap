@@ -138,6 +138,10 @@
   /* how it works */
   .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
   @media (max-width: 760px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+  .caught { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 10px 0 0; font-size: 13px; }
+  .caught-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--red-line); }
+  .caught code { font-family: var(--mono, ui-monospace, Menlo, monospace); padding: 3px 8px; border-radius: 6px;
+    background: var(--code-bg, rgba(127,127,127,.12)); overflow-wrap: anywhere; }
   .fix-check { margin: 16px 0 0; padding: 10px 14px; border-radius: 10px; font-size: 14px; border: 1px solid transparent; }
   .fix-check.good { background: color-mix(in srgb, #30a46c 9%, transparent); border-color: color-mix(in srgb, #30a46c 28%, transparent); }
   .fix-check.bad { background: color-mix(in srgb, #e5484d 9%, transparent); border-color: color-mix(in srgb, #e5484d 28%, transparent); }
@@ -664,7 +668,12 @@ function verdictCard(doc, groups, findings) {
     h("span", { class: `badge ${doc.status}` }, LABEL(doc.status))));
 
   if (groups.length) {
-    for (const g of groups) body.append(h("p", { class: "sentence" }, leakSentence(g)));
+    for (const g of groups) {
+      body.append(h("p", { class: "sentence" }, leakSentence(g)));
+      // the request the trap stopped: evidence, not an opinion
+      if (g.destination) body.append(h("p", { class: "caught" }, h("span", { class: "caught-label" }, "Caught in transit"),
+        h("code", {}, `${g.method && g.method !== "DNS" ? g.method + " " : g.method === "DNS" ? "DNS lookup " : ""}${g.destination}`)));
+    }
     const sent = groups.flatMap((g) => g.secrets || []);
     const identity = sent.some((x) => /machine name|user name/.test(x));
     const keys = sent.some((x) => !/machine name|user name/.test(x));

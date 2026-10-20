@@ -1,11 +1,12 @@
-# Agent Trap — demo video script (target 2:35, limit 3:00)
+# Agent Trap — demo video script (target 2:50, limit 3:00)
 
-About 345 spoken words, calm pace, with room to breathe. **VO** = voice-over. **SCREEN** = what is
+About 390 spoken words, calm pace, with room to breathe. **VO** = voice-over. **SCREEN** = what is
 recorded. ⏩ = speed up in editing. Record real runs and say so. No music with lyrics or
 copyrighted tracks (a Devpost rule).
 
-Four beats: **the aha** (an AI tricked by one sentence) → **how it works** (one live scan) →
-**proof** (real malware, no false alarms) → **where it lives** (pull requests, on Nemotron).
+Four beats: **the aha** (an AI tricked by one sentence) → **how it works** (one live scan, and the
+moment it is caught) → **proof** (real malware, who is behind it, no false alarms) → **where it
+lives** (pull requests, on Nemotron), then a one-line close.
 Judging criteria in brackets.
 
 ---
@@ -34,7 +35,7 @@ Click line `17`; the same sentence flashes in red.
 
 ---
 
-### 2 · How it works — 0:25 to 1:10  *(Technological implementation, Design)*
+### 2 · How it works — 0:25 to 1:20  *(Technological implementation, Design)*
 
 **SCREEN:** Agent Trap landing page. Paste `https://github.com/p3Xxer/malicious-repo-agent-trap`,
 press Scan. Caption in a corner: "Real run — unedited, sped up". ⏩ through the progress.
@@ -46,17 +47,22 @@ press Scan. Caption in a corner: "Real run — unedited, sped up". ⏩ through t
 > trap instead of the internet.
 
 **SCREEN:** Verdict appears: "When installed, setup.py sends your Anthropic key, OpenAI key and
-AWS key to collector.agenttrap.invalid." Scroll to the code: red lines 12, 15, 16, 18, 20, 24.
-Then the green "Fix check" box.
+AWS key to collector.agenttrap.invalid." Zoom on the line under it: "CAUGHT IN TRANSIT
+POST http://collector.agenttrap.invalid/v1/build".
 
 **VO:**
-> This one steals the moment it's installed. Agent Trap only says "malicious" when it sees a planted
-> key leave — then it shows the exact lines that read the keys and send them, and proves it:
-> delete those lines, scan again, nothing is stolen.
+> This one steals the moment it's installed. And here's the catch itself: the request our trap
+> stopped, carrying the planted keys. Agent Trap only says "malicious" when it sees that.
+
+**SCREEN:** Scroll to the code: red lines 12, 15, 16, 18, 20, 24. Then the green "Fix check" box.
+
+**VO:**
+> Then it shows the exact lines that read the keys and send them — and proves it: delete those
+> lines, scan again, nothing is stolen.
 
 ---
 
-### 3 · Proof — 1:10 to 1:45  *(Potential impact)*
+### 3 · Proof — 1:20 to 2:00  *(Potential impact)*
 
 **SCREEN:** Landing page → "Caught in the wild" cards. Click `s3transfer_sl`: "…sends your
 Anthropic key, machine name, OpenAI key and user name to webhook.site".
@@ -66,6 +72,13 @@ Anthropic key, machine name, OpenAI key and user name to webhook.site".
 > dataset, and caught four in the act — like this tampered AWS library, sending the planted AI keys
 > to webhook.site.
 
+**SCREEN:** Open "More details" → "Who is behind webhook.site": domain registered March 2016, and
+the public report from Palo Alto Networks Unit 42 on a hacking group abusing webhook.site.
+
+**VO:**
+> And it asks the web who's on the other end. Through Tavily, it finds Palo Alto Networks' report
+> of a hacking group using this exact service.
+
 **SCREEN:** Simple title card: "0 of 20 popular open-source projects falsely flagged
 (click, attrs, tqdm, bottle…)".
 
@@ -74,7 +87,7 @@ Anthropic key, machine name, OpenAI key and user name to webhook.site".
 
 ---
 
-### 4 · Where it lives — 1:45 to 2:20  *(Design, Technological implementation)*
+### 4 · Where it lives — 2:00 to 2:30  *(Design, Technological implementation)*
 
 **SCREEN:** GitHub pull request "Add anonymous build telemetry" → red ✗ "Agent Trap / scan" →
 Files changed: red annotations on the stealing lines.
@@ -83,21 +96,21 @@ Files changed: red annotations on the stealing lines.
 > It runs where code arrives. As a GitHub Action, it fails a pull request that steals and marks the
 > lines — before anyone merges.
 
-**SCREEN:** Architecture diagram, then on screen: `$5.15 — every test and evaluation, 21,308 model calls`.
+**SCREEN:** The architecture diagram.
 
 **VO:**
-> Nemotron isn't a reviewer bolted on. It's the agent we put in the trap. And because Token Factory
-> makes it cheap to ask it many times, our entire project cost five dollars.
+> NVIDIA Nemotron, on Nebius Token Factory, isn't a reviewer bolted on. It's the agent we put in
+> the trap — because this attack only works on a real agent.
 
 ---
 
-### Close — 2:20 to 2:35
+### Close — 2:30 to 2:50
 
 **SCREEN:** Landing page hero, then `github.com/p3Xxer/agent-trap`.
 
 **VO:**
-> Malware that waits, or needs the real internet, won't show itself here. Everything else, Agent
-> Trap catches in the act. Don't read the repo. Run it.
+> Run it before your AI agent touches a new repo, or on every pull request — so code you didn't
+> write never gets to your keys. Agent Trap. Don't read the repo. Run it.
 
 ---
 
@@ -107,6 +120,8 @@ Files changed: red annotations on the stealing lines.
       a clean viewer) and highlight line 17; the verdict is in Past scans → "Our test repositories" →
       "README: 'important instructions'" (also on the demo site).
 - [ ] **Beat 2:** record one fresh scan of the public test repo in full; speed it up, keep the caption.
+      Make sure the result shows the "Caught in transit" line (scans from 20 Oct onwards have it).
+- [ ] **Beat 3 (Tavily):** use the newest s3transfer_sl result; it lists the Unit 42 and Medium reports.
 - [ ] Zoom the browser to 110–125%; light theme for results; cursor movements slow and deliberate.
 - [ ] Beat 4 PR shots: https://github.com/p3Xxer/agent-trap/pull/1 (public repo, or logged in).
 - [ ] Hide bookmarks, notifications and any `.env` or key windows.

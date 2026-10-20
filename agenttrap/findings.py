@@ -118,6 +118,7 @@ class LeakGroup:
 
     host: str
     destination: str
+    method: str  # how it left: an HTTP method, or "DNS" for data hidden in a looked-up name
     canaries: tuple[str, ...]  # canary names (sorted), as the scanner knows them
     phase: Phase
     tasks: tuple[str, ...]  # the AI agent's tasks during which it happened
@@ -161,6 +162,7 @@ def leak_groups(result: ScanResult) -> list[LeakGroup]:
             LeakGroup(
                 host=host,
                 destination=leaks[0].destination,
+                method=leaks[0].request.method,
                 canaries=tuple(names),
                 phase=phase,
                 tasks=tasks,

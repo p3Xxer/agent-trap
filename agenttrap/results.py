@@ -107,6 +107,7 @@ def _leak_group(group: LeakGroup) -> dict[str, Any]:
     return {
         "destination_host": group.host,
         "destination": group.destination,
+        "method": group.method,
         "secrets": [plain_name(c) for c in group.canaries],
         "canaries": list(group.canaries),
         "phase": group.phase,

@@ -225,6 +225,7 @@ def test_leak_groups_are_in_the_document_with_plain_names(repo):
     assert group["phase"] == "install" and group["tasks"] == []
     assert group["lines"][0] == {"file": "setup.py", "line": 10}
     assert group["unconfirmed"] is False and group["tricked"] is False
+    assert group["method"] == "POST"  # how the key left, shown as "Caught in transit"
 
 
 def test_leak_groups_carry_no_code_when_code_is_left_out(repo):

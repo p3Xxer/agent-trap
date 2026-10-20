@@ -244,8 +244,10 @@ class OutOfTime(Exception):
 MAX_SUSPECTS = 8
 TASK_WORDS = {"setup": "set it up", "test": "test it", "summary": "summarize it"}
 LOCALIZE_WORKERS = 3  # detonations at once; each needs about 2 GB of the Docker machine's memory
-# Keeps a whole scan within about 5 minutes; a search that needs longer falls back to text search.
-LOCALIZE_SECONDS = 150
+# No time limit: the search ends by itself (it can only remove so many lines), and a finished
+# search proves its lines. Set a number of seconds to trade proof for speed; when it runs out, the
+# lines come from a text search instead and are marked as not confirmed.
+LOCALIZE_SECONDS: float | None = None
 
 
 def replay_runner(
@@ -374,7 +376,7 @@ def localize_leak(
     leak = next(x for x in run.leaks if base_name(x.canary) == canary_name)
     try:
         with EgressPool(served, LOCALIZE_WORKERS) as pool:
-            deadline = time.time() + LOCALIZE_SECONDS
+            deadline = None if LOCALIZE_SECONDS is None else time.time() + LOCALIZE_SECONDS
             loaded: set[str] = set()
             runner = replay_runner(
                 run.trace.steps, served, deadline, pool=pool, until=canary_name, loaded=loaded

@@ -279,8 +279,8 @@ def _leak_message(
     message = f"{when_leaked(phase, tasks)} {what} was sent to {destination}."
     if any(c.tag == UNCONFIRMED for c in key):
         return message + (
-            " These lines mention the address or read the machine's identity (found by searching "
-            "the code; the full re-run search ran out of time, so this is not confirmed)."
+            " These are the likely lines, found by reading the code; run with --prove to confirm "
+            "them."
         )
     if key:
         return message + " These lines make that happen."

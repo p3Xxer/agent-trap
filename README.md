@@ -204,9 +204,11 @@ check and gets warnings on the exact lines. See [docs/github-action.md](docs/git
 | [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
 | Our clean test repos | 8 harmless repos written to look risky | 0/8 called MALICIOUS; 1 flagged SUSPICIOUS (it calls its own web service) |
 
-A scan takes 1 to 2 minutes for a clean repository and several minutes more when there are culprit
-lines to pinpoint (the search runs until it has proven them), and costs about 1 to 3 cents of model
-use.
+A scan takes 1 to 2 minutes for a clean repository and a few minutes more when there are culprit
+lines to pinpoint, and costs about 1 to 3 cents of model use. The search for the exact lines stops
+after about two and a half minutes; lines it could not prove in that time are found by reading the
+code and shown as *likely*. Add `--prove` (to `scan` or `batch`) to let the search run until every
+line is proven: on real malware that can take up to an hour.
 
 **Try it on a real link:** [p3Xxer/malicious-repo-agent-trap](https://github.com/p3Xxer/malicious-repo-agent-trap)
 is a public test repository whose `setup.py` steals keys during install (aimed at a name that

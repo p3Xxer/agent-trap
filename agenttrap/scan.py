@@ -244,10 +244,11 @@ class OutOfTime(Exception):
 MAX_SUSPECTS = 8
 TASK_WORDS = {"setup": "set it up", "test": "test it", "summary": "summarize it"}
 LOCALIZE_WORKERS = 3  # detonations at once; each needs about 2 GB of the Docker machine's memory
-# No time limit: the search ends by itself (it can only remove so many lines), and a finished
-# search proves its lines. Set a number of seconds to trade proof for speed; when it runs out, the
-# lines come from a text search instead and are marked as not confirmed.
-LOCALIZE_SECONDS: float | None = None
+# How long the search for the exact lines may run before falling back to a text search, whose lines
+# are shown as "likely". It keeps a scan to a few minutes. `prove=True` (the --prove option) removes
+# the limit: the search then ends by itself, which can take up to an hour on real malware, and
+# every line it names is proven.
+LOCALIZE_SECONDS = 150
 
 
 def replay_runner(
@@ -366,6 +367,7 @@ def localize_leak(
     *,
     llm: LLM | None = None,
     model: str = "nano",
+    prove: bool = False,
 ) -> tuple[list[Culprit], str]:
     """Culprit lines for one leaked secret, or ([], why not).
 
@@ -376,7 +378,7 @@ def localize_leak(
     leak = next(x for x in run.leaks if base_name(x.canary) == canary_name)
     try:
         with EgressPool(served, LOCALIZE_WORKERS) as pool:
-            deadline = None if LOCALIZE_SECONDS is None else time.time() + LOCALIZE_SECONDS
+            deadline = None if prove else time.time() + LOCALIZE_SECONDS
             loaded: set[str] = set()
             runner = replay_runner(
                 run.trace.steps, served, deadline, pool=pool, until=canary_name, loaded=loaded
@@ -419,6 +421,7 @@ def scan(
     workers: int = 3,
     progress: Callable[[str], None] = lambda message: None,
     on_verdict: Callable[[ScanResult], None] = lambda result: None,
+    prove: bool = False,
 ) -> ScanResult:
     """Detonate the repo and judge it. `on_verdict` gets the result once, as soon as the verdict
     is known and before the (slow) search for the culprit lines begins; its culprits are empty."""
@@ -473,7 +476,7 @@ def scan(
         if destination not in located:  # two secrets sent in one request have the same culprit
             progress(f"finding the lines that leaked {canary.plain_name(name)}")
             located[destination] = localize_leak(
-                files, leaking_run, name, served, llm=llm, model=model
+                files, leaking_run, name, served, llm=llm, model=model, prove=prove
             )
         culprits, reason = located[destination]
         if culprits:

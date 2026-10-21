@@ -34,6 +34,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan.add_argument("repo", type=Path)
     scan.add_argument(
+        "--prove",
+        action="store_true",
+        help="prove the culprit lines: no time limit on the search "
+        "(slow, up to an hour on real malware)",
+    )
+    scan.add_argument(
         "--k", type=int, default=2, help="runs per task (agents are not deterministic)"
     )
     scan.add_argument("--model", choices=["nano", "super", "ultra"], default="nano")
@@ -64,6 +70,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     batch.add_argument("folder", type=Path)
     batch.add_argument("--k", type=int, default=2, help="runs per task")
+    batch.add_argument(
+        "--prove",
+        action="store_true",
+        help="prove the culprit lines: no time limit on the search "
+        "(slow, up to an hour on real malware)",
+    )
     batch.add_argument("--workers", type=int, default=2, help="projects scanned at once")
     batch.add_argument("--keep-code", action="store_true", help="save code excerpts in the results")
     batch.add_argument("--results", type=Path, default=DEFAULT_DIR, help="where results are saved")
@@ -113,6 +125,7 @@ def _scan(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
             clean_dir=args.clean,
             progress=status.update,
             on_verdict=verdict_known,
+            prove=args.prove,
         )
 
     in_github = running_in_github()
@@ -146,6 +159,7 @@ def _batch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         k=args.k,
         workers=args.workers,
         include_code=args.keep_code,
+        prove=args.prove,
         on_verdict=lambda item: console.print(
             f"  {label(item.status):<10} {item.name}  (pinpointing culprit lines...)",
             highlight=False,

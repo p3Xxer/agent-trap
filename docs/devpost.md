@@ -35,10 +35,13 @@ Paste a GitHub link (or point the CLI or the GitHub Action at a repository). Age
    and summarize it.
 3. **Watches every byte that tries to leave** through a honeypot proxy and DNS sinkhole that read
    HTTP, HTTPS and DNS and never forward anything. A planted value seen leaving — plain, base64,
-   hex or hashed, in a request or a DNS name — is proof.
+   hex or hashed, in a request or a DNS name — is proof, and the result shows the exact request it
+   stopped ("Caught in transit: POST http://…").
 4. **Pinpoints the exact lines**: it re-runs the repository with lines removed until only the
    ones that still cause the leak remain. When the agent itself was tricked by text, it asks
-   Nemotron again with lines removed to find the sentences that did it.
+   Nemotron again with lines removed to find the sentences that did it. A normal scan keeps this
+   search to a few minutes and shows lines it could not prove yet as *likely*; `--prove` lets it
+   run to the end.
 5. **Proves the fix**: it removes those lines and scans the copy again.
 
 The verdict is **MALICIOUS** (a planted key left the sandbox), **SUSPICIOUS** (warning signs, no
@@ -56,17 +59,20 @@ annotations on the exact lines of a pull request through the GitHub Action.
   calls for $5.15; a scan costs about 1–3 cents. That is what lets us ask the model 12 times per
   candidate when proving which line tricked it.
 - **Tavily** looks up every host the sandbox contacted, next to the domain's registration date
-  from RDAP, so a reviewer sees whether the destination is already reported as malicious.
+  from RDAP, so a reviewer sees who is on the other end. For the real malware that sent our planted
+  keys to `webhook.site`, it surfaced a Palo Alto Networks Unit 42 report of a hacking group abusing
+  that same service.
 - **The trap**: per-run Docker networks, a DNS sinkhole, mitmproxy with a CA only the sandbox
   trusts, all capabilities dropped, and a CA private key that never enters a sandbox.
 - **Product**: a CLI, a batch mode for folders of repositories, a local web page that streams a
-  live scan, SARIF output, and a composite GitHub Action. 438 automated tests.
+  live scan, SARIF output, and a composite GitHub Action. 440 automated tests.
 
 ## Results
 
 - **Real malware.** From Datadog's dataset of malicious PyPI packages we ran 11 likely credential
   stealers. **4 were caught in the act** — one, a tampered copy of an AWS library, sent the planted
-  OpenAI and Anthropic keys to `webhook.site` — with the exact `setup.py` lines named. 6 more were
+  OpenAI and Anthropic keys to `webhook.site` the moment it was installed. For all four, the lines
+  that did it are **proven** by a full search (`--prove`), from 3 to 7 lines each. 6 more were
   flagged SUSPICIOUS (two download their real payload from the internet, which the sandbox does not
   reach).
 - **Our attack repositories.** 11 of 11 flagged, against 2 of 11 for a scanner that only reads the
@@ -87,16 +93,18 @@ annotations on the exact lines of a pull request through the GitHub Action.
   would not build in the sandbox; unpacked archives hid their projects many folders deep; most real
   stealers report the machine's identity rather than a key file, so we added a fake machine name
   and user name as canaries; and data can leave inside a DNS name, so host names are searched too.
-- **Speed.** Pinpointing a line means dozens of detonations. Running them in parallel, reusing the
-  network watchers and stopping each replay at the step that leaks took a real-malware scan from
-  16 minutes to under 6.
+- **Proof takes time.** Proving the exact lines means hundreds of detonations: for the real malware,
+  a full search took from 55 minutes to over 7 hours, even after we made each detonation faster
+  (running them in parallel, reusing the network watchers, stopping each replay at the step that
+  leaks). So a normal scan gives the verdict and *likely* lines in a few minutes, and `--prove` is
+  there when someone needs certainty — for example before reporting a package as malware.
 
 ## Accomplishments we're proud of
 
 - Catching real, published malware stealing planted keys — and naming the lines.
-- Evidence a person can check: a MALICIOUS verdict comes with the request that carried the key and
-  the lines that sent it, and, when the lines were found, a re-scan proving that removing them
-  stops it.
+- Evidence a person can check: a MALICIOUS verdict comes with the request our trap caught in
+  transit, the lines that sent it, and, when the lines were found, a re-scan proving that removing
+  them stops it.
 - A pull request in our own repository that adds "build telemetry" goes red, with annotations on
   the two lines that steal.
 

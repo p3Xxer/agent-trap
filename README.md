@@ -1,10 +1,37 @@
 # Agent Trap
 
-**A defensive security tool.** Agent Trap detonates an untrusted repository in a sandbox, lets a
-cheap AI coding agent work on it with **fake canary secrets** planted, catches the agent if it is
-hijacked into leaking them, and pinpoints the **exact file and line** that did it.
+**Is this repo safe to give your AI coding agent?** Agent Trap runs an untrusted repository in a
+locked sandbox with **fake keys** planted, lets an AI coding agent (NVIDIA Nemotron on Nebius Token
+Factory) work on it, and says **MALICIOUS** only when it sees a planted key leave — then names the
+**exact lines** that sent it.
 
-> Built for the Nebius × NVIDIA hackathon. Works end to end: CLI, local web page and GitHub Action.
+It catches two kinds of attack: code that steals the moment it is installed, imported or tested,
+and the new kind that only exists because we hand repos to AI agents — text in a README that talks
+the agent into sending your keys.
+
+![A result: the repo steals secrets, the request caught in transit, and the lines that do it](docs/images/result.png)
+
+## Judge quick start
+
+| | |
+| --- | --- |
+| **See real results, no setup** | Demo site: <https://p3xxer.github.io/agent-trap/> — real PyPI malware caught, the README attack, clean projects |
+| **Scan a repo yourself** | Docker + Python 3.11 + a Nebius Token Factory key, then the [Quick start](#quick-start) (5 commands) |
+| **A repo to try** | <https://github.com/p3Xxer/malicious-repo-agent-trap> — harmless outside the sandbox, steals planted keys inside it |
+| **On a pull request** | [Agent Trap failing a PR](https://github.com/p3Xxer/agent-trap/pull/1) that adds "build telemetry" |
+| **Results in numbers** | [4 of 11 real malware samples caught](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
+
+**Contents:** [Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
+[How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Usage](#usage) ·
+[Web page](#web-page) · [GitHub Action](#github-action) · [Results](#results) ·
+[What Agent Trap does and does not do](#what-agent-trap-does-and-does-not-do) · [Safety](#safety)
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/readme-trick.png" alt="A README sentence that tricked the AI agent into sending the AWS key"><br><sub><b>The new attack:</b> one sentence in a README (line 17) talked the AI agent into sending the AWS key.</sub></td>
+<td width="50%"><img src="docs/images/landing.png" alt="The Agent Trap web page with real malware caught"><br><sub><b>The web page:</b> paste a GitHub link; real malware from PyPI caught in the trap.</sub></td>
+</tr>
+</table>
 
 ## Safety
 

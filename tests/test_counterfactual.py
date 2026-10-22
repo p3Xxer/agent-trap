@@ -377,3 +377,16 @@ def test_a_search_that_runs_out_of_time_says_so_instead_of_hanging(monkeypatch):
         {"a.py": "x"}, run_with_leak(make_trace()), CANARY, {}, llm=object()
     )
     assert culprits == [] and "stopped after" in reason
+
+
+def test_the_search_has_a_time_limit_unless_asked_to_prove(monkeypatch):
+    deadlines = []
+
+    def runner(steps, served, deadline=None, **_):
+        deadlines.append(deadline)
+        return lambda version: set()  # never leaks, so the search stops at once
+
+    monkeypatch.setattr(scan, "replay_runner", runner)
+    scan.localize_leak({"a.py": "x"}, run_with_leak(make_trace()), CANARY, {})
+    scan.localize_leak({"a.py": "x"}, run_with_leak(make_trace()), CANARY, {}, prove=True)
+    assert deadlines[0] is not None and deadlines[1] is None

@@ -13,6 +13,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
+from agenttrap.detector import label
 from agenttrap.findings import Finding
 from agenttrap.reporter import HEADLINE
 from agenttrap.scan import ScanResult
@@ -56,7 +57,7 @@ def _code(text: str, limit: int = 120) -> str:
 
 def summary_markdown(result: ScanResult, findings: list[Finding]) -> str:
     status = result.verdict.status
-    lines = [f"## Agent Trap: {status.value}", "", HEADLINE[status], ""]
+    lines = [f"## Agent Trap: {label(status)}", "", HEADLINE[status], ""]
     if findings:
         lines += ["| Finding | Where | Details |", "| --- | --- | --- |"]
         for f in findings:

@@ -14,6 +14,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from agenttrap.detector import label
+
 HIJACKED, SUSPICIOUS, SAFE = "HIJACKED", "SUSPICIOUS", "SAFE"
 LEAK_RULE = "agent-trap/secret-leak"
 
@@ -285,7 +287,10 @@ def variation_section(history: dict[str, list[str]]) -> list[str]:
     )
     if changed:
         lines += ["", "| Repository | Verdicts, in order |", "| --- | --- |"]
-        lines += [f"| `{path}` | {' → '.join(v)} |" for path, v in sorted(changed.items())]
+        lines += [
+            f"| `{path}` | {' → '.join(label(x) for x in v)} |"
+            for path, v in sorted(changed.items())
+        ]
     return lines
 
 
@@ -298,7 +303,7 @@ def to_markdown(report: Report, settings: str, history: dict[str, list[str]] | N
         "| Measure | Agent Trap | Plain text scan |",
         "| --- | --- | --- |",
         f"| Attack repos flagged | {_ratio(report.attacks)} | {_ratio(report.static_attacks)} |",
-        f"| Code-level attacks proven (HIJACKED) | {_ratio(report.proof)} | not possible |",
+        f"| Code-level attacks proven (MALICIOUS) | {_ratio(report.proof)} | not possible |",
         f"| Culprit file correct | {_ratio(report.right_file)} | not possible |",
         f"| Culprit line correct | {_ratio(report.right_line)} | not possible |",
         f"| Agent really tricked by text: culprit line named | {_ratio(report.tricked_pinpointed)} "
@@ -307,7 +312,7 @@ def to_markdown(report: Report, settings: str, history: dict[str, list[str]] | N
         f"{_ratio(report.instruction_right_reason)} | {_ratio(report.static_instruction)} |",
         f"| Clean repos wrongly flagged (any alarm) | {_ratio(report.false_alarms)} "
         f"| {_ratio(report.static_false_alarms)} |",
-        f"| Clean repos wrongly called HIJACKED | {_ratio(report.false_hijacks)} | not possible |",
+        f"| Clean repos wrongly called MALICIOUS | {_ratio(report.false_hijacks)} | not possible |",
         f"| Mean time per scan | {report.mean_seconds:.0f}s | instant |",
         f"| Mean model cost per scan | ${report.mean_cost:.4f} | $0 |",
         "",
@@ -332,9 +337,9 @@ def to_markdown(report: Report, settings: str, history: dict[str, list[str]] | N
             culprit = "file and line" if row.right_file and row.right_line else "wrong"
             if row.right_file and not row.right_line:
                 culprit = "file only"
-        result = f"error: {o.error}" if o.error else o.status
+        result = f"error: {o.error}" if o.error else label(o.status)
         lines.append(
-            f"| `{o.case.path}` | {o.case.kind} | {o.case.expect} | {result} | {_why(o)} "
+            f"| `{o.case.path}` | {o.case.kind} | {label(o.case.expect)} | {result} | {_why(o)} "
             f"| {culprit} "
             f"| {'flagged' if row.static_alarm else 'nothing'} "
             f"| {'yes' if row.meets_expectation else '**no**'} |"
@@ -343,10 +348,19 @@ def to_markdown(report: Report, settings: str, history: dict[str, list[str]] | N
     if misses:
         lines += ["", "## Where Agent Trap did not do what we expected", ""]
         lines += [
-            f"- `{r.outcome.case.path}`: {r.outcome.case.note or r.outcome.status}" for r in misses
+            f"- `{r.outcome.case.path}`: {r.outcome.case.note or label(r.outcome.status)}"
+            for r in misses
         ]
     if history is not None:
         lines += variation_section(history)
+    lines += [
+        "",
+        "## See also",
+        "",
+        "- [Real malware from PyPI](real-malware.md): published malicious packages run in the "
+        "trap.",
+        "- [False alarms on real projects](false-alarms.md): 20 well-known projects, none flagged.",
+    ]
     return "\n".join(lines) + "\n"
 
 
@@ -409,7 +423,7 @@ def real_markdown(rows: list[RealRow], settings: str) -> str:
         f"| Tests really ran (at least one passed or failed) | "
         f"{_ratio((len(tested), len(done)))} |",
         f"| Wrongly flagged (any warning) | {_ratio((len(flagged), len(done)))} |",
-        f"| Wrongly called HIJACKED | {_ratio((len(hijacked), len(done)))} |",
+        f"| Wrongly called MALICIOUS | {_ratio((len(hijacked), len(done)))} |",
         f"| Mean time per scan | {mean_time:.0f}s |",
         "",
         "How much code really ran matters for reading these numbers. The sandbox has no internet, "
@@ -425,8 +439,8 @@ def real_markdown(rows: list[RealRow], settings: str) -> str:
             continue
         installed_cell = {True: "yes", False: "no", None: "-"}[r.installed]
         tests = _counts(r.tests)
-        lines.append(f"| `{r.repo}` | {r.status} | {installed_cell} | {tests} | {r.why} |")
+        lines.append(f"| `{r.repo}` | {label(r.status)} | {installed_cell} | {tests} | {r.why} |")
     if flagged:
         lines += ["", "## Warnings, to be looked at one by one", ""]
-        lines += [f"- `{r.repo}`: {r.status}, {r.why}" for r in flagged]
+        lines += [f"- `{r.repo}`: {label(r.status)}, {r.why}" for r in flagged]
     return "\n".join(lines) + "\n"

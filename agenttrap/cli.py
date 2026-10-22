@@ -13,7 +13,7 @@ from rich.console import Console
 from agenttrap.agent import TASKS
 from agenttrap.batch import run_batch
 from agenttrap.ci import commands_disabled, emit_github, running_in_github
-from agenttrap.detector import Status
+from agenttrap.detector import Status, label
 from agenttrap.findings import findings
 from agenttrap.llm import LLM
 from agenttrap.pipeline import full_scan
@@ -33,6 +33,12 @@ def build_parser() -> argparse.ArgumentParser:
         "scan", help="detonate a repo in a sandbox and report whether it hijacks an agent"
     )
     scan.add_argument("repo", type=Path)
+    scan.add_argument(
+        "--prove",
+        action="store_true",
+        help="prove the culprit lines: no time limit on the search "
+        "(slow, up to an hour on real malware)",
+    )
     scan.add_argument(
         "--k", type=int, default=2, help="runs per task (agents are not deterministic)"
     )
@@ -64,6 +70,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     batch.add_argument("folder", type=Path)
     batch.add_argument("--k", type=int, default=2, help="runs per task")
+    batch.add_argument(
+        "--prove",
+        action="store_true",
+        help="prove the culprit lines: no time limit on the search "
+        "(slow, up to an hour on real malware)",
+    )
     batch.add_argument("--workers", type=int, default=2, help="projects scanned at once")
     batch.add_argument("--keep-code", action="store_true", help="save code excerpts in the results")
     batch.add_argument("--results", type=Path, default=DEFAULT_DIR, help="where results are saved")
@@ -113,6 +125,7 @@ def _scan(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
             clean_dir=args.clean,
             progress=status.update,
             on_verdict=verdict_known,
+            prove=args.prove,
         )
 
     in_github = running_in_github()
@@ -146,15 +159,21 @@ def _batch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         k=args.k,
         workers=args.workers,
         include_code=args.keep_code,
+        prove=args.prove,
         on_verdict=lambda item: console.print(
-            f"  {item.status:<10} {item.name}  (pinpointing culprit lines...)", highlight=False
+            f"  {label(item.status):<10} {item.name}  (pinpointing culprit lines...)",
+            highlight=False,
         ),
-        on_done=lambda item: console.print(f"  {item.status:<10} {item.name}", highlight=False),
+        on_done=lambda item: console.print(
+            f"  {label(item.status):<10} {item.name}", highlight=False
+        ),
     )
     counts = {
         s: sum(i.status == s for i in items) for s in ("HIJACKED", "SUSPICIOUS", "SAFE", "ERROR")
     }
-    console.print(f"\n{len(items)} projects: " + ", ".join(f"{n} {s}" for s, n in counts.items()))
+    console.print(
+        f"\n{len(items)} projects: " + ", ".join(f"{n} {label(s)}" for s, n in counts.items())
+    )
     console.print("[dim]Results saved; view them with: agenttrap serve[/]")
     return 0
 

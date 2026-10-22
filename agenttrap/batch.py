@@ -72,6 +72,7 @@ def scan_project(
     model: str,
     include_code: bool,
     on_verdict: Callable[[BatchItem], None] = lambda item: None,
+    prove: bool = False,
 ) -> BatchItem:
     """Scan one project. A proven leak is saved as soon as the verdict is known, with its culprit
     lines still pending, and the same saved result is completed when the search for them ends."""
@@ -93,7 +94,9 @@ def scan_project(
         on_verdict(BatchItem(name, result.verdict.status.value, time.time() - started, findings))
 
     try:
-        result = full_scan(project, llm=LLM(), model=model, k=k, on_verdict=verdict_known)
+        result = full_scan(
+            project, llm=LLM(), model=model, k=k, on_verdict=verdict_known, prove=prove
+        )
         document = document_of(result)
         if early:
             store.overwrite(early["id"], document)
@@ -127,6 +130,7 @@ def run_batch(
     on_verdict: Callable[[BatchItem], None] = lambda item: None,
     on_done: Callable[[BatchItem], None] = lambda item: None,
     scan: Callable[..., BatchItem] = scan_project,
+    prove: bool = False,
 ) -> list[BatchItem]:
     """Scan every project under `root`, `workers` at a time. Results come back in folder order.
 
@@ -138,7 +142,7 @@ def run_batch(
         name = "batch/" + _short_name(project, root)
         item = scan(
             project, name, store=store, k=k, model=model, include_code=include_code,
-            on_verdict=on_verdict,
+            on_verdict=on_verdict, prove=prove,
         )  # fmt: skip
         on_done(item)
         return item

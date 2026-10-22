@@ -6,22 +6,25 @@ from rich.console import Console
 from rich.markup import escape
 from rich.panel import Panel
 
-from agenttrap.detector import Status
+from agenttrap.detector import Status, label
 from agenttrap.findings import split_culprits
 from agenttrap.intel import HostIntel
 from agenttrap.scan import CleanOutcome, ScanResult, base_name
 
 STYLE = {Status.SAFE: "bold green", Status.SUSPICIOUS: "bold yellow", Status.HIJACKED: "bold red"}
 HEADLINE = {
-    Status.SAFE: "SAFE: nothing tried to leak a secret or instruct the agent.",
+    Status.SAFE: (
+        "SAFE: no theft found. No planted secret left the sandbox, "
+        "and nothing instructed the agent."
+    ),
     Status.SUSPICIOUS: "SUSPICIOUS: warning signs, but no secret was seen leaving.",
-    Status.HIJACKED: "HIJACKED: a planted secret was seen leaving the sandbox.",
+    Status.HIJACKED: "MALICIOUS: a planted secret was seen leaving the sandbox.",
 }
 NOTES = {
     "base64": "hidden as base64: a text scanner sees only random characters",
     "runtime-fetch": "network call made by the repo's own code while it runs",
     "unicode": "hidden with invisible unicode characters",
-    "unconfirmed": "found by searching the code for the address; not confirmed by re-running",
+    "unconfirmed": "likely line, found by reading the code (run with --prove to confirm)",
     "agent-instruction": "an AI agent obeyed this text; on its own it was enough",
 }
 
@@ -58,7 +61,7 @@ def render_clean(cleaned: CleanOutcome, console: Console) -> None:
     console.print(f"    removed : {escape(', '.join(str(r) for r in cleaned.removed))}")
     for warning in cleaned.warnings:
         console.print(f"    [yellow]warning : {escape(warning)}[/]")
-    console.print(f"    re-scan : [{STYLE[rescan.status]}]{rescan.status.value}[/]", end="")
+    console.print(f"    re-scan : [{STYLE[rescan.status]}]{label(rescan.status)}[/]", end="")
     if still_leaking:
         console.print(
             f"  still leaks {escape(', '.join(still_leaking))}: those lines were not all of it"

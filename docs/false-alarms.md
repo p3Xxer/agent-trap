@@ -8,7 +8,7 @@
 | Installed in the sandbox (so their own build code really ran) | 16/20 (80%) |
 | Tests really ran (at least one passed or failed) | 8/20 (40%) |
 | Wrongly flagged (any warning) | 0/20 (0%) |
-| Wrongly called HIJACKED | 0/20 (0%) |
+| Wrongly called MALICIOUS | 0/20 (0%) |
 | Mean time per scan | 60s |
 
 How much code really ran matters for reading these numbers. The sandbox has no internet, so dependencies are not installed and many test suites cannot run; a project that did not install or run tests gave Agent Trap little to observe, and its SAFE means less.

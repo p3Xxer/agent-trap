@@ -34,11 +34,21 @@ CA_DIR = STATE_DIR / "mitm-ca"
 CA_CERT = CA_DIR / "mitmproxy-ca-cert.pem"  # public part: the only file the sandbox receives
 
 
+_CA_LOCK = threading.Lock()
+
+
 def ensure_ca() -> None:
     """Create the interception CA once. Its private key stays in .agenttrap/ and is mounted only
-    into the proxy container, never into a sandbox. Do not install this CA on your own machine."""
-    if CA_CERT.exists():
-        return
+    into the proxy container, never into a sandbox. Do not install this CA on your own machine.
+
+    A scan starts several runs at once; on the very first scan they would all create the CA at the
+    same time and read each other's half-written files, so only one of them makes it."""
+    with _CA_LOCK:
+        if not CA_CERT.exists():
+            _create_ca()
+
+
+def _create_ca() -> None:
     CA_DIR.mkdir(parents=True, exist_ok=True)
     made = _docker(
         "run", "--rm", "--entrypoint", "python", "-v", f"{CA_DIR}:/ca", MITM_IMAGE, "-c",

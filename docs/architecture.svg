@@ -76,9 +76,9 @@
 <line x1="300" y1="430" x2="358" y2="430" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <text x="1130" y="169.0" font-size="20" xml:space="preserve" fill="#1e1e1e">3  JUDGE THE EVIDENCE</text>
 <text x="1130" y="191.3" font-size="14" xml:space="preserve" fill="#1e1e1e">plain rules decide this; an AI opinion alone</text>
-<text x="1130" y="208.8" font-size="14" xml:space="preserve" fill="#1e1e1e">can never make a repo HIJACKED</text>
+<text x="1130" y="208.8" font-size="14" xml:space="preserve" fill="#1e1e1e">can never make a repo MALICIOUS</text>
 <rect x="1130" y="225" width="340" height="185" rx="10" fill="#ffc9c9" stroke="#e03131" stroke-width="2"/>
-<text x="1142" y="253.1" font-size="19" xml:space="preserve" fill="#1e1e1e">HIJACKED = proof</text>
+<text x="1142" y="253.1" font-size="19" xml:space="preserve" fill="#1e1e1e">MALICIOUS = proof</text>
 <text x="1142" y="276.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• a fake secret or the fake machine</text>
 <text x="1142" y="295.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  name was seen leaving: in a request</text>
 <text x="1142" y="313.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  or a DNS name, plain, base64, hex or</text>
@@ -105,7 +105,7 @@
 <text x="1142" y="805.5" font-size="15" xml:space="preserve" fill="#1e1e1e">report it (Tavily). Only host names are</text>
 <text x="1142" y="824.2" font-size="15" xml:space="preserve" fill="#1e1e1e">sent.</text>
 <text x="1530" y="169.0" font-size="20" xml:space="preserve" fill="#1e1e1e">4  PINPOINT THE LINE</text>
-<text x="1530" y="191.3" font-size="14" xml:space="preserve" fill="#1e1e1e">only when HIJACKED; the verdict is shown first</text>
+<text x="1530" y="191.3" font-size="14" xml:space="preserve" fill="#1e1e1e">only when MALICIOUS; the verdict is shown first</text>
 <rect x="1530" y="205" width="340" height="165" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
 <text x="1542" y="233.1" font-size="19" xml:space="preserve" fill="#1e1e1e">Replay and shrink</text>
 <text x="1542" y="256.2" font-size="15" xml:space="preserve" fill="#1e1e1e">When code steals: re-run the recorded</text>
@@ -127,7 +127,7 @@
 <rect x="1530" y="605" width="340" height="233" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
 <text x="1542" y="633.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Works today</text>
 <text x="1542" y="656.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• terminal report with file:line, exit</text>
-<text x="1542" y="675.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  code 1 on HIJACKED</text>
+<text x="1542" y="675.0" font-size="15" xml:space="preserve" fill="#1e1e1e">  code 1 on MALICIOUS</text>
 <text x="1542" y="693.8" font-size="15" xml:space="preserve" fill="#1e1e1e">• JSON results, batch summary</text>
 <text x="1542" y="712.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• --clean: a copy without the culprit</text>
 <text x="1542" y="731.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  code, scanned again</text>
@@ -140,7 +140,7 @@
 <rect x="60" y="865" width="1010" height="110" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2"/>
 <text x="72" y="893.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Why not just read the repo?</text>
 <text x="72" y="917.2" font-size="15" xml:space="preserve" fill="#1e1e1e">On 11 built attacks, Agent Trap flagged 11 and a plain code scanner 2: instructions hidden as base64 or fetched at run time</text>
-<text x="72" y="936.0" font-size="15" xml:space="preserve" fill="#1e1e1e">can't be seen by reading. On real malware from PyPI (Datadog dataset), 4 packages were caught HIJACKED, one sending the fake</text>
+<text x="72" y="936.0" font-size="15" xml:space="preserve" fill="#1e1e1e">can't be seen by reading. On real malware from PyPI (Datadog dataset), 4 packages were caught MALICIOUS, one sending the fake</text>
 <text x="72" y="954.8" font-size="15" xml:space="preserve" fill="#1e1e1e">API keys to webhook.site, with the exact setup.py lines.</text>
 <text x="1130" y="881.1" font-size="17" xml:space="preserve" fill="#1e1e1e">Legend</text>
 <text x="1130" y="906.3" font-size="14" xml:space="preserve" fill="#1e1e1e">red = proof   yellow = warning   green = safe, or works today</text>

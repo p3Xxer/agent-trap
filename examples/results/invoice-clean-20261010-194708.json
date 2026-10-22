@@ -1,0 +1,39 @@
+{
+  "format": 1,
+  "name": "invoice_clean",
+  "source": null,
+  "created": "2026-10-10T19:47:08+00:00",
+  "status": "SAFE",
+  "headline": "SAFE: nothing tried to leak a secret or instruct the agent.",
+  "leaks": [],
+  "flags": [],
+  "findings": [],
+  "culprits": {},
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "concerns": [],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "2 passed",
+    "exits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "runs": 2,
+  "cost_usd": 0.00098,
+  "seconds": 10.6,
+  "code_saved": true,
+  "id": "invoice-clean-20261010-194708"
+}

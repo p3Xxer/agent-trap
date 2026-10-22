@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from typing import Literal
 from urllib.parse import urlparse
 
-from agenttrap.canary import HOSTNAME, IDENTITY_WORDS, USERNAME
-from agenttrap.localizer import UNCONFIRMED, Culprit
+from agenttrap.canary import IDENTITY_WORDS, plain_name
+from agenttrap.localizer import UNCONFIRMED, Culprit, reads_a_value, sends_over_network
 from agenttrap.scan import ScanResult, base_name
 
 Level = Literal["error", "warning", "note"]
@@ -18,8 +18,8 @@ Level = Literal["error", "warning", "note"]
 RULES: dict[str, tuple[str, str, Level, str]] = {
     "agent-trap/secret-leak": (
         "Secret leaves the sandbox",
-        "A planted fake secret was seen leaving the sandbox while an AI agent set up and tested "
-        "the repository. Code in this repository reads the secret and sends it out.",
+        "A planted fake secret was seen leaving the sandbox. Something in this repository, either "
+        "its own code or text that an AI agent obeyed, sends the secret out.",
         "error",
         "9.0",
     ),
@@ -85,7 +85,8 @@ _SCAFFOLDING = re.compile(
 def split_culprits(
     culprits: list[Culprit], canary: str, destination: str
 ) -> tuple[list[Culprit], list[Culprit]]:
-    """Separate the lines that touch the secret or the destination from supporting lines.
+    """Separate the lines that name the secret or the destination, read a value out of a file or
+    the environment, or send something over the network, from supporting lines.
 
     The localizer returns every line the leak needs (including `try:` and `pass`). Only some of
     them are what a reviewer should look at; the rest are scaffolding around them, and plain
@@ -94,11 +95,88 @@ def split_culprits(
     host = urlparse(destination).hostname or destination
     words = IDENTITY_WORDS.get(canary, ())
     markers = [m for m in (host, canary.removeprefix("~/").removeprefix("$"), *words) if m]
-    key = [c for c in culprits if any(m.lower() in c.text.lower() for m in markers)]
+    key = [
+        c
+        for c in culprits
+        if any(m.lower() in c.text.lower() for m in markers)
+        or sends_over_network(c.text)
+        or reads_a_value(c.text)
+    ]
     if not key:
         return culprits, []
     support = [c for c in culprits if c not in key and not _SCAFFOLDING.fullmatch(c.text.strip())]
     return key, support
+
+
+Phase = Literal["install", "agent", "both"]
+INSTALL_TASK = "baseline"  # the run without an AI agent: install, import and test the repository
+
+
+@dataclass(frozen=True)
+class LeakGroup:
+    """Everything that was sent to one destination host, told once."""
+
+    host: str
+    destination: str
+    method: str  # how it left: an HTTP method, or "DNS" for data hidden in a looked-up name
+    canaries: tuple[str, ...]  # canary names (sorted), as the scanner knows them
+    phase: Phase
+    tasks: tuple[str, ...]  # the AI agent's tasks during which it happened
+    tricked: bool  # an AI agent obeyed text in the repository
+    lines: tuple[Location, ...]  # the key lines of every secret sent here, without duplicates
+    unconfirmed: bool  # some lines come from a text search, not from re-running the repository
+    why_not: tuple[str, ...]  # why a line could not be found, when it could not
+
+
+def _host(destination: str) -> str:
+    return urlparse(destination).hostname or destination
+
+
+def _phase(tasks: list[str]) -> tuple[Phase, tuple[str, ...]]:
+    """When it happened, from the names of the runs that leaked. Without run information the
+    leak is reported as the agent's, the wording used before runs were recorded."""
+    agent = tuple(dict.fromkeys(t for t in tasks if t != INSTALL_TASK))
+    if INSTALL_TASK in tasks:
+        return ("both" if agent else "install"), agent
+    return "agent", agent
+
+
+def leak_groups(result: ScanResult) -> list[LeakGroup]:
+    groups = []
+    hosts = dict.fromkeys(_host(x.destination) for x in result.verdict.leaks)
+    for host in hosts:
+        leaks = [x for x in result.verdict.leaks if _host(x.destination) == host]
+        names = sorted({base_name(x.canary) for x in leaks})
+        lines: dict[tuple[str, int], Culprit] = {}
+        why_not = []
+        for name in names:
+            destination = next(x.destination for x in leaks if base_name(x.canary) == name)
+            key, _ = split_culprits(result.culprits.get(name, []), name, destination)
+            lines.update({(c.file, c.line): c for c in key})
+            if name in result.unlocalized and not key:
+                why_not.append(result.unlocalized[name])
+        chosen = [lines[k] for k in sorted(lines)]
+        runs = [r.task for r in result.runs if any(_host(x.destination) == host for x in r.leaks)]
+        phase, tasks = _phase(runs)
+        groups.append(
+            LeakGroup(
+                host=host,
+                destination=leaks[0].destination,
+                method=leaks[0].request.method,
+                canaries=tuple(names),
+                phase=phase,
+                tasks=tasks,
+                tricked=any(c.tag == "agent-instruction" for c in chosen),
+                lines=tuple(Location(c.file, c.line, c.text) for c in chosen),
+                unconfirmed=any(c.tag == UNCONFIRMED for c in chosen),
+                why_not=tuple(dict.fromkeys(why_not)),
+            )
+        )
+    return groups
+
+
+def _leaking_runs(result: ScanResult, canary: str) -> list[str]:
+    return [r.task for r in result.runs if any(base_name(x.canary) == canary for x in r.leaks)]
 
 
 def findings(result: ScanResult) -> list[Finding]:
@@ -107,7 +185,10 @@ def findings(result: ScanResult) -> list[Finding]:
     for name in sorted({base_name(x.canary) for x in result.verdict.leaks}):
         evidence = next(x for x in result.verdict.leaks if base_name(x.canary) == name)
         key, support = split_culprits(result.culprits.get(name, []), name, evidence.destination)
-        message = _leak_message(name, evidence.destination, key, result.unlocalized.get(name, ""))
+        phase, tasks = _phase(_leaking_runs(result, name))
+        message = _leak_message(
+            name, evidence.destination, key, result.unlocalized.get(name, ""), phase, tasks
+        )
         out.append(
             Finding(
                 "agent-trap/secret-leak",
@@ -171,26 +252,35 @@ def _host_message(host: str, result: ScanResult) -> str:
     return message
 
 
-def _what(canary: str) -> str:
-    if canary in (HOSTNAME, USERNAME):
-        return f"the sandbox's identity ({canary}, a random fake machine name)"
-    return f"the planted fake secret {canary}"
+def when_leaked(phase: Phase, tasks: tuple[str, ...] = ()) -> str:
+    """Who was running when the secret left, as the start of a sentence."""
+    if phase == "install":
+        return "While the project was installed and tested (no AI involved),"
+    if phase == "both":  # an AI agent installing it sets off the same code
+        return "While the project was installed and tested,"
+    task = f" (task: {', '.join(tasks)})" if tasks else ""
+    return f"While an AI agent was working on this repository{task},"
 
 
-def _leak_message(canary: str, destination: str, key: list[Culprit], why_not: str) -> str:
+def _leak_message(
+    canary: str,
+    destination: str,
+    key: list[Culprit],
+    why_not: str,
+    phase: Phase = "agent",
+    tasks: tuple[str, ...] = (),
+) -> str:
+    what = plain_name(canary)
     if any(c.tag == "agent-instruction" for c in key):
         return (
-            f"An AI agent was tricked by text in this repository into sending {_what(canary)} "
+            f"An AI agent was tricked by text in this repository into sending {what} "
             f"to {destination}. Shown on their own, these lines were enough to make it do so."
         )
-    message = (
-        f"While an AI agent set up and tested this repository, {_what(canary)} "
-        f"was sent to {destination}."
-    )
+    message = f"{when_leaked(phase, tasks)} {what} was sent to {destination}."
     if any(c.tag == UNCONFIRMED for c in key):
         return message + (
-            " These lines mention the address or read the machine's identity (found by searching "
-            "the code; the full re-run search ran out of time, so this is not confirmed)."
+            " These are the likely lines, found by reading the code; run with --prove to confirm "
+            "them."
         )
     if key:
         return message + " These lines make that happen."

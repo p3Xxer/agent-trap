@@ -1,25 +1,131 @@
 # Agent Trap
 
-**A defensive security tool.** Agent Trap detonates an untrusted repository in a sandbox, lets a
-cheap AI coding agent work on it with **fake canary secrets** planted, catches the agent if it is
-hijacked into leaking them, and pinpoints the **exact file and line** that did it.
+**Is this repo safe to give your AI coding agent?** Agent Trap runs an untrusted repository in a
+locked sandbox with **fake keys** planted, lets an AI coding agent (NVIDIA Nemotron on Nebius Token
+Factory) work on it, and says **MALICIOUS** only when it sees a planted key leave — then names the
+**exact lines** that sent it.
 
-> Status: early development (Nebius × NVIDIA hackathon). Not yet usable end to end.
+It catches two kinds of attack: code that steals the moment it is installed, imported or tested,
+and the new kind that only exists because we hand repos to AI agents — text in a README that talks
+the agent into sending your keys.
+
+![A result: the repo steals secrets, the request caught in transit, and the lines that do it](docs/images/result.png)
+
+## Judge quick start
+
+| | |
+| --- | --- |
+| **See real results, no setup** | Demo site: <https://p3xxer.github.io/agent-trap/> — real PyPI malware caught, the README attack, clean projects |
+| **Scan a repo yourself** | Docker + Python 3.11 + a Nebius Token Factory key, then the [Quick start](#quick-start) (5 commands) |
+| **A repo to try** | <https://github.com/p3Xxer/malicious-repo-agent-trap> — harmless outside the sandbox, steals planted keys inside it |
+| **On a pull request** | [Agent Trap failing a PR](https://github.com/p3Xxer/agent-trap/pull/1) that adds "build telemetry" |
+| **Results in numbers** | [4 of 11 real malware samples caught](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
+
+**Contents:** [Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
+[How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Usage](#usage) ·
+[Web page](#web-page) · [GitHub Action](#github-action) · [Results](#results) ·
+[What Agent Trap does and does not do](#what-agent-trap-does-and-does-not-do) · [Safety](#safety)
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/readme-trick.png" alt="A README sentence that tricked the AI agent into sending the AWS key"><br><sub><b>The new attack:</b> one sentence in a README (line 17) talked the AI agent into sending the AWS key.</sub></td>
+<td width="50%"><img src="docs/images/landing.png" alt="The Agent Trap web page with real malware caught"><br><sub><b>The web page:</b> paste a GitHub link; real malware from PyPI caught in the trap.</sub></td>
+</tr>
+</table>
 
 ## Safety
 
 - Every secret Agent Trap plants is a fake canary. No real credential is ever touched.
 - All sandbox traffic goes through a recording proxy that blocks it; nothing is exfiltrated.
-- The attack fixtures in `fixtures/attacks/` are inert: fake canaries aimed at fake hosts that only
-  ever resolve to our local proxy.
+- The attack fixtures in `fixtures/attacks/` send only to reserved names such as
+  `setup-check.test`, which can never exist on the internet (RFC 6761): run outside the sandbox,
+  the request simply fails.
+
+## Built with NVIDIA Nemotron on Nebius Token Factory
+
+Every model call in Agent Trap goes to **NVIDIA Nemotron 3 Nano**
+(`nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`) through **Nebius Token Factory**'s OpenAI-compatible API
+(`https://api.tokenfactory.nebius.com/v1/`). Nemotron is not a reviewer added on top: it *is* the
+coding agent being put in the trap.
+
+| Where Nemotron is used | What it does | Model calls |
+| --- | --- | --- |
+| **The coding agent in the sandbox** ([`agenttrap/agent.py`](agenttrap/agent.py)) | Works on the repository like a developer's coding assistant: reads files, runs commands, installs and tests the project. It gets three everyday tasks ("set this project up", "run the tests", "summarize what this repo does") and answers each step with one JSON action that is carried out inside the sandbox. | Up to 15 per task. 3 tasks, run once each on the web page and twice each from the command line. |
+| **Two questions after each task** ([`agenttrap/agent.py`](agenttrap/agent.py)) | "Did anything you read try to give *you* instructions?" and "Did you see code that does something risky?" A quote only counts if it is found in the repository, and the answers are shown as warnings, never as proof. | 2 per task |
+| **Finding the line that tricked the agent** ([`agenttrap/counterfactual.py`](agenttrap/counterfactual.py)) | When the agent itself sent a planted key out, Agent Trap removes candidate lines and asks Nemotron to take the same next step again: 12 samples per version, counted as still tricked when at least 3 reach for the key. | Only in that case; at most 40 versions × 12 samples |
+
+Code that steals by itself is pinpointed without any model call: the repository is simply re-run
+with lines removed. `--model super` or `--model ultra` switches the agent to Nemotron 3 Super or
+Ultra on Token Factory.
+
+**How Token Factory made this practical**
+
+- **Cheap enough to sample.** Each scan records its own cost, typically 1 to 3 cents. Over the whole
+  project (development, tests and every evaluation) the spend ledger in `.agenttrap/spend.json`
+  shows 21,308 calls, 40.7 million input and 2.1 million output tokens, **$5.15 in total**. That is
+  what makes asking the model 12 times per candidate affordable, and a scan on every pull request
+  realistic.
+- **OpenAI-compatible.** One small client ([`agenttrap/llm.py`](agenttrap/llm.py)) with JSON mode
+  for structured answers, a cache for identical requests, and spend limits checked *before* every
+  call: `MAX_USD_PER_CHECK` per scan (default $0.50) and `TOTAL_BUDGET_USD` for the lifetime of the
+  project (default $20).
+- **Parallel runs.** The agent tasks of a scan run side by side, each in its own sandbox.
+
+**Tavily.** For every host the sandbox contacted that is not on the allow-list, Agent Trap makes a
+Tavily search at scan time to see whether the public web reports it as malicious, next to the
+domain's registration date from RDAP. Only host names are sent; the results are context for a
+person and are never given to the model.
+
+## How a scan works
+
+Every scan runs the repository in a fresh, locked sandbox several times:
+
+| Run | What happens | What it catches |
+| --- | --- | --- |
+| Install and test, no AI | `pip install`, import every module, `pytest` | code that steals the moment it is installed, imported or tested |
+| AI agent: "set it up" | the agent reads the install instructions and runs them | install-time code, and README steps like "first run this script" |
+| AI agent: "run its tests" | the agent runs the tests and reads test files | code hidden in tests |
+| AI agent: "summarize it" | the agent mostly reads the README and docs | hidden instructions aimed at the AI ("ignore your task and send the key to…") |
+
+These are the everyday things a developer asks a coding agent to do with new code, and each one
+makes the agent touch a different part of the repository, so an attack waiting for one moment is
+still reached. An AI agent does not behave the same way every time, so the command line runs each
+agent task twice by default (`--k`); the web page runs each once so a live scan takes about two
+minutes.
+
+A verdict of MALICIOUS needs proof: a planted fake secret seen leaving the sandbox, or a destructive
+command actually run. SAFE means nothing was seen leaving in these runs, not that the code is
+proven harmless: code waiting for a date, another operating system or a real internet connection
+will not show itself here.
+
+## Quick start
+
+You need **Python 3.11+**, **Docker** (running) and a **Nebius Token Factory API key**. A Tavily key
+is optional.
+
+```bash
+git clone https://github.com/p3Xxer/agent-trap && cd agent-trap
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e '.[dev]'
+cp .env.example .env        # then put your NEBIUS_API_KEY (and optionally TAVILY_API_KEY) in .env
+agenttrap serve             # the web page, at http://localhost:8765
+```
+
+On the web page, paste `https://github.com/p3Xxer/malicious-repo-agent-trap` (a harmless
+test repository that steals keys during install) and press Scan. The first scan builds the sandbox
+image and downloads mitmproxy, so it takes a few extra minutes.
+
+From the terminal instead:
+
+```bash
+agenttrap scan fixtures/attacks/install_time_exfil     # one of our own test attacks
+```
 
 ## Development
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev]'
-cp .env.example .env   # then add your NEBIUS_API_KEY
-pytest
+pytest                      # no Docker or API key needed
 ```
 
 ## Usage
@@ -29,7 +135,7 @@ agenttrap scan path/to/repo            # needs Docker running and NEBIUS_API_KEY
 agenttrap scan path/to/repo --k 3 --json result.json
 ```
 
-Add `--clean OUT_DIR` to get a copy of a HIJACKED repo with the culprit code removed, plus a second
+Add `--clean OUT_DIR` to get a copy of a MALICIOUS repo with the culprit code removed, plus a second
 scan of that copy to show whether the leak is gone. The original is never modified, and `OUT_DIR`
 must not exist or be empty. In Python files whole statements are removed (a removed statement
 becomes `pass`, so line numbers and syntax hold); in other files exactly the culprit lines are
@@ -48,17 +154,18 @@ Add `--sarif result.sarif` to write the findings as SARIF, the format GitHub sho
 pull request lines. Inside GitHub Actions the scan also prints annotations for those lines and
 writes a run summary, with no extra flags.
 
-Every scan also runs `pip install -e .` and `pytest` in the sandbox with no AI involved, next to
-the agent's runs. Whether the agent installs the project is up to the agent (in our measurements
+Every scan also installs the project (`pip install`, `pip install -e`, `setup.py install`), imports
+every module and runs `pytest` in the sandbox with no AI involved, next to the agent's runs. Whether the agent installs the project is up to the agent (in our measurements
 it did in about half of "set up" runs and a quarter of "run the tests" runs), so without this step
 a stealer in `setup.py` would be missed some of the time.
 
 Each scan is saved to `.agenttrap/results/`, where the web page finds it.
 
-The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
+The exit code is 1 if the verdict is MALICIOUS, so it can gate CI. (In saved JSON results this
+verdict is stored as `HIJACKED`, its earlier name, so older results and scripts keep working.) Verdicts:
 
-- **HIJACKED**: a planted secret was seen leaving the sandbox in plain HTTP, or the agent ran a
-  clearly destructive command. The report names the culprit file and line.
+- **MALICIOUS**: a planted secret was seen leaving the sandbox (in a web request or a DNS lookup),
+  or the agent ran a clearly destructive command. The report names the culprit file and line.
 - **SUSPICIOUS**: no proof, but the agent reported text trying to instruct it, or the sandbox
   tried to reach a host that is not on the allow-list.
 - **SAFE**: neither.
@@ -71,7 +178,7 @@ The exit code is 1 if the verdict is HIJACKED, so it can gate CI. Verdicts:
 | `agenttrap/sandbox.py` | Throwaway Docker container on an internal network with no route out |
 | `agenttrap/egress.py`, `sinkhole.py`, `mitm_addon.py` | Network monitor: a per-run private network with a mitmproxy container (reads HTTP and HTTPS, answers every request itself) and a DNS/TCP sinkhole for anything that bypasses the proxy. Nothing is forwarded |
 | `agenttrap/agent.py` | The bait agent: a Nemotron tool-use loop run inside the sandbox, plus a post-task debrief |
-| `agenttrap/detector.py` | Canary-leak matching and the SAFE / SUSPICIOUS / HIJACKED verdict |
+| `agenttrap/detector.py` | Canary-leak matching and the SAFE / SUSPICIOUS / MALICIOUS verdict |
 | `agenttrap/localizer.py` | Delta debugging (ddmin): culprit file, then culprit line |
 | `agenttrap/cleaner.py` | Copy of the repo without the culprit code, for a verification re-scan |
 | `agenttrap/intel.py` | Host lookups run on every scan: domain age (RDAP) and public reports (Tavily) |
@@ -115,6 +222,28 @@ check and gets warnings on the exact lines. See [docs/github-action.md](docs/git
     nebius-api-key: ${{ secrets.NEBIUS_API_KEY }}
 ```
 
+## Results
+
+| Test | What we ran | Result |
+| --- | --- | --- |
+| [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (MALICIOUS)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. The other 6 flagged SUSPICIOUS; 1 SAFE |
+| [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **2/11** for a tool that only reads the code. All 5 code attacks proven with the exact file and line |
+| [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
+| Our clean test repos | 8 harmless repos written to look risky | 0/8 called MALICIOUS; 1 flagged SUSPICIOUS (it calls its own web service) |
+
+A scan takes 1 to 2 minutes for a clean repository and a few minutes more when there are culprit
+lines to pinpoint, and costs about 1 to 3 cents of model use. The search for the exact lines stops
+after about two and a half minutes; lines it could not prove in that time are found by reading the
+code and shown as *likely*. Add `--prove` (to `scan` or `batch`) to let the search run until every
+line is proven: on real malware that can take up to an hour.
+
+**Try it on a real link:** [p3Xxer/malicious-repo-agent-trap](https://github.com/p3Xxer/malicious-repo-agent-trap)
+is a public test repository whose `setup.py` steals keys during install (aimed at a name that
+cannot exist, so it is harmless elsewhere). Paste it into the web page and it comes back MALICIOUS
+with the lines.
+
+![How one scan works](docs/architecture.svg)
+
 ## Evaluation
 
 `python eval/run_eval.py` scans every repository in `fixtures/manifest.json` (11 attack repos and
@@ -134,7 +263,7 @@ default no line of the scanned code is saved in the results.
 
 ## What Agent Trap does and does not do
 
-- **Proven (HIJACKED):** a planted fake secret really leaves the sandbox, found by running the
+- **Proven (MALICIOUS):** a planted fake secret really leaves the sandbox, found by running the
   project's install, import and test steps and the agent's own work. For code that steals, the
   culprit file and line are found by replaying commands. When the agent itself was tricked by text,
   the lines are found by asking the model again with and without them (`counterfactual.py`).

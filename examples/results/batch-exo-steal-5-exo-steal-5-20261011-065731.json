@@ -1,0 +1,193 @@
+{
+  "format": 1,
+  "name": "batch/exo-steal-5/exo-steal-5",
+  "source": null,
+  "created": "2026-10-11T06:57:31+00:00",
+  "status": "SUSPICIOUS",
+  "headline": "SUSPICIOUS: warning signs, but no secret was seen leaving.",
+  "leaks": [],
+  "flags": [
+    {
+      "kind": "suspicious-code",
+      "detail": "exo-steal/exo-steal_file.py:1: The code reads system environment variables, constructs file paths based on the username, and uses p",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "exo-steal/exo-steal_file.py:5: The code sends data from the user's machine to an external server by making HTTP requests to ip-api.",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "exo-steal/exo-steal_file.py:90: Sending data from the user's machine to an external server via Telegram API",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "exo-steal/exo-steal_file.py:8: Reading user credentials and system information",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "exo-steal/exo-steal_file.py:9: Hardcoding a token that could be used for authentication",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "exo-steal/exo-steal_file.py:10: Hardcoding a chat ID that could be used for targeted communication",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: The code reads system environment variables, constructs file paths based on the username, and uses pyautogui to take screenshots. It also sends data to external servers via Telegram API and makes HTTP requests to external services like ip-api.com.",
+      "locations": [
+        {
+          "file": "exo-steal/exo-steal_file.py",
+          "line": 1,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: The code sends data from the user's machine to an external server by making HTTP requests to ip-api.com and api.telegram.org, potentially exfiltrating system information and interacting with external services without explicit user consent.",
+      "locations": [
+        {
+          "file": "exo-steal/exo-steal_file.py",
+          "line": 5,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Sending data from the user's machine to an external server via Telegram API",
+      "locations": [
+        {
+          "file": "exo-steal/exo-steal_file.py",
+          "line": 90,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Reading user credentials and system information",
+      "locations": [
+        {
+          "file": "exo-steal/exo-steal_file.py",
+          "line": 8,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Hardcoding a token that could be used for authentication",
+      "locations": [
+        {
+          "file": "exo-steal/exo-steal_file.py",
+          "line": 9,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: Hardcoding a chat ID that could be used for targeted communication",
+      "locations": [
+        {
+          "file": "exo-steal/exo-steal_file.py",
+          "line": 10,
+          "text": ""
+        }
+      ],
+      "related": []
+    }
+  ],
+  "culprits": {},
+  "unlocalized": {},
+  "files": {},
+  "injections": [],
+  "concerns": [
+    {
+      "where": "exo-steal/exo-steal_file.py:1",
+      "quote": "",
+      "behavior": "The code reads system environment variables, constructs file paths based on the username, and uses pyautogui to take screenshots. It also sends data to external servers via Telegram API and makes HTTP requests to external services like ip-api.com."
+    },
+    {
+      "where": "exo-steal/exo-steal_file.py:5",
+      "quote": "",
+      "behavior": "The code sends data from the user's machine to an external server by making HTTP requests to ip-api.com and api.telegram.org, potentially exfiltrating system information and interacting with external services without explicit user consent."
+    },
+    {
+      "where": "exo-steal/exo-steal_file.py:90",
+      "quote": "",
+      "behavior": "Sending data from the user's machine to an external server via Telegram API"
+    },
+    {
+      "where": "exo-steal/exo-steal_file.py:8",
+      "quote": "",
+      "behavior": "Reading user credentials and system information"
+    },
+    {
+      "where": "exo-steal/exo-steal_file.py:9",
+      "quote": "",
+      "behavior": "Hardcoding a token that could be used for authentication"
+    },
+    {
+      "where": "exo-steal/exo-steal_file.py:10",
+      "quote": "",
+      "behavior": "Hardcoding a chat ID that could be used for targeted communication"
+    }
+  ],
+  "contacted_hosts": [],
+  "host_intel": {},
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "",
+    "exits": [
+      0,
+      0,
+      1,
+      0,
+      5
+    ],
+    "errors": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.02591,
+  "seconds": 61.2,
+  "code_saved": false,
+  "id": "batch-exo-steal-5-exo-steal-5-20261011-065731"
+}

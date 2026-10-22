@@ -19,3 +19,9 @@ out/
 *.sarif
 
 .DS_Store
+
+# Local app settings (launch configs for the Claude desktop app)
+.claude/
+
+# Hackathon submission drafts (kept locally, not published)
+submission/

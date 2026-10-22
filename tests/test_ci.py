@@ -62,7 +62,7 @@ def test_a_very_long_message_is_cut():
 def test_summary_has_the_verdict_and_a_table_of_findings():
     result = leaking_result(intel=intel_for())
     text = summary_markdown(result, findings(result))
-    assert text.startswith("## Agent Trap: HIJACKED")
+    assert text.startswith("## Agent Trap: MALICIOUS")
     assert "| Finding | Where | Details |" in text
     assert "`setup.py:10`, `setup.py:11`" in text
 
@@ -90,7 +90,7 @@ def test_emit_prints_annotations_and_appends_the_summary(tmp_path, monkeypatch, 
     result = leaking_result()
     emit_github(result, findings(result))
     assert capsys.readouterr().out.startswith("::error file=setup.py,line=10")
-    assert summary.read_text().startswith("earlier step\n## Agent Trap: HIJACKED")
+    assert summary.read_text().startswith("earlier step\n## Agent Trap: MALICIOUS")
 
 
 def test_emit_works_without_a_summary_file(monkeypatch, capsys):

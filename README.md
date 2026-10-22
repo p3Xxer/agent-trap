@@ -77,9 +77,10 @@ Ultra on Token Factory.
   small client ([`agenttrap/llm.py`](agenttrap/llm.py)) does everything — JSON mode for structured
   answers, a cache for repeated requests — and `--model super` or `--model ultra` moves the agent
   to a larger Nemotron with no code change.
-- **Safe to leave running.** Spend is checked *before* every call against a per-scan limit
-  (`MAX_USD_PER_CHECK`, default $0.50) and a total one (`TOTAL_BUDGET_USD`, default $20), so a
-  scan in CI cannot run up a bill.
+- **Spend you can predict.** Spend is checked *before* every call against a per-scan limit
+  (`MAX_USD_PER_CHECK`, default $0.50) and a running total (`TOTAL_BUDGET_USD`, default $20), so no
+  single scan can cost more than its limit. (On GitHub's runners the total starts fresh each run;
+  the per-scan limit always holds.)
 
 **Tavily.** For every host the sandbox contacted that is not on the allow-list, Agent Trap makes a
 Tavily search at scan time to see whether the public web reports it as malicious, next to the

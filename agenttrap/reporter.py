@@ -89,6 +89,8 @@ def render(result: ScanResult, console: Console | None = None) -> None:
         f"\n[bold]AGENT TRAP[/] scan of [cyan]{result.repo}[/]  ({len(result.runs)} runs)\n"
     )
     console.print(Panel(HEADLINE[status], style=STYLE[status], expand=False))
+    for warning in result.warnings:
+        console.print(f"[bold yellow]warning[/] {escape(warning)}")
 
     for leak in sorted({base_name(x.canary) for x in result.verdict.leaks}):
         evidence = next(x for x in result.verdict.leaks if base_name(x.canary) == leak)

@@ -115,6 +115,21 @@ On the web page, paste `https://github.com/p3Xxer/malicious-repo-agent-trap` (a 
 test repository that steals keys during install) and press Scan. The first scan builds the sandbox
 image and downloads mitmproxy, so it takes a few extra minutes.
 
+### Keys
+
+| Key | Needed? | Where to get it | What it is used for |
+| --- | --- | --- | --- |
+| `NEBIUS_API_KEY` | For the full scan | [Nebius Token Factory](https://tokenfactory.nebius.com) → API keys | The AI coding agent (NVIDIA Nemotron) that works on the repository |
+| `TAVILY_API_KEY` | Optional | [Tavily](https://app.tavily.com) | Web reports on the servers a repository contacted |
+| GitHub login | **Not needed** | — | Public repositories are downloaded anonymously |
+
+Keys go in `.env` (copied from `.env.example`), which git ignores; they are never written into
+results. **Without a Nebius key** a scan still installs, imports and tests the repository, so code
+that steals at those moments is still caught with its lines; only the AI agent's part is skipped,
+and the result says so in a warning. Spend is capped before every model call: $0.50 per scan and
+$20 in total by default (`MAX_USD_PER_CHECK`, `TOTAL_BUDGET_USD` in `.env`); a scan typically costs
+1 to 3 cents.
+
 From the terminal instead:
 
 ```bash

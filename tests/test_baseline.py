@@ -495,3 +495,22 @@ def test_text_search_also_finds_the_line_that_names_the_stolen_secret():
         files, "http://setup-check.test/verify", "~/.aws/credentials#secret"
     )
     assert [c.line for c in found] == [2, 4]
+
+
+def test_a_scan_says_so_when_the_ai_agent_could_not_run():
+    from agenttrap.agent import Trace
+    from agenttrap.scan import RunResult, agent_warning
+
+    def run(task, stopped, steps=0):
+        trace = Trace(task=task)
+        trace.stopped = stopped
+        trace.steps = [object()] * steps
+        return RunResult(task, trace, Observed((), ()), ())
+
+    no_key = "model: NEBIUS_API_KEY is not set. Put it in .env (never in code)."
+    runs = [run("baseline", "finished", 5), run("setup", no_key), run("test", no_key)]
+    warning = agent_warning(runs)
+    assert "The AI agent did not run (NEBIUS_API_KEY is not set" in warning
+    assert "text that tricks an AI agent was not" in warning
+    assert agent_warning([run("baseline", "finished", 5), run("setup", "finished", 4)]) is None
+    assert agent_warning([run("baseline", "finished", 5)]) is None

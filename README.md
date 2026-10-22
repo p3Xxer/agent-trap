@@ -59,18 +59,27 @@ without any model call: the repository is simply re-run with lines removed, and 
 removal stops the leak are the culprits. `--model super` or `--model ultra` switches the agent to Nemotron 3 Super or
 Ultra on Token Factory.
 
-**How Token Factory made this practical**
+**How Nebius Token Factory made this practical**
 
-- **Cheap enough to sample.** Each scan records its own cost, typically 1 to 3 cents. Over the whole
-  project (development, tests and every evaluation) the spend ledger in `.agenttrap/spend.json`
-  shows 21,308 calls, 40.7 million input and 2.1 million output tokens, **$5.15 in total**. That is
-  what makes asking the model 12 times per candidate affordable, and a scan on every pull request
-  realistic.
-- **OpenAI-compatible.** One small client ([`agenttrap/llm.py`](agenttrap/llm.py)) with JSON mode
-  for structured answers, a cache for identical requests, and spend limits checked *before* every
-  call: `MAX_USD_PER_CHECK` per scan (default $0.50) and `TOTAL_BUDGET_USD` for the lifetime of the
-  project (default $20).
-- **Parallel runs.** The agent tasks of a scan run side by side, each in its own sandbox.
+- **Evidence by sampling, not by a single answer.** Nemotron does not answer the same way twice, so
+  one re-run proves nothing. Agent Trap asks it the same question 12 times per candidate and
+  counts. That only works when a model call costs almost nothing, and on Token Factory it does: the
+  whole project, every test and evaluation included, came to 21,308 calls and **$5.15**
+  (from the spend ledger in `.agenttrap/spend.json`).
+- **An agent can afford to read everything.** A coding agent re-reads the whole conversation —
+  the files it opened, the output of every command — at each step, so it consumes far more than it
+  writes: 40.7 million input tokens against 2.1 million output in this project. Cheap input on
+  Nemotron 3 Nano lets the agent read a repository the way a real assistant would, instead of
+  being starved to save money.
+- **A security check for every pull request.** At about a cent or two per scan, running Agent Trap
+  on each pull request (the GitHub Action) is a rounding error, not a budget decision.
+- **One standard client, any Nemotron size.** Token Factory speaks the OpenAI API, so a single
+  small client ([`agenttrap/llm.py`](agenttrap/llm.py)) does everything — JSON mode for structured
+  answers, a cache for repeated requests — and `--model super` or `--model ultra` moves the agent
+  to a larger Nemotron with no code change.
+- **Safe to leave running.** Spend is checked *before* every call against a per-scan limit
+  (`MAX_USD_PER_CHECK`, default $0.50) and a total one (`TOTAL_BUDGET_USD`, default $20), so a
+  scan in CI cannot run up a bill.
 
 **Tavily.** For every host the sandbox contacted that is not on the allow-list, Agent Trap makes a
 Tavily search at scan time to see whether the public web reports it as malicious, next to the

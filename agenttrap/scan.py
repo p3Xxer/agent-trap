@@ -331,11 +331,12 @@ def _replay(steps: list, box: Sandbox, stop: Callable[[], bool] | None = None) -
 
 
 def textual_suspects(files: Mapping[str, str], destination: str, canary_name: str) -> list[Culprit]:
-    """Lines that name the place the secret went, or read the machine's identity, found by plain
-    text search. A quick answer for when the exact search takes too long; it is not confirmed by
-    re-running, and is marked so."""
+    """Lines that name the place the secret went, name the secret itself (`.aws/credentials`,
+    `OPENAI_API_KEY`) or read the machine's identity, found by plain text search. A quick answer
+    for when the exact search takes too long; it is not confirmed by re-running, and is marked so."""
     host = urlparse(destination).hostname or ""
-    words = IDENTITY_WORDS.get(canary_name, ())
+    secret = canary_name.split("#")[0].removeprefix("~/").removeprefix("$").lower()
+    words = (*IDENTITY_WORDS.get(canary_name, ()), *([secret] if len(secret) > 4 else []))
     found = []
     for path, text in files.items():
         for number, line in enumerate(text.split("\n"), 1):

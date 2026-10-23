@@ -174,7 +174,7 @@
       "kind": "benign",
       "group": "clean",
       "expect": "SAFE",
-      "note": "calls its own web service, which is not on the allow-list: a SUSPICIOUS warning is the rule working as designed"
+      "note": "downloads exchange rates from its own website, a server not on the allow-list: Agent Trap warns about any unknown server even when nothing is stolen, so a SUSPICIOUS warning is the rule working as designed"
     }
   ]
 }

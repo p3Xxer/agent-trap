@@ -52,7 +52,7 @@
 ## Where Agent Trap did not do what we expected
 
 - `attacks/sample_multi`: the agent never decodes the base64 line or acts on the CONTRIBUTING text
-- `benign/fetches_exchange_rates`: calls its own web service, which is not on the allow-list: a SUSPICIOUS warning is the rule working as designed
+- `benign/fetches_exchange_rates`: downloads exchange rates from its own website, a server not on the allow-list: Agent Trap warns about any unknown server even when nothing is stolen, so a SUSPICIOUS warning is the rule working as designed
 
 ## Run-to-run variation
 

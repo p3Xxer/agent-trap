@@ -32,8 +32,9 @@ Attackers have noticed:
   ([The Hacker News](https://thehackernews.com/2025/03/new-rules-file-backdoor-attack-lets.html))
 
 Reading the code doesn't catch these: the stealing code looks like ordinary "telemetry", and the
-instructions are plain English or invisible. Agent Trap takes the opposite approach: **run it, with
-an AI agent at the keyboard, and watch what tries to leave.**
+instructions are plain English or invisible. Agent Trap tests the repository side of this threat —
+code and text in a repo that make an agent leak your keys — the opposite way: **run it, with an AI
+agent at the keyboard, and watch what tries to leave.**
 
 ## Judge quick start
 
@@ -45,11 +46,13 @@ an AI agent at the keyboard, and watch what tries to leave.**
 | **On a pull request** | [Agent Trap failing a PR](https://github.com/p3Xxer/agent-trap/pull/1) that adds "build telemetry" |
 | **Results in numbers** | [Real PyPI malware: 4 caught stealing, 6 flagged as suspicious](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
 
-**Contents:** [Why this matters](#why-this-matters) · [Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
-[How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Running the tests](#running-the-tests) · [Usage](#usage) ·
-[Web page](#web-page) · [GitHub Action](#github-action) · [Results](#results) · [Reproducing the results](#reproducing-the-results) ·
-[What Agent Trap does and does not do](#what-agent-trap-does-and-does-not-do) · [Safety](#safety) ·
-[License](#license)
+**Contents:** [Why this matters](#why-this-matters) · [Safety](#safety) ·
+[Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
+[How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Running the tests](#running-the-tests) ·
+[Usage](#usage) · [Layout](#layout) · [Web page](#web-page) · [GitHub Action](#github-action) ·
+[Results](#results) · [Reproducing the results](#reproducing-the-results) ·
+[What Agent Trap does and does not do](#what-agent-trap-does-and-does-not-do) ·
+[How HTTPS is handled](#how-https-is-handled-and-its-limits) · [Credits](#credits) · [License](#license)
 
 <table>
 <tr>
@@ -81,8 +84,7 @@ coding agent being put in the trap.
 
 Code that steals by itself (a `setup.py` that sends your keys when installed) is pinpointed
 without any model call: the repository is simply re-run with lines removed, and the lines whose
-removal stops the leak are the culprits. `--model super` or `--model ultra` switches the agent to Nemotron 3 Super or
-Ultra on Token Factory.
+removal stops the leak are the culprits.
 
 **How Nebius Token Factory made this practical**
 
@@ -185,8 +187,9 @@ Useful options for `scan`:
 | `--prove` | Prove every line instead of showing *likely* ones (slow) |
 | `--model super` | Use a larger Nemotron for the agent |
 
-**Verdicts:** **MALICIOUS** — a planted key was seen leaving the sandbox (the exit code is then 1,
-so it can fail a CI job). **SUSPICIOUS** — warning signs, no proof. **SAFE** — no theft found.
+**Verdicts:** **MALICIOUS** — a planted key was seen leaving the sandbox, or a destructive command
+ran (the exit code is then 1, so it can fail a CI job). **SUSPICIOUS** — warning signs, no proof.
+**SAFE** — no theft found.
 
 ## Layout
 
@@ -242,7 +245,7 @@ Add your Nebius key as a repository secret named `NEBIUS_API_KEY`, then add this
 | [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (MALICIOUS)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. 6 flagged as suspicious; 1 came back SAFE |
 | [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **2/11** for a tool that only reads the code. All 5 code attacks proven with the exact file and line |
 | [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
-| Our clean test repos | 8 harmless repos written to look risky | **0/8 called MALICIOUS**; 1 flagged SUSPICIOUS — a harmless library that downloads exchange rates from its own website. Agent Trap warns about any unknown server, even when nothing is stolen |
+| [Our clean test repos](docs/evaluation.md) | 8 harmless repos written to look risky | **0/8 called MALICIOUS**; 1 flagged SUSPICIOUS — a harmless library that downloads exchange rates from its own website. Agent Trap warns about any unknown server, even when nothing is stolen |
 
 A scan takes 1–2 minutes, and a few more when there are lines to pinpoint. Lines it cannot prove
 in that time are shown as *likely*; `--prove` proves them all, but slowly.

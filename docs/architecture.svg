@@ -7,15 +7,13 @@
 <text x="72" y="233.1" font-size="19" xml:space="preserve" fill="#1e1e1e">Untrusted repo</text>
 <text x="72" y="256.2" font-size="15" xml:space="preserve" fill="#1e1e1e">a download, a dependency,</text>
 <text x="72" y="275.0" font-size="15" xml:space="preserve" fill="#1e1e1e">or a pull request</text>
-<rect x="60" y="360" width="240" height="170" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
-<text x="72" y="388.1" font-size="19" xml:space="preserve" fill="#1e1e1e">4 ways to start</text>
+<rect x="60" y="360" width="240" height="150" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
+<text x="72" y="388.1" font-size="19" xml:space="preserve" fill="#1e1e1e">3 ways to start</text>
 <text x="72" y="411.2" font-size="15" xml:space="preserve" fill="#1e1e1e">• terminal: agenttrap scan</text>
 <text x="72" y="430.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• a whole folder: agenttrap</text>
 <text x="72" y="448.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  batch</text>
 <text x="72" y="467.5" font-size="15" xml:space="preserve" fill="#1e1e1e">• the web page: paste a</text>
 <text x="72" y="486.2" font-size="15" xml:space="preserve" fill="#1e1e1e">  GitHub link</text>
-<text x="72" y="505.0" font-size="15" xml:space="preserve" fill="#1e1e1e">• GitHub Action: every pull</text>
-<text x="72" y="523.8" font-size="15" xml:space="preserve" fill="#1e1e1e">  request</text>
 <line x1="180" y1="320" x2="180" y2="360" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <rect x="60" y="575" width="240" height="190" rx="10" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
 <text x="72" y="603.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Safety rules</text>

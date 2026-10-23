@@ -94,11 +94,10 @@ card(
     60,
     360,
     240,
-    170,
+    150,
     "blue",
-    "4 ways to start",
-    "• terminal: agenttrap scan\n• a whole folder: agenttrap batch\n• the web page: paste a GitHub link\n"
-    "• GitHub Action: every pull request",
+    "3 ways to start",
+    "• terminal: agenttrap scan\n• a whole folder: agenttrap batch\n• the web page: paste a GitHub link",
 )
 arrow(180, 320, 180, 360)
 card(

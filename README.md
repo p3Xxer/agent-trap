@@ -67,10 +67,12 @@ Ultra on Token Factory.
 - **Room to read everything.** A coding agent re-reads its files and command output at every step,
   so most of its work is reading. Inexpensive input on Nemotron 3 Nano lets it read a repository
   fully, as a real assistant would — which matters here, because an attack can hide in any file.
-- **One standard client, any Nemotron size.** Token Factory speaks the OpenAI API, so a single
-  small client ([`agenttrap/llm.py`](agenttrap/llm.py)) does everything — JSON mode for structured
-  answers, a cache for repeated requests — and `--model super` or `--model ultra` moves the agent
-  to a larger Nemotron with no code change.
+- **The whole Nemotron family, one switch away.** Token Factory serves Nemotron 3 Nano, Super and
+  Ultra behind the same standard OpenAI-style API, so Agent Trap talks to all of them through the
+  ordinary `openai` library. Nano is the default: fast enough to scan every pull request. One option
+  (`--model super` or `--model ultra`) puts a larger, more capable Nemotron in the trap instead,
+  with no code change — so a team can test a repository against an agent closer to the one it
+  really uses. (The results in this README were measured with Nano.)
 
 **Tavily.** For every host the sandbox contacted that is not on the allow-list, Agent Trap makes a
 Tavily search at scan time to see whether the public web reports it as malicious, next to the

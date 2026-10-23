@@ -247,11 +247,14 @@ much.
 - **Warnings (SUSPICIOUS):** the agent reported text aimed at it, or code it found suspicious, or
   the sandbox contacted a host that is not on the allow-list. These are the agent's opinion and
   context, not proof.
-- **Limits.** Real malware that needs the internet, targets another operating system, or hides
-  from a sandbox will not show anything here (a SAFE verdict means nothing was observed, not that
-  the code is safe). Python projects only. Whether the agent follows an injected instruction
-  varies from run to run, so one scan is an indication; `docs/evaluation.md` shows how much the
-  verdicts varied across repeated runs.
+- **Limits.**
+  - **Some malware stays hidden.** Code that waits for a real internet connection, only runs on
+    another operating system, or notices it is in a sandbox won't do anything here. So SAFE means
+    no theft was seen during the scan, not that the code is proven harmless.
+  - **Python only,** for now.
+  - **AI agents aren't predictable.** An agent may obey a hidden instruction in one run and ignore
+    it in the next, so a single scan of that kind of attack can miss it.
+    [docs/evaluation.md](docs/evaluation.md) shows how often verdicts changed across repeated runs.
 
 ## Credits
 

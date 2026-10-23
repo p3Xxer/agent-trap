@@ -129,7 +129,7 @@ Every scan runs the repository in a fresh, locked sandbox several times:
 These are the everyday things a developer asks a coding agent to do with new code, and each one
 makes the agent touch a different part of the repository, so an attack waiting for one moment is
 still reached. An AI agent does not behave the same way every time, so the command line runs each
-agent task twice by default (`--k`); the web page runs each once so a live scan takes about two
+agent task twice by default; the web page runs each once so a live scan takes about two
 minutes.
 
 A verdict of MALICIOUS needs proof: a planted fake secret seen leaving the sandbox, or a destructive
@@ -186,6 +186,13 @@ evaluation in [docs/evaluation.md](docs/evaluation.md).
 | `agenttrap scan path/to/repo` | Scan one repository from the terminal |
 | `agenttrap batch path/to/folder` | Scan every project in a folder (results keep no code) |
 | `agenttrap export out/` | Save the web page and results as a static site |
+
+To scan from the terminal, download the repository first, then scan the folder:
+
+```bash
+git clone https://github.com/p3Xxer/malicious-repo-agent-trap /tmp/trap-test
+agenttrap scan /tmp/trap-test
+```
 
 Useful options for `scan`:
 

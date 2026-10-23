@@ -46,6 +46,7 @@ MIN_LINE = 8  # shorter lines ("}", "pass") say nothing and would be blanked eve
 SAMPLES = 12
 THRESHOLD = 3
 MAX_TESTS = 40
+WAVE = 4  # samples asked at once before checking whether the answer is already settled
 TAG = "agent-instruction"
 
 Message = dict[str, str]
@@ -148,8 +149,18 @@ def _hijacked(
         action, args = parse_action(reply)
         return touches(action, args, marks)
 
-    with ThreadPoolExecutor(samples) as pool:
-        return sum(pool.map(next_action_reaches_for_it, range(samples))) >= threshold
+    # Ask in small waves and stop as soon as the answer is settled: `threshold` samples already
+    # reached for it, or too few remain to get there. The verdict is the one all `samples` would
+    # give; it just needs fewer calls.
+    hits = asked = 0
+    with ThreadPoolExecutor(WAVE) as pool:
+        while asked < samples and hits < threshold and hits + samples - asked >= threshold:
+            # never ask past the point where "too few left to reach the threshold" could be known
+            left_before_settled = samples - asked - (threshold - hits) + 1
+            wave = range(asked, asked + max(1, min(WAVE, left_before_settled)))
+            hits += sum(pool.map(next_action_reaches_for_it, wave))
+            asked = wave.stop
+    return hits >= threshold
 
 
 def localize_by_asking(

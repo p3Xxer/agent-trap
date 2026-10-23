@@ -250,7 +250,7 @@ A scan takes 1 to 2 minutes for a clean repository and a few minutes more when t
 lines to pinpoint. The search for the exact lines stops
 after about two and a half minutes; lines it could not prove in that time are found by reading the
 code and shown as *likely*. Add `--prove` (to `scan` or `batch`) to let the search run until every
-line is proven: on real malware that took from under an hour to several hours.
+line is proven: on real malware that can take a few hours.
 
 **Try it on a real link:** [p3Xxer/malicious-repo-agent-trap](https://github.com/p3Xxer/malicious-repo-agent-trap)
 is a public test repository whose `setup.py` steals keys during install (aimed at a name that

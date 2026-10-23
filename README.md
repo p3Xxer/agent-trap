@@ -143,45 +143,25 @@ evaluation in [docs/evaluation.md](docs/evaluation.md).
 
 ## Usage
 
-```bash
-agenttrap scan path/to/repo            # needs Docker running and NEBIUS_API_KEY in .env
-agenttrap scan path/to/repo --k 3 --json result.json
-```
+| Command | What it does |
+| --- | --- |
+| `agenttrap serve` | The web page, at http://localhost:8765 |
+| `agenttrap scan path/to/repo` | Scan one repository from the terminal |
+| `agenttrap batch path/to/folder` | Scan every project in a folder (results keep no code) |
+| `agenttrap export out/` | Save the web page and results as a static site |
 
-Add `--clean OUT_DIR` to get a copy of a MALICIOUS repo with the culprit code removed, plus a second
-scan of that copy to show whether the leak is gone. The original is never modified, and `OUT_DIR`
-must not exist or be empty. In Python files whole statements are removed (a removed statement
-becomes `pass`, so line numbers and syntax hold); in other files exactly the culprit lines are
-blanked. Removing code can change behavior, so review the copy before using it.
+Useful options for `scan`:
 
-Every scan also asks the public web about the hosts it flagged: when the domain was registered
-(RDAP, free) and whether pages report it as malicious (Tavily; set `TAVILY_API_KEY` in `.env`,
-without it only the age lookup runs). Only host names are sent out, names that look internal
-(`.local`, `.corp`, ...) are skipped, and the lookups run on your machine, never inside the
-sandbox. A recent
-registration or a web report is context for a human, not proof; web text is untrusted and is never
-given to a model. Limits: not every TLD publishes RDAP (for example `.io`), in which case the
-registration date is shown as unknown.
+| Option | What it does |
+| --- | --- |
+| `--clean OUT_DIR` | Also write a copy without the stealing code, and scan it again to confirm |
+| `--sarif FILE` | Write findings in the format GitHub shows on pull request lines |
+| `--json FILE` | Write the full result as JSON |
+| `--prove` | Prove every line instead of showing *likely* ones (slow) |
+| `--model super` | Use a larger Nemotron for the agent |
 
-Add `--sarif result.sarif` to write the findings as SARIF, the format GitHub shows as warnings on
-pull request lines. Inside GitHub Actions the scan also prints annotations for those lines and
-writes a run summary, with no extra flags.
-
-Every scan also installs the project (`pip install`, `pip install -e`, `setup.py install`), imports
-every module and runs `pytest` in the sandbox with no AI involved, next to the agent's runs. Whether the agent installs the project is up to the agent (in our measurements
-it did in about half of "set up" runs and a quarter of "run the tests" runs), so without this step
-a stealer in `setup.py` would be missed some of the time.
-
-Each scan is saved to `.agenttrap/results/`, where the web page finds it.
-
-The exit code is 1 if the verdict is MALICIOUS, so it can gate CI. (In saved JSON results this
-verdict is stored as `HIJACKED`, its earlier name, so older results and scripts keep working.) Verdicts:
-
-- **MALICIOUS**: a planted secret was seen leaving the sandbox (in a web request or a DNS lookup),
-  or the agent ran a clearly destructive command. The report names the culprit file and line.
-- **SUSPICIOUS**: no proof, but the agent reported text trying to instruct it, or the sandbox
-  tried to reach a host that is not on the allow-list.
-- **SAFE**: neither.
+**Verdicts:** **MALICIOUS** — a planted key was seen leaving the sandbox (the exit code is then 1,
+so it can fail a CI job). **SUSPICIOUS** — warning signs, no proof. **SAFE** — no theft found.
 
 ## Layout
 

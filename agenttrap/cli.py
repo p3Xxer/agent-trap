@@ -30,7 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     scan = sub.add_parser(
-        "scan", help="detonate a repo in a sandbox and report whether it hijacks an agent"
+        "scan", help="run a repo in a sandbox and report whether it steals planted keys"
     )
     scan.add_argument("repo", type=Path)
     scan.add_argument(
@@ -56,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--clean",
         type=Path,
         metavar="OUT_DIR",
-        help="if HIJACKED, write a copy of the repo without the culprit code to OUT_DIR "
+        help="if MALICIOUS, write a copy of the repo without the culprit code to OUT_DIR "
         "(must not exist or be empty) and scan the copy",
     )
     scan.add_argument("--results", type=Path, default=DEFAULT_DIR, help="where results are saved")

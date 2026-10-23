@@ -67,16 +67,10 @@ Ultra on Token Factory.
 - **Room to read everything.** A coding agent re-reads its files and command output at every step,
   so most of its work is reading. Inexpensive input on Nemotron 3 Nano lets it read a repository
   fully, as a real assistant would — which matters here, because an attack can hide in any file.
-- **A security check for every pull request.** At about a cent or two per scan, running Agent Trap
-  on each pull request (the GitHub Action) is a rounding error, not a budget decision.
 - **One standard client, any Nemotron size.** Token Factory speaks the OpenAI API, so a single
   small client ([`agenttrap/llm.py`](agenttrap/llm.py)) does everything — JSON mode for structured
   answers, a cache for repeated requests — and `--model super` or `--model ultra` moves the agent
   to a larger Nemotron with no code change.
-- **Spend you can predict.** Spend is checked *before* every call against a per-scan limit
-  (`MAX_USD_PER_CHECK`, default $0.50) and a running total (`TOTAL_BUDGET_USD`, default $20), so no
-  single scan can cost more than its limit. (On GitHub's runners the total starts fresh each run;
-  the per-scan limit always holds.)
 
 **Tavily.** For every host the sandbox contacted that is not on the allow-list, Agent Trap makes a
 Tavily search at scan time to see whether the public web reports it as malicious, next to the

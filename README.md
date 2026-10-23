@@ -76,8 +76,7 @@ Ultra on Token Factory.
 
 **Tavily.** For every host the sandbox contacted that is not on the allow-list, Agent Trap makes a
 Tavily search at scan time to see whether the public web reports it as malicious, next to the
-domain's registration date from RDAP. Only host names are sent; the results are context for a
-person and are never given to the model.
+domain's registration date from RDAP. Only host names are sent.
 
 ## How a scan works
 

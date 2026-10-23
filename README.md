@@ -105,9 +105,15 @@ removal stops the leak are the culprits.
   with no code change — so a team can test a repository against an agent closer to the one it
   really uses. (The results in this README were measured with Nano.)
 
-**Tavily.** For every host the sandbox contacted that is not on the allow-list, Agent Trap makes a
-Tavily search at scan time to see whether the public web reports it as malicious, next to the
-domain's registration date from RDAP. Only host names are sent.
+**Tavily.** Agent Trap uses Tavily search at scan time for two questions:
+- **Who is on the other end?** For every server the sandbox contacted that is not on the
+  allow-list, whether the public web reports it as malicious, next to the domain's registration
+  date from RDAP. Only host names are sent.
+- **Has this package already been reported?** A search for the package's exact name and version
+  (for example "litellm 1.107.0"), shown as "Already reported online" next to the verdict. Only
+  for published packages and public GitHub links, so a private project's name is never sent.
+
+What Tavily finds is context for the reader; the verdict comes only from what the trap caught.
 
 ## How a scan works
 
@@ -153,7 +159,7 @@ image and downloads mitmproxy, so it takes a few extra minutes.
 | Key | Needed? | Where to get it | What it is used for |
 | --- | --- | --- | --- |
 | `NEBIUS_API_KEY` | For the full scan | [Nebius Token Factory](https://tokenfactory.nebius.com) → API keys | The AI coding agent (NVIDIA Nemotron) that works on the repository |
-| `TAVILY_API_KEY` | Optional | [Tavily](https://app.tavily.com) | Web reports on the servers a repository contacted |
+| `TAVILY_API_KEY` | Optional | [Tavily](https://app.tavily.com) | Web reports on the servers a repository contacted, and on the package itself |
 | GitHub login | **Not needed** | — | Public repositories are downloaded anonymously |
 
 Keys go in `.env` (copied from `.env.example`), which git ignores; they are never written into
@@ -164,7 +170,7 @@ and the result says so in a warning.
 ## Running the tests
 
 ```bash
-pytest        # 444 tests, about 3 seconds; no Docker or API key needed
+pytest        # 453 tests, about 3 seconds; no Docker or API key needed
 ```
 
 They cover leak detection, the network watcher, the fake keys, the AI agent loop, the search for
@@ -206,7 +212,7 @@ ran (the exit code is then 1, so it can fail a CI job). **SUSPICIOUS** — warni
 | `agenttrap/detector.py` | Spots a planted key leaving, and decides MALICIOUS, SUSPICIOUS or SAFE |
 | `agenttrap/localizer.py`, `counterfactual.py` | Finds the exact lines: by re-running with lines removed, or by asking Nemotron again |
 | `agenttrap/cleaner.py` | Makes a copy without the stealing code, for the fix check |
-| `agenttrap/intel.py` | Looks up the servers contacted: Tavily web reports and domain age |
+| `agenttrap/intel.py` | Looks up the servers contacted (Tavily web reports, domain age) and web reports of the package itself |
 | `agenttrap/fetch.py` | Safely downloads a public GitHub repository, with size and time limits |
 | `agenttrap/pipeline.py`, `results.py`, `web/` | Runs a whole scan, saves the result, and serves the web page |
 | `agenttrap/findings.py`, `sarif.py`, `ci.py` | Turns findings into GitHub pull-request warnings and a summary |

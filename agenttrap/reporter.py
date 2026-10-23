@@ -8,7 +8,7 @@ from rich.panel import Panel
 
 from agenttrap.detector import Status, label
 from agenttrap.findings import split_culprits
-from agenttrap.intel import HostIntel
+from agenttrap.intel import HostIntel, PackageIntel
 from agenttrap.scan import CleanOutcome, ScanResult, base_name
 
 STYLE = {Status.SAFE: "bold green", Status.SUSPICIOUS: "bold yellow", Status.HIJACKED: "bold red"}
@@ -45,6 +45,22 @@ def render_intel(intel: dict[str, HostIntel], console: Console) -> None:
             for report in info.reports:
                 console.print(f"        - {escape(report.title)}  {escape(report.url)}")
                 console.print(f"          {escape(report.snippet)}")
+
+
+def render_package(info: PackageIntel, console: Console) -> None:
+    """Web reports of this package version. Context from the internet, not part of the verdict."""
+    what = f"{escape(info.name)} {escape(info.version)}"
+    console.print(f"\n[bold]Has {what} already been reported?[/] [dim](web search, untrusted)[/]")
+    if info.reports is None:
+        console.print("    unknown (search did not run)")
+    elif not info.reports:
+        console.print("    no public reports found")
+    else:
+        count = len(info.reports)
+        console.print(f"    [yellow]{count} page(s) describe it as malicious or compromised[/]")
+        for report in info.reports:
+            console.print(f"      - {escape(report.title)}  {escape(report.url)}")
+            console.print(f"        {escape(report.snippet)}")
 
 
 def _registration(info: HostIntel) -> str:
@@ -135,6 +151,8 @@ def render(result: ScanResult, console: Console | None = None) -> None:
             console.print(f"    {escape(host)}")
     if result.intel:
         render_intel(result.intel, console)
+    if result.package:
+        render_package(result.package, console)
     if result.cleaned:
         render_clean(result.cleaned, console)
     console.print(f"\n[dim]cost ${result.cost_usd:.4f}, {result.seconds:.0f}s[/]\n")

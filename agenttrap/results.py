@@ -88,6 +88,7 @@ def result_document(
             }
             for host, info in result.intel.items()
         },
+        "package_intel": _package_intel(result),
         "cleaned": _cleaned(result),
         "static_scan": {
             "count": len(static),
@@ -101,6 +102,14 @@ def result_document(
         "warnings": list(result.warnings),
     }
     return document if include_code else _without_code(document)
+
+
+def _package_intel(result: ScanResult) -> dict[str, Any] | None:
+    info = result.package
+    if info is None:
+        return None
+    reports = None if info.reports is None else [asdict(r) for r in info.reports]
+    return {"name": info.name, "version": info.version, "reports": reports}
 
 
 def _leak_group(group: LeakGroup) -> dict[str, Any]:

@@ -793,6 +793,11 @@ function detailsBlock(doc) {
   const hosts = hostRows(doc);
   if (hosts.length) body.append(h("h3", {}, "Outside servers"), h("ul", {}, hosts));
 
+  const pkg = doc.package_intel;
+  if (pkg && Array.isArray(pkg.reports) && !pkg.reports.length)
+    body.append(h("h3", {}, "Reported online?"),
+      h("p", {}, `A web search found no public reports of ${pkg.name} ${pkg.version} as malicious.`));
+
   const flagged = doc.static_scan?.count ?? 0;
   if (doc.static_scan && flagged) {
     body.append(h("h3", {}, "Code scanners"),
@@ -809,12 +814,29 @@ function detailsBlock(doc) {
     h("summary", {}, h("span", { class: "chev", "aria-hidden": "true" }), "More details"), body);
 }
 
+// ---- the result: has this package already been reported? ---------------------------------------------------------------
+// Pages found by a web search (Tavily) for this exact package version. Untrusted text from the
+// internet, shown as plain text: context next to the verdict, never part of it.
+function reportedCard(doc) {
+  const info = doc.package_intel;
+  if (!info?.reports?.length) return null;
+  const n = info.reports.length;
+  return h("div", { class: "card" },
+    h("h2", { class: "section" }, "Already reported online"),
+    h("p", {}, `${n} public page${n === 1 ? "" : "s"} describe${n === 1 ? "s" : ""} ${info.name} ${info.version} as malicious or compromised.`),
+    h("ul", {}, info.reports.map((r) => h("li", {}, h("strong", {}, r.title), h("br"),
+      h("span", { class: "small" }, r.snippet), h("br"), h("span", { class: "muted small" }, r.url)))),
+    h("p", { class: "muted small" }, "Found by a web search for this package and version. Context, not part of the verdict."));
+}
+
 function renderDetail(doc) {
   const out = $("detail");
   clear(out);
   const findings = doc.findings || [];
   const groups = leakGroups(doc);
   out.append(verdictCard(doc, groups, findings));
+  const reported = reportedCard(doc);
+  if (reported) out.append(reported);
   const where = whereCard(doc, groups, findings);
   if (where) out.append(where);
   out.append(detailsBlock(doc));

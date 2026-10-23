@@ -40,7 +40,7 @@ from agenttrap.cleaner import Removal, clean, write_copy
 from agenttrap.counterfactual import localize_by_asking
 from agenttrap.detector import Flag, Leak, Request, Verdict, command_flags, find_leaks, judge
 from agenttrap.egress import Egress, EgressPool, Observed, contact_flags, unexpected_hosts
-from agenttrap.intel import HostIntel
+from agenttrap.intel import HostIntel, PackageIntel
 from agenttrap.llm import LLM
 from agenttrap.localizer import UNCONFIRMED, Culprit, Files, Runner, localize
 from agenttrap.sandbox import Sandbox
@@ -92,6 +92,7 @@ class ScanResult:
     unlocalized: dict[str, str] = field(default_factory=dict)  # canary -> why
     contacted: list[str] = field(default_factory=list)  # hosts contacted, not on the allow-list
     intel: dict[str, HostIntel] = field(default_factory=dict)  # filled in by an optional lookup
+    package: PackageIntel | None = None  # web reports of this package version, when looked up
     cleaned: CleanOutcome | None = None  # filled in by clean_and_rescan
     cost_usd: float = 0.0
     seconds: float = 0.0

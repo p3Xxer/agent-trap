@@ -10,14 +10,18 @@ from agenttrap.egress import Observed, unexpected_hosts
 from agenttrap.intel import (
     MAX_HOSTS,
     HostIntel,
+    PackageIntel,
     Report,
     clean,
     domain_candidates,
     lookup,
+    lookup_package,
+    package_identity,
     rdap_registered,
+    search_package_reports,
     search_reports,
 )
-from agenttrap.reporter import render_intel
+from agenttrap.reporter import render_intel, render_package
 
 TODAY = date(2026, 10, 7)
 
@@ -208,3 +212,85 @@ def test_reserved_names_that_cannot_exist_are_never_looked_up():
     for host in ("setup-check.test", "collector.agenttrap.invalid", "x.example", "a.localhost"):
         assert not _is_domain(host)
     assert _is_domain("setup-check.io")
+
+
+# ---- has this package version already been reported? ------------------------------------------
+
+
+def write(folder, name, text):
+    (folder / name).write_text(text)
+    return folder
+
+
+def test_package_identity_from_each_kind_of_file(tmp_path):
+    a, b, c, d = (tmp_path / x for x in "abcd")
+    for x in (a, b, c, d):
+        x.mkdir()
+    write(a, "PKG-INFO", "Metadata-Version: 2.1\nName: litellm\nVersion: 1.107.0\n\nName: body\n")
+    write(b, "pyproject.toml", '[project]\nname = "fast-invoice"\nversion = "0.3.1"\n')
+    write(c, "setup.cfg", "[metadata]\nname = tiketoken\nversion = 99.7\n")
+    write(d, "setup.py", "setup(name='s3transfer_sl', version='0.12.5')")
+    assert package_identity(a) == ("litellm", "1.107.0")
+    assert package_identity(b) == ("fast-invoice", "0.3.1")
+    assert package_identity(c) == ("tiketoken", "99.7")
+    assert package_identity(d) == ("s3transfer_sl", "0.12.5")
+
+
+def test_no_version_or_an_odd_name_means_no_search(tmp_path):
+    write(tmp_path, "pyproject.toml", '[project]\nname = "x"\ndynamic = ["version"]\n')
+    assert package_identity(tmp_path) is None
+    write(tmp_path, "PKG-INFO", "Name: bad name; rm -rf\nVersion: 1.0\n")
+    assert package_identity(tmp_path) is None
+
+
+def test_a_private_project_name_is_never_sent_out(tmp_path):
+    write(tmp_path, "pyproject.toml", '[project]\nname = "secret-internal-tool"\nversion = "1.0"\n')
+    web = FakeWeb(results=[])
+    assert lookup_package(tmp_path, key="k", public=False, fetch=web) is None
+    assert web.requests == []
+    assert lookup_package(tmp_path, key="k", public=True, fetch=web).name == "secret-internal-tool"
+
+
+def test_a_published_package_is_searched_and_sends_only_its_name_and_version(tmp_path):
+    write(tmp_path, "PKG-INFO", "Name: litellm\nVersion: 1.107.0\n")
+    web = FakeWeb(results=[])
+    info = lookup_package(tmp_path, key="tvly-secret", public=False, fetch=web)
+    assert info == PackageIntel("litellm", "1.107.0", ())
+    [request] = web.requests
+    body = json.loads(request.data)
+    assert set(body) == {"query", "max_results"}
+    assert '"litellm" "1.107.0"' in body["query"]
+    assert "tvly-secret" not in request.full_url + request.data.decode()
+
+
+def test_without_a_key_nothing_is_searched(tmp_path):
+    write(tmp_path, "PKG-INFO", "Name: litellm\nVersion: 1.107.0\n")
+    web = FakeWeb(results=[])
+    assert lookup_package(tmp_path, key=None, public=True, fetch=web) is None
+    assert web.requests == []
+
+
+def test_a_report_must_name_this_version_near_a_malware_word():
+    results = [
+        hit("LiteLLM 1.107.0 compromised on PyPI", "The release steals cloud and AI keys."),
+        hit("Typosquats", "A malicious typosquat of litellm was found."),  # no version
+        hit("Release notes", "litellm 1.107.0 adds a new router."),  # no malware word
+        hit("Other version", "litellm 1.107.01 is malicious."),  # a different version
+    ]
+    found = search_package_reports("litellm", "1.107.0", "k", FakeWeb(results=results))
+    assert [r.title for r in found] == ["LiteLLM 1.107.0 compromised on PyPI"]
+
+
+def test_name_separators_count_as_the_same_and_search_failure_is_unknown():
+    results = [hit("Report", "The package s3transfer-sl 0.12.5 is malicious.")]
+    assert search_package_reports("s3transfer_sl", "0.12.5", "k", FakeWeb(results=results))
+    assert search_package_reports("x", "1.0", "k", FakeWeb(results=None)) is None
+
+
+def test_package_reports_are_shown_as_escaped_text():
+    out = io.StringIO()
+    info = PackageIntel("litellm", "1.107.0", (Report("[bold]x[/]", "https://a.net/p", "steals"),))
+    render_package(info, Console(file=out, width=200, color_system=None))
+    text = out.getvalue()
+    assert "Has litellm 1.107.0 already been reported?" in text
+    assert "[bold]x[/]" in text

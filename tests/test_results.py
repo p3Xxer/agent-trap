@@ -46,6 +46,19 @@ def test_a_document_describes_the_scan_without_absolute_paths(repo):
     assert str(repo) not in json.dumps(doc)  # nothing machine-specific ends up in a saved result
 
 
+def test_package_reports_are_saved_and_a_missing_lookup_is_null(repo):
+    from agenttrap.intel import PackageIntel, Report
+
+    report = Report("LiteLLM 1.107.0 compromised", "https://a.net/p", "steals keys")
+    doc = document(repo, package=PackageIntel("litellm", "1.107.0", (report,)))
+    assert doc["package_intel"] == {
+        "name": "litellm",
+        "version": "1.107.0",
+        "reports": [{"title": report.title, "url": report.url, "snippet": report.snippet}],
+    }
+    assert document(repo)["package_intel"] is None
+
+
 def test_excerpts_hold_the_lines_around_each_finding(repo):
     doc = document(repo)
     excerpt = doc["files"]["setup.py"]

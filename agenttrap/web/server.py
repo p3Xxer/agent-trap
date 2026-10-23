@@ -126,6 +126,7 @@ def default_work(store: ResultStore, demos: dict[str, Path], k: int) -> Work:
                 served=served,
                 clean_dir=workdir / "cleaned",
                 progress=progress,
+                public=source is not None,  # downloaded from a public GitHub link
                 on_verdict=lambda r: progress(
                     HEADLINE[r.verdict.status]
                     + (" Finding the exact lines..." if r.verdict.leaks else "")

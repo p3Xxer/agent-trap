@@ -128,9 +128,7 @@ image and downloads mitmproxy, so it takes a few extra minutes.
 Keys go in `.env` (copied from `.env.example`), which git ignores; they are never written into
 results. **Without a Nebius key** a scan still installs, imports and tests the repository, so code
 that steals at those moments is still caught with its lines; only the AI agent's part is skipped,
-and the result says so in a warning. Spend is capped before every model call: $0.50 per scan and
-$20 in total by default (`MAX_USD_PER_CHECK`, `TOTAL_BUDGET_USD` in `.env`); a scan typically costs
-1 to 3 cents.
+and the result says so in a warning.
 
 From the terminal instead:
 

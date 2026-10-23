@@ -984,6 +984,8 @@ function follow(job) {
     else if (!finished) { errorBox.textContent = "Lost the connection to the server."; stop(); }
   });
   source.addEventListener("done", async (event) => {
+    settle();
+    log.append(h("li", { class: "past" }, h("span", { class: "step-dot", "aria-hidden": "true" }), h("span", {}, "Done. The result is under Past scans.")));
     stop();
     state.results = (await getJson("api/results")) || state.results;
     await selectResult(JSON.parse(event.data).result);

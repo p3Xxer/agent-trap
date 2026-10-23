@@ -9,7 +9,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from agenttrap.agent import TASKS
-from agenttrap.intel import api_key, lookup, lookup_package
+from agenttrap.intel import PackageIntel, api_key, lookup, lookup_package
 from agenttrap.llm import LLM
 from agenttrap.scan import ScanResult, clean_and_rescan, scan, suspect_hosts
 
@@ -35,11 +35,24 @@ def full_scan(
     for on the web; a published package (with PKG-INFO) is searched for either way."""
     options = {"llm": llm, "model": model, "k": k, "tasks": tasks, "served": served or {}}
     result = scan(repo, **options, progress=progress, on_verdict=on_verdict, prove=prove)
-    progress("checking who is behind the websites it contacted")
-    result.intel = lookup(suspect_hosts(result), key=api_key())
-    progress("checking whether this package has already been reported")
+    hosts = suspect_hosts(result)
+    if hosts:
+        progress("checking who is behind the websites it contacted")
+        result.intel = lookup(hosts, key=api_key())
     result.package = lookup_package(repo, key=api_key(), public=public)
+    if result.package:
+        progress(_package_message(result.package))
     if clean_dir and result.culprits:
         progress("removing those lines and scanning the cleaned copy to confirm it is safe")
         result.cleaned = clean_and_rescan(repo, result, clean_dir, **options, progress=progress)
     return result
+
+
+def _package_message(info: PackageIntel) -> str:
+    what = f"{info.name} {info.version}"
+    if info.reports is None:
+        return f"could not search the web for reports of {what}"
+    if not info.reports:
+        return f"searched the web: no public reports of {what} as malicious"
+    count = len(info.reports)
+    return f"searched the web: {count} public page(s) describe {what} as malicious or compromised"

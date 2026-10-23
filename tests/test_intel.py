@@ -294,3 +294,12 @@ def test_package_reports_are_shown_as_escaped_text():
     text = out.getvalue()
     assert "Has litellm 1.107.0 already been reported?" in text
     assert "[bold]x[/]" in text
+
+
+def test_the_scan_page_is_told_what_the_package_search_found():
+    from agenttrap.pipeline import _package_message
+
+    report = Report("t", "https://a.net/p", "s")
+    assert "no public reports of x 1.0" in _package_message(PackageIntel("x", "1.0", ()))
+    assert "1 public page(s)" in _package_message(PackageIntel("x", "1.0", (report,)))
+    assert "could not search" in _package_message(PackageIntel("x", "1.0", None))

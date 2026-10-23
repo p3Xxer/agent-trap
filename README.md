@@ -130,12 +130,6 @@ results. **Without a Nebius key** a scan still installs, imports and tests the r
 that steals at those moments is still caught with its lines; only the AI agent's part is skipped,
 and the result says so in a warning.
 
-From the terminal instead:
-
-```bash
-agenttrap scan fixtures/attacks/install_time_exfil     # one of our own test attacks
-```
-
 ## Development
 
 ```bash

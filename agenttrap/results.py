@@ -98,6 +98,7 @@ def result_document(
         "cost_usd": round(result.cost_usd, 5),
         "seconds": round(result.seconds, 1),
         "code_saved": include_code,
+        "warnings": list(result.warnings),
     }
     return document if include_code else _without_code(document)
 

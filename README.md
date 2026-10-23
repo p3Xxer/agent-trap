@@ -52,24 +52,35 @@ coding agent being put in the trap.
 | --- | --- | --- |
 | **The coding agent in the sandbox** ([`agenttrap/agent.py`](agenttrap/agent.py)) | Works on the repository like a developer's coding assistant: reads files, runs commands, installs and tests the project. It gets three everyday tasks ("set this project up", "run the tests", "summarize what this repo does") and answers each step with one JSON action that is carried out inside the sandbox. | Up to 15 per task. 3 tasks, run once each on the web page and twice each from the command line. |
 | **Two questions after each task** ([`agenttrap/agent.py`](agenttrap/agent.py)) | "Did anything you read try to give *you* instructions?" and "Did you see code that does something risky?" A quote only counts if it is found in the repository, and the answers are shown as warnings, never as proof. | 2 per task |
-| **Finding the line that tricked the agent** ([`agenttrap/counterfactual.py`](agenttrap/counterfactual.py)) | When the agent itself sent a planted key out, Agent Trap removes candidate lines and asks Nemotron to take the same next step again: 12 samples per version, counted as still tricked when at least 3 reach for the key. | Only in that case; at most 40 versions × 12 samples |
+| **Finding the sentence that tricked the agent** ([`agenttrap/counterfactual.py`](agenttrap/counterfactual.py)) | When text in the repository (a README line, say) talked the agent into sending a key, Agent Trap hides some lines and **asks Nemotron again** what its next step would be — 12 times, because its answers vary. If at least 3 of the 12 still reach for the key, the trick is in the lines it can still see. Repeating this with different lines hidden leaves only the sentence that did it. | 12 per round, at most 40 rounds; only when the agent was tricked |
 
-Code that steals by itself is pinpointed without any model call: the repository is simply re-run
-with lines removed. `--model super` or `--model ultra` switches the agent to Nemotron 3 Super or
+Code that steals by itself (a `setup.py` that sends your keys when installed) is pinpointed
+without any model call: the repository is simply re-run with lines removed, and the lines whose
+removal stops the leak are the culprits. `--model super` or `--model ultra` switches the agent to Nemotron 3 Super or
 Ultra on Token Factory.
 
-**How Token Factory made this practical**
+**How Nebius Token Factory made this practical**
 
-- **Cheap enough to sample.** Each scan records its own cost, typically 1 to 3 cents. Over the whole
-  project (development, tests and every evaluation) the spend ledger in `.agenttrap/spend.json`
-  shows 21,308 calls, 40.7 million input and 2.1 million output tokens, **$5.15 in total**. That is
-  what makes asking the model 12 times per candidate affordable, and a scan on every pull request
-  realistic.
-- **OpenAI-compatible.** One small client ([`agenttrap/llm.py`](agenttrap/llm.py)) with JSON mode
-  for structured answers, a cache for identical requests, and spend limits checked *before* every
-  call: `MAX_USD_PER_CHECK` per scan (default $0.50) and `TOTAL_BUDGET_USD` for the lifetime of the
-  project (default $20).
-- **Parallel runs.** The agent tasks of a scan run side by side, each in its own sandbox.
+- **Evidence by sampling, not by a single answer.** Nemotron does not answer the same way twice, so
+  one re-run proves nothing. Agent Trap asks it the same question 12 times per candidate and
+  counts. That only works when a model call costs almost nothing, and on Token Factory it does: the
+  whole project, every test and evaluation included, came to 21,308 calls and **$5.15**
+  (from the spend ledger in `.agenttrap/spend.json`).
+- **An agent can afford to read everything.** A coding agent re-reads the whole conversation —
+  the files it opened, the output of every command — at each step, so it consumes far more than it
+  writes: 40.7 million input tokens against 2.1 million output in this project. Cheap input on
+  Nemotron 3 Nano lets the agent read a repository the way a real assistant would, instead of
+  being starved to save money.
+- **A security check for every pull request.** At about a cent or two per scan, running Agent Trap
+  on each pull request (the GitHub Action) is a rounding error, not a budget decision.
+- **One standard client, any Nemotron size.** Token Factory speaks the OpenAI API, so a single
+  small client ([`agenttrap/llm.py`](agenttrap/llm.py)) does everything — JSON mode for structured
+  answers, a cache for repeated requests — and `--model super` or `--model ultra` moves the agent
+  to a larger Nemotron with no code change.
+- **Spend you can predict.** Spend is checked *before* every call against a per-scan limit
+  (`MAX_USD_PER_CHECK`, default $0.50) and a running total (`TOTAL_BUDGET_USD`, default $20), so no
+  single scan can cost more than its limit. (On GitHub's runners the total starts fresh each run;
+  the per-scan limit always holds.)
 
 **Tavily.** For every host the sandbox contacted that is not on the allow-list, Agent Trap makes a
 Tavily search at scan time to see whether the public web reports it as malicious, next to the
@@ -114,6 +125,21 @@ agenttrap serve             # the web page, at http://localhost:8765
 On the web page, paste `https://github.com/p3Xxer/malicious-repo-agent-trap` (a harmless
 test repository that steals keys during install) and press Scan. The first scan builds the sandbox
 image and downloads mitmproxy, so it takes a few extra minutes.
+
+### Keys
+
+| Key | Needed? | Where to get it | What it is used for |
+| --- | --- | --- | --- |
+| `NEBIUS_API_KEY` | For the full scan | [Nebius Token Factory](https://tokenfactory.nebius.com) → API keys | The AI coding agent (NVIDIA Nemotron) that works on the repository |
+| `TAVILY_API_KEY` | Optional | [Tavily](https://app.tavily.com) | Web reports on the servers a repository contacted |
+| GitHub login | **Not needed** | — | Public repositories are downloaded anonymously |
+
+Keys go in `.env` (copied from `.env.example`), which git ignores; they are never written into
+results. **Without a Nebius key** a scan still installs, imports and tests the repository, so code
+that steals at those moments is still caught with its lines; only the AI agent's part is skipped,
+and the result says so in a warning. Spend is capped before every model call: $0.50 per scan and
+$20 in total by default (`MAX_USD_PER_CHECK`, `TOTAL_BUDGET_USD` in `.env`); a scan typically costs
+1 to 3 cents.
 
 From the terminal instead:
 

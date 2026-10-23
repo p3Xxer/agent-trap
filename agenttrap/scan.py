@@ -95,6 +95,25 @@ class ScanResult:
     cleaned: CleanOutcome | None = None  # filled in by clean_and_rescan
     cost_usd: float = 0.0
     seconds: float = 0.0
+    warnings: list[str] = field(default_factory=list)  # parts of the scan that could not run
+
+
+def agent_warning(runs: list[RunResult]) -> str | None:
+    """Why the AI agent could not work on the repository, when none of its runs got a single
+    answer from the model (no API key, a wrong one, or the service unreachable). The checks that
+    need no AI still ran, so the scan is not wrong, but it is incomplete and must say so."""
+    agent_runs = [r for r in runs if r.task != "baseline"]
+    stopped = [r.trace.stopped for r in agent_runs]
+    if not agent_runs or not all(
+        s.startswith("model:") and not r.trace.steps
+        for s, r in zip(stopped, agent_runs, strict=True)
+    ):
+        return None
+    reason = stopped[0].removeprefix("model:").strip()
+    return (
+        f"The AI agent did not run ({reason}). Code that steals when installed, imported or "
+        "tested was still checked; text that tricks an AI agent was not."
+    )
 
 
 # ---- one detonation ----------------------------------------------
@@ -332,8 +351,9 @@ def _replay(steps: list, box: Sandbox, stop: Callable[[], bool] | None = None) -
 
 def textual_suspects(files: Mapping[str, str], destination: str, canary_name: str) -> list[Culprit]:
     """Lines that name the place the secret went, name the secret itself (`.aws/credentials`,
-    `OPENAI_API_KEY`) or read the machine's identity, found by plain text search. A quick answer
-    for when the exact search takes too long; it is not confirmed by re-running, and is marked so."""
+    `OPENAI_API_KEY`) or read the machine's identity, found by plain text search. A quick
+    answer for when the exact search takes too long; it is not confirmed by re-running, and is
+    marked so."""
     host = urlparse(destination).hostname or ""
     secret = canary_name.split("#")[0].removeprefix("~/").removeprefix("$").lower()
     words = (*IDENTITY_WORDS.get(canary_name, ()), *([secret] if len(secret) > 4 else []))
@@ -466,6 +486,8 @@ def scan(
     ]
     result = ScanResult(str(repo), judge(leaks, flags), runs, injections, concerns)
     result.contacted = unexpected_hosts(hosts, allowed_hosts)
+    if warning := agent_warning(runs):
+        result.warnings.append(warning)
     result.cost_usd = llm.status()["cost_usd"]
     result.seconds = time.time() - started
     on_verdict(result)

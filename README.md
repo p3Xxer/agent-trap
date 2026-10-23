@@ -139,8 +139,8 @@ will not show itself here.
 
 ## Quick start
 
-You need **Python 3.11+**, **Docker** (running) and a **Nebius Token Factory API key**. A Tavily key
-is optional.
+You need **Python 3.11+** (check with `python3 --version`), **Docker** (running) and a **Nebius
+Token Factory API key**. A Tavily key is optional. Tested on macOS and Linux.
 
 ```bash
 git clone https://github.com/p3Xxer/agent-trap && cd agent-trap
@@ -150,9 +150,17 @@ cp .env.example .env        # then put your NEBIUS_API_KEY (and optionally TAVIL
 agenttrap serve             # the web page, at http://localhost:8765
 ```
 
-On the web page, paste `https://github.com/p3Xxer/malicious-repo-agent-trap` (a harmless
-test repository that steals keys during install) and press Scan. The first scan builds the sandbox
-image and downloads mitmproxy, so it takes a few extra minutes.
+**Try it:**
+
+1. Open http://localhost:8765 in your browser.
+2. Paste `https://github.com/p3Xxer/malicious-repo-agent-trap` and press **Scan**, or click
+   **A repo that steals keys** under the box. It is a harmless test repository that steals the
+   fake keys during install.
+3. Watch the steps appear. The first scan takes a few extra minutes while it builds the sandbox;
+   after that, about 2 minutes.
+4. The result opens under **Past scans**. Expect **MALICIOUS**, the request it caught ("Caught in
+   transit"), and the exact lines in `setup.py` that steal the keys.
+5. To compare, scan `https://github.com/pallets/markupsafe`, which should come back **SAFE**.
 
 ### Keys
 
@@ -187,12 +195,29 @@ evaluation in [docs/evaluation.md](docs/evaluation.md).
 | `agenttrap batch path/to/folder` | Scan every project in a folder (results keep no code) |
 | `agenttrap export out/` | Save the web page and results as a static site |
 
-To scan from the terminal, download the repository first, then scan the folder:
+**From the terminal:**
 
-```bash
-git clone https://github.com/p3Xxer/malicious-repo-agent-trap /tmp/trap-test
-agenttrap scan /tmp/trap-test
-```
+1. In a new terminal, from the `agent-trap` folder, turn on the environment:
+
+   ```bash
+   source .venv/bin/activate
+   ```
+
+2. Download a repository and scan it:
+
+   ```bash
+   git clone https://github.com/p3Xxer/malicious-repo-agent-trap /tmp/trap-test
+   agenttrap scan /tmp/trap-test
+   ```
+
+3. The verdict appears first (expect **MALICIOUS**), then the exact lines that steal, and the
+   servers it contacted. The scan is also saved, so it shows up under **Past scans** on the web
+   page.
+4. To also get a copy with the stealing lines removed, re-scanned to confirm it is safe:
+
+   ```bash
+   agenttrap scan /tmp/trap-test --clean /tmp/trap-test-cleaned
+   ```
 
 Useful options for `scan`:
 

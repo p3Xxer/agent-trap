@@ -42,7 +42,7 @@ jobs:
 
 ## Things to know
 
-- **Cost and time.** A scan takes 2 to 3 minutes and costs about a cent of model usage.
+- **Time.** A scan takes a few minutes on GitHub's runners.
 - **Pull requests from forks** do not receive repository secrets, so the Action prints a notice
   and skips the scan instead of failing. Do not "fix" this with `pull_request_target`: it runs
   with secrets and would hand them to untrusted code's neighbourhood.

@@ -199,8 +199,10 @@ read-only copy, which is how the [demo site](https://p3xxer.github.io/agent-trap
 
 ## GitHub Action
 
-Scan every pull request automatically; a pull request that steals the planted secrets fails its
-check and gets warnings on the exact lines. See [docs/github-action.md](docs/github-action.md).
+Scan every pull request automatically: a pull request that steals the planted keys fails its check
+and gets warnings on the exact lines — [see it on a real pull request](https://github.com/p3Xxer/agent-trap/pull/1).
+Add your Nebius key as a repository secret named `NEBIUS_API_KEY`, then add this step to a workflow
+(full setup in [docs/github-action.md](docs/github-action.md)):
 
 ```yaml
 - uses: actions/checkout@v4

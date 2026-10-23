@@ -23,7 +23,7 @@ the agent into sending your keys.
 
 **Contents:** [Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
 [How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Running the tests](#running-the-tests) · [Usage](#usage) ·
-[Web page](#web-page) · [GitHub Action](#github-action) · [Results](#results) ·
+[Web page](#web-page) · [GitHub Action](#github-action) · [Results](#results) · [Reproducing the results](#reproducing-the-results) ·
 [What Agent Trap does and does not do](#what-agent-trap-does-and-does-not-do) · [Safety](#safety)
 
 <table>
@@ -220,35 +220,23 @@ Add your Nebius key as a repository secret named `NEBIUS_API_KEY`, then add this
 | [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
 | Our clean test repos | 8 harmless repos written to look risky | **0/8 called MALICIOUS**; 1 flagged SUSPICIOUS — a harmless library that downloads exchange rates from its own website. Agent Trap warns about any unknown server, even when nothing is stolen |
 
-A scan takes 1 to 2 minutes for a clean repository and a few minutes more when there are culprit
-lines to pinpoint. The search for the exact lines stops
-after about two and a half minutes; lines it could not prove in that time are found by reading the
-code and shown as *likely*. Add `--prove` (to `scan` or `batch`) to let the search run until every
-line is proven: on real malware that can take a few hours.
-
-**Try it on a real link:** [p3Xxer/malicious-repo-agent-trap](https://github.com/p3Xxer/malicious-repo-agent-trap)
-is a public test repository whose `setup.py` steals keys during install (aimed at a name that
-cannot exist, so it is harmless elsewhere). Paste it into the web page and it comes back MALICIOUS
-with the lines.
+A scan takes 1–2 minutes, and a few more when there are lines to pinpoint. Lines it cannot prove
+in that time are shown as *likely*; `--prove` proves them all, but slowly.
 
 ![How one scan works](docs/architecture.svg)
 
-## Evaluation
+## Reproducing the results
 
-`python eval/run_eval.py` scans every repository in `fixtures/manifest.json` (11 attack repos and
-8 clean ones, each with a known right answer) and writes the results to
-[docs/evaluation.md](docs/evaluation.md), next to what a plain text scan finds. Every scan is saved
-in `eval/results/` and can be opened in the web page.
+| Test | How to re-run it |
+| --- | --- |
+| Our 19 test repositories (11 attacks, 8 clean) | `python eval/run_eval.py` → [docs/evaluation.md](docs/evaluation.md) |
+| 20 popular open-source projects | `python eval/run_real.py` → [docs/false-alarms.md](docs/false-alarms.md) |
+| Real malware from PyPI | `scripts/fetch_samples.sh` downloads and unpacks the samples (nothing runs outside the sandbox), then `agenttrap batch ~/malware-samples/extracted2` |
 
-These repositories are synthetic: the code-level attacks are inert test doubles (a fake file sent to
-a fake host) placed at the stages where real malicious Python packages run their code, and the
-instruction attacks use published AgentDojo text. The agent is not deterministic, so a single
-run of each repository is an indication, not a guarantee; some results can differ from run to run.
-The table lists the cases where Agent Trap did not do what we expected, and separates a repository
-being flagged from being flagged for the right reason.
-
-`agenttrap batch FOLDER` scans every project in a folder, for code written by someone else. By
-default no line of the scanned code is saved in the results.
+Our attack repositories are our own: they steal fake keys and send them to names that cannot exist,
+and the instruction attacks use published AgentDojo text. The AI agent does not behave the same way
+on every run, so results can differ slightly; [docs/evaluation.md](docs/evaluation.md) shows how
+much.
 
 ## What Agent Trap does and does not do
 

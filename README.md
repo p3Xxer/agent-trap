@@ -18,6 +18,10 @@ the agent into sending your keys.
 Developers now hand new code straight to AI coding agents — "set this up", "run the tests".
 Attackers have noticed:
 
+- **Oct 2026, LiteLLM.** A backdoored release of LiteLLM, a popular Python library for calling AI
+  models, was on PyPI for about two hours. It added a file that Python runs at every start, which
+  collected SSH keys, cloud credentials and **AI provider keys** and sent them to the attackers.
+  ([StepSecurity](https://www.stepsecurity.io/blog/litellm-1-107-0-compromised-pypi-backdoored-wheels-credential-stealer))
 - **Aug 2025, the `nx` attack.** Malicious releases of Nx, a popular build tool on npm, stole
   GitHub tokens, SSH keys and npm credentials from developers' machines, and were the first known
   malware to **use the victims' own AI command-line tools** (Claude, Gemini, Q) to hunt for more

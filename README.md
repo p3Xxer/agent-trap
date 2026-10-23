@@ -64,11 +64,9 @@ Ultra on Token Factory.
 - **Evidence from many answers, not one.** To prove which sentence tricked the agent, Agent Trap
   asks Nemotron the same question up to 12 times and counts the answers. Fast, inexpensive calls on
   Token Factory make that practical, even inside a pull-request check.
-- **An agent can afford to read everything.** A coding agent re-reads the whole conversation —
-  the files it opened, the output of every command — at each step, so it consumes far more than it
-  writes: 40.7 million input tokens against 2.1 million output in this project. Cheap input on
-  Nemotron 3 Nano lets the agent read a repository the way a real assistant would, instead of
-  being starved to save money.
+- **Room to read everything.** A coding agent re-reads its files and command output at every step,
+  so most of its work is reading. Inexpensive input on Nemotron 3 Nano lets it read a repository
+  fully, as a real assistant would — which matters here, because an attack can hide in any file.
 - **A security check for every pull request.** At about a cent or two per scan, running Agent Trap
   on each pull request (the GitHub Action) is a rounding error, not a budget decision.
 - **One standard client, any Nemotron size.** Token Factory speaks the OpenAI API, so a single

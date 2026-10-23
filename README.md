@@ -184,24 +184,18 @@ so it can fail a CI job). **SUSPICIOUS** â€” warning signs, no proof. **SAFE** â
 
 ## Web page
 
-```bash
-pip install -e '.[web]'
-agenttrap serve            # then open http://127.0.0.1:8765
-```
+Run `agenttrap serve` and open http://localhost:8765. **Scan a repo** takes a public GitHub link
+and streams the scan as it runs; **Past scans** lists every result. `agenttrap export out/` saves a
+read-only copy, which is how the [demo site](https://p3xxer.github.io/agent-trap/) is made.
 
-Two tabs: **Saved results** (every scan the CLI or the page has run, with the culprit lines
-highlighted in the code, the comparison with a plain text scan, the host lookups and the cleaned
-copy) and **Scan a repo** (paste a public GitHub URL or pick one of the test repos; progress
-streams in as it runs). It needs Docker and `NEBIUS_API_KEY`, and it only listens on 127.0.0.1.
+**The page is built to be safe to run:**
 
-The server checks the `Host` and `Origin` of every request and requires its own header on every
-POST, so a web page in another tab cannot start scans. Pasted URLs go through the checks in
-`agenttrap/fetch.py` first: only `https://github.com/owner/repo`, public, at most 50 MB and 3,000
-files, with a time limit on the download. One scan runs at a time. Everything shown comes from the
-scanned repository and is displayed as plain text, never as HTML.
-
-`agenttrap export OUT_DIR` writes the page and the saved results as static files, a copy that
-shows saved results without a server (live scanning is then switched off).
+- It only listens on your own computer, and other websites can't start scans through it.
+- It only accepts public `github.com` links, up to 50 MB and 3,000 files, with a download time
+  limit.
+- Everything from a scanned repository is shown as plain text, so a malicious repo can't inject
+  anything into the page.
+- One scan runs at a time.
 
 ## GitHub Action
 

@@ -19,7 +19,7 @@ the agent into sending your keys.
 | **Scan a repo yourself** | Docker + Python 3.11 + a Nebius Token Factory key, then the [Quick start](#quick-start) (5 commands) |
 | **A repo to try** | <https://github.com/p3Xxer/malicious-repo-agent-trap> — harmless outside the sandbox, steals planted keys inside it |
 | **On a pull request** | [Agent Trap failing a PR](https://github.com/p3Xxer/agent-trap/pull/1) that adds "build telemetry" |
-| **Results in numbers** | [4 of 11 real malware samples caught](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
+| **Results in numbers** | [10 of 11 real malware samples flagged, 4 proven stealing](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
 
 **Contents:** [Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
 [How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Usage](#usage) ·
@@ -252,7 +252,7 @@ check and gets warnings on the exact lines. See [docs/github-action.md](docs/git
 
 | Test | What we ran | Result |
 | --- | --- | --- |
-| [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (MALICIOUS)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. The other 6 flagged SUSPICIOUS; 1 SAFE |
+| [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **10 of 11 flagged: 4 caught in the act (MALICIOUS)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. The other 6 flagged SUSPICIOUS; 1 missed (SAFE) |
 | [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **2/11** for a tool that only reads the code. All 5 code attacks proven with the exact file and line |
 | [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
 | Our clean test repos | 8 harmless repos written to look risky | 0/8 called MALICIOUS; 1 flagged SUSPICIOUS (it calls its own web service) |

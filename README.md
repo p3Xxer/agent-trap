@@ -178,7 +178,7 @@ and the result says so in a warning.
 ## Running the tests
 
 ```bash
-pytest        # 453 tests, about 3 seconds; no Docker or API key needed
+pytest        # 454 tests, about 3 seconds; no Docker or API key needed
 ```
 
 They cover leak detection, the network watcher, the fake keys, the AI agent loop, the search for

@@ -94,15 +94,16 @@ card(
     60,
     360,
     240,
-    150,
+    170,
     "blue",
-    "agenttrap scan <repo>",
-    "from the terminal, a folder of repos (batch), the local web page, or a GitHub Action on every pull request",
+    "4 ways to start",
+    "• terminal: agenttrap scan\n• a whole folder: agenttrap batch\n• the web page: paste a GitHub link\n"
+    "• GitHub Action: every pull request",
 )
 arrow(180, 320, 180, 360)
 card(
     60,
-    550,
+    575,
     240,
     190,
     "green",
@@ -144,8 +145,8 @@ card(
     300,
     95,
     "white",
-    "Sinkhole DNS",
-    "logs every name looked up, so data hidden inside a name is seen too",
+    "Fake DNS (sinkhole)",
+    "points every name at the trap and records it, so data hidden in a name is seen too",
 )
 card(
     360,
@@ -162,8 +163,8 @@ card(
     330,
     150,
     "gray",
-    "Nemotron Nano on Nebius",
-    "the agent's brain: it sends its messages here and decides what to read and run next",
+    "Nemotron (Token Factory)",
+    "the agent's brain: decides what to read and run next. Nano by default; Super or Ultra with --model",
 )
 card(
     360,
@@ -198,8 +199,8 @@ card(
     185,
     "red",
     "MALICIOUS = proof",
-    "• a fake secret or the fake machine name was seen leaving: in a request or a DNS name, "
-    "plain, base64, hex or hashed\n"
+    "• a fake key or the fake machine name was caught leaving: in a request or a DNS name, "
+    "plain, base64, hex or hashed (the request is shown)\n"
     "• a destructive command really ran (rm -rf, curl | sh)",
 )
 card(
@@ -223,9 +224,9 @@ card(
     340,
     140,
     "teal",
-    "Who is behind a host?",
-    "Every flagged host is looked up on the public web: when the domain was registered (RDAP) "
-    "and whether pages report it (Tavily). Only host names are sent.",
+    "Tavily: who is behind it?",
+    "A Tavily web search finds public reports on every server contacted, next to the domain's age "
+    "(RDAP). Example: Unit 42's report of hackers abusing webhook.site.",
 )
 
 # ---- 4 pinpoint + 5 output -----------------------------------------------------------------------
@@ -248,10 +249,16 @@ card(
     150,
     "purple",
     "Ask the model again",
-    "When the agent was tricked: remove candidate lines and ask Nemotron again, 12 times each, until the few lines "
-    "that still make it leak remain.",
+    "When the agent was tricked: hide candidate lines and ask Nemotron again, up to 12 times each, "
+    "until only the sentence that still tricks it remains.",
 )
-text(1530, 538, "Out of time? lines found by text search, marked unconfirmed", 13, 340)
+text(
+    1530,
+    538,
+    "Out of time? lines found by reading the code, shown as likely (--prove: no limit)",
+    13,
+    340,
+)
 arrow(1472, 310, 1528, 290)
 text(1530, 575, "5  OUTPUT", 20, wrap=False)
 card(
@@ -260,11 +267,11 @@ card(
     340,
     233,
     "green",
-    "Works today",
-    "• terminal report with file:line, exit code 1 on MALICIOUS\n• JSON results, batch summary\n"
-    "• --clean: a copy without the culprit code, scanned again\n"
+    "Results",
+    "• web page: the verdict, the request caught in transit, the exact lines and a fix check\n"
+    "• terminal report, exit code 1 on MALICIOUS\n"
     "• GitHub Action + SARIF: warnings on the exact lines of a pull request\n"
-    "• local web page: scan a GitHub URL, browse saved results",
+    "• JSON results, batch summaries",
 )
 arrow(1472, 500, 1528, 660)
 arrow(1472, 640, 1528, 700)
@@ -275,10 +282,10 @@ text(72, 875, "Why not just read the repo?", 19, wrap=False)
 text(
     72,
     903,
-    "On 11 built attacks, Agent Trap flagged 11 and a plain code scanner 2: instructions hidden "
-    "as base64 or fetched at run time can't be seen by reading. On real malware from PyPI "
-    "(Datadog dataset), 4 packages were caught MALICIOUS, one sending the fake API keys to "
-    "webhook.site, with the exact setup.py lines.",
+    "On our 11 attacks, Agent Trap flagged 11 and a plain code scanner 2: a sentence aimed at the "
+    "AI, or code disguised as telemetry, can't be seen by reading. On 11 real malicious PyPI packages "
+    "it caught 4 stealing (one sent the fake API keys to webhook.site) and flagged 6 as suspicious; "
+    "on 20 popular open-source projects it raised no false alarms.",
     15,
     986,
 )
@@ -286,7 +293,7 @@ text(1130, 865, "Legend", 17, wrap=False)
 text(
     1130,
     893,
-    "red = proof   yellow = warning   green = safe, or works today\n"
+    "red = proof   yellow = warning   green = safe, or results\n"
     "purple = uses the AI model   dashed outline = the locked room",
     14,
     740,

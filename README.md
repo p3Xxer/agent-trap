@@ -61,11 +61,9 @@ Ultra on Token Factory.
 
 **How Nebius Token Factory made this practical**
 
-- **Evidence by sampling, not by a single answer.** Nemotron does not answer the same way twice, so
-  one re-run proves nothing. Agent Trap asks it the same question 12 times per candidate and
-  counts. That only works when a model call costs almost nothing, and on Token Factory it does: the
-  whole project, every test and evaluation included, came to 21,308 calls and **$5.15**
-  (from the spend ledger in `.agenttrap/spend.json`).
+- **Evidence from many answers, not one.** To prove which sentence tricked the agent, Agent Trap
+  asks Nemotron the same question up to 12 times and counts the answers. Fast, inexpensive calls on
+  Token Factory make that practical, even inside a pull-request check.
 - **An agent can afford to read everything.** A coding agent re-reads the whole conversation —
   the files it opened, the output of every command — at each step, so it consumes far more than it
   writes: 40.7 million input tokens against 2.1 million output in this project. Cheap input on

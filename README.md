@@ -9,7 +9,31 @@ It catches two kinds of attack: code that steals the moment it is installed, imp
 and the new kind that only exists because we hand repos to AI agents — text in a README that talks
 the agent into sending your keys.
 
+> Submitted to the **Nebius × NVIDIA Global AI Hackathon**, Coding and Agentic Engineering track.
+
 ![A result: the repo steals secrets, the request caught in transit, and the lines that do it](docs/images/result.png)
+
+## Why this matters
+
+Developers now hand new code straight to AI coding agents — "set this up", "run the tests".
+Attackers have noticed:
+
+- **Aug 2025, the `nx` attack.** Malicious releases of Nx, a popular build tool on npm, stole
+  GitHub tokens, SSH keys and npm credentials from developers' machines, and were the first known
+  malware to **use the victims' own AI command-line tools** (Claude, Gemini, Q) to hunt for more
+  secrets. Over a thousand valid GitHub tokens leaked.
+  ([Wiz](https://www.wiz.io/blog/s1ngularity-supply-chain-attack))
+- **May 2025, a GitHub issue that hijacks an agent.** Researchers showed that a malicious issue in
+  a public repository could take over an AI agent asked to "check the open issues", making it leak
+  data from the user's **private** repositories.
+  ([Invariant Labs](https://invariantlabs.ai/blog/mcp-github-vulnerability))
+- **Mar 2025, the "Rules File Backdoor".** Hidden, invisible instructions in the configuration
+  files that guide Cursor and GitHub Copilot made the AI quietly insert malicious code.
+  ([The Hacker News](https://thehackernews.com/2025/03/new-rules-file-backdoor-attack-lets.html))
+
+Reading the code doesn't catch these: the stealing code looks like ordinary "telemetry", and the
+instructions are plain English or invisible. Agent Trap takes the opposite approach: **run it, with
+an AI agent at the keyboard, and watch what tries to leave.**
 
 ## Judge quick start
 
@@ -21,10 +45,11 @@ the agent into sending your keys.
 | **On a pull request** | [Agent Trap failing a PR](https://github.com/p3Xxer/agent-trap/pull/1) that adds "build telemetry" |
 | **Results in numbers** | [Real PyPI malware: 4 caught stealing, 6 flagged as suspicious](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
 
-**Contents:** [Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
+**Contents:** [Why this matters](#why-this-matters) · [Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
 [How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Running the tests](#running-the-tests) · [Usage](#usage) ·
 [Web page](#web-page) · [GitHub Action](#github-action) · [Results](#results) · [Reproducing the results](#reproducing-the-results) ·
-[What Agent Trap does and does not do](#what-agent-trap-does-and-does-not-do) · [Safety](#safety)
+[What Agent Trap does and does not do](#what-agent-trap-does-and-does-not-do) · [Safety](#safety) ·
+[License](#license)
 
 <table>
 <tr>
@@ -165,22 +190,21 @@ so it can fail a CI job). **SUSPICIOUS** — warning signs, no proof. **SAFE** �
 
 ## Layout
 
-| Module | Job |
+| Code | What it does |
 | --- | --- |
-| `agenttrap/canary.py` | Realistic fake secrets, unique per run, planted in the sandbox home |
-| `agenttrap/sandbox.py` | Throwaway Docker container on an internal network with no route out |
-| `agenttrap/egress.py`, `sinkhole.py`, `mitm_addon.py` | Network monitor: a per-run private network with a mitmproxy container (reads HTTP and HTTPS, answers every request itself) and a DNS/TCP sinkhole for anything that bypasses the proxy. Nothing is forwarded |
-| `agenttrap/agent.py` | The bait agent: a Nemotron tool-use loop run inside the sandbox, plus a post-task debrief |
-| `agenttrap/detector.py` | Canary-leak matching and the SAFE / SUSPICIOUS / MALICIOUS verdict |
-| `agenttrap/localizer.py` | Delta debugging (ddmin): culprit file, then culprit line |
-| `agenttrap/cleaner.py` | Copy of the repo without the culprit code, for a verification re-scan |
-| `agenttrap/intel.py` | Host lookups run on every scan: domain age (RDAP) and public reports (Tavily) |
-| `agenttrap/pipeline.py`, `results.py`, `web/` | One scan pipeline for the CLI and the page; the saved result format; the local server and page |
-| `agenttrap/fetch.py` | Safe, size-limited download of a public GitHub repository |
-| `agenttrap/findings.py`, `sarif.py`, `ci.py` | The scan's findings, rendered as SARIF, GitHub annotations and a run summary |
-| `agenttrap/baseline_static.py` | Read-only scanner baseline, for comparison |
-| `agenttrap/llm.py` | Nebius client with spend caps and disk cache |
-| `scripts/bait_spike.py` | Experiment: run the bait agent on a fixture and report what it did |
+| `agenttrap/sandbox.py` | The locked room: a throwaway Docker container with no route to the internet |
+| `agenttrap/canary.py` | The fake keys, machine name and user name, new for every run |
+| `agenttrap/egress.py`, `mitm_addon.py`, `sinkhole.py` | The trap: a private network where a proxy reads HTTP and HTTPS and a fake DNS answers every lookup; nothing is ever forwarded |
+| `agenttrap/agent.py` | The AI coding agent (Nemotron) that works inside the sandbox, and the two questions asked after each task |
+| `agenttrap/detector.py` | Spots a planted key leaving, and decides MALICIOUS, SUSPICIOUS or SAFE |
+| `agenttrap/localizer.py`, `counterfactual.py` | Finds the exact lines: by re-running with lines removed, or by asking Nemotron again |
+| `agenttrap/cleaner.py` | Makes a copy without the stealing code, for the fix check |
+| `agenttrap/intel.py` | Looks up the servers contacted: Tavily web reports and domain age |
+| `agenttrap/fetch.py` | Safely downloads a public GitHub repository, with size and time limits |
+| `agenttrap/pipeline.py`, `results.py`, `web/` | Runs a whole scan, saves the result, and serves the web page |
+| `agenttrap/findings.py`, `sarif.py`, `ci.py` | Turns findings into GitHub pull-request warnings and a summary |
+| `agenttrap/llm.py` | The Nebius Token Factory client, with spend limits |
+| `action/` | The GitHub Action |
 
 ## Web page
 
@@ -256,11 +280,6 @@ much.
     it in the next, so a single scan of that kind of attack can miss it.
     [docs/evaluation.md](docs/evaluation.md) shows how often verdicts changed across repeated runs.
 
-## Credits
-
-Some attack fixtures (`fixtures/attacks/agentdojo/`) use injection templates from
-[AgentDojo](https://github.com/ethz-spylab/agentdojo) (MIT License, ETH Zurich SPY Lab).
-
 ## How HTTPS is handled, and its limits
 
 Each run gets a mitmproxy container that reads the sandbox's HTTP **and HTTPS** requests and
@@ -273,3 +292,12 @@ answers them itself, so a planted secret sent over HTTPS is caught as proof. To 
 - Programs that ignore the proxy settings (raw sockets, custom TLS) can't complete a connection;
   they show up as a contacted host only (SUSPICIOUS), not as proof.
 - Programs that pin certificates won't trust our CA and will fail, so they are not inspected.
+
+## Credits
+
+Some attack fixtures (`fixtures/attacks/agentdojo/`) use injection templates from
+[AgentDojo](https://github.com/ethz-spylab/agentdojo) (MIT License, ETH Zurich SPY Lab).
+
+## License
+
+[MIT](LICENSE).

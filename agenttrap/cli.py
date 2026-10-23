@@ -37,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--prove",
         action="store_true",
         help="prove the culprit lines: no time limit on the search "
-        "(slow, up to an hour on real malware)",
+        "(slow: hours on real malware)",
     )
     scan.add_argument(
         "--k", type=int, default=2, help="runs per task (agents are not deterministic)"
@@ -74,7 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--prove",
         action="store_true",
         help="prove the culprit lines: no time limit on the search "
-        "(slow, up to an hour on real malware)",
+        "(slow: hours on real malware)",
     )
     batch.add_argument("--workers", type=int, default=2, help="projects scanned at once")
     batch.add_argument("--keep-code", action="store_true", help="save code excerpts in the results")

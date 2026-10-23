@@ -247,10 +247,10 @@ check and gets warnings on the exact lines. See [docs/github-action.md](docs/git
 | Our clean test repos | 8 harmless repos written to look risky | 0/8 called MALICIOUS; 1 flagged SUSPICIOUS (it calls its own web service) |
 
 A scan takes 1 to 2 minutes for a clean repository and a few minutes more when there are culprit
-lines to pinpoint, and costs about 1 to 3 cents of model use. The search for the exact lines stops
+lines to pinpoint. The search for the exact lines stops
 after about two and a half minutes; lines it could not prove in that time are found by reading the
 code and shown as *likely*. Add `--prove` (to `scan` or `batch`) to let the search run until every
-line is proven: on real malware that can take up to an hour.
+line is proven: on real malware that took from under an hour to several hours.
 
 **Try it on a real link:** [p3Xxer/malicious-repo-agent-trap](https://github.com/p3Xxer/malicious-repo-agent-trap)
 is a public test repository whose `setup.py` steals keys during install (aimed at a name that

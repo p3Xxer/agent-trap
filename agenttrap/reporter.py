@@ -155,4 +155,4 @@ def render(result: ScanResult, console: Console | None = None) -> None:
         render_package(result.package, console)
     if result.cleaned:
         render_clean(result.cleaned, console)
-    console.print(f"\n[dim]cost ${result.cost_usd:.4f}, {result.seconds:.0f}s[/]\n")
+    console.print(f"\n[dim]{result.seconds:.0f}s[/]\n")

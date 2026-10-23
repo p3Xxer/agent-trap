@@ -624,7 +624,7 @@ function scanFacts(doc) {
     "run its tests and summarize it, the way a developer would use one on new code.";
   const s = Math.round(Number(doc.seconds) || 0);
   const took = s < 90 ? `${s} seconds` : `${Math.round(s / 60)} minutes`;
-  return { how, meta: `${took} · AI cost $${Number(doc.cost_usd || 0).toFixed(3)} · ${when(doc.created)}` };
+  return { how, meta: `${took} · ${when(doc.created)}` };
 }
 
 // "setup.py:1", "setup.py:8-26" -> "setup.py lines 1 and 8–26"

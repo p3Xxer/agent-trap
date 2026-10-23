@@ -22,7 +22,7 @@ the agent into sending your keys.
 | **Results in numbers** | [Real PyPI malware: 4 caught stealing, 6 flagged as suspicious](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
 
 **Contents:** [Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
-[How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Usage](#usage) ·
+[How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Running the tests](#running-the-tests) · [Usage](#usage) ·
 [Web page](#web-page) · [GitHub Action](#github-action) · [Results](#results) ·
 [What Agent Trap does and does not do](#what-agent-trap-does-and-does-not-do) · [Safety](#safety)
 
@@ -130,12 +130,16 @@ results. **Without a Nebius key** a scan still installs, imports and tests the r
 that steals at those moments is still caught with its lines; only the AI agent's part is skipped,
 and the result says so in a warning.
 
-## Development
+## Running the tests
 
 ```bash
-pip install -e '.[dev]'
-pytest                      # no Docker or API key needed
+pytest        # 444 tests, about 3 seconds; no Docker or API key needed
 ```
+
+They cover leak detection, the network watcher, the fake keys, the AI agent loop, the search for
+the exact lines, the safe download of GitHub repositories, the web page's safety, the GitHub Action
+output and the results format. The full pipeline, with Docker and Nemotron, is exercised by the
+evaluation in [docs/evaluation.md](docs/evaluation.md).
 
 ## Usage
 

@@ -45,3 +45,13 @@ def test_a_source_project_is_never_repacked(tmp_path):
     (tmp_path / "setup.py").write_text("")
     (tmp_path / "x-1.0.dist-info").mkdir()
     assert _rewheel(tmp_path) == ""
+
+
+def test_a_large_pth_file_is_still_read_but_other_large_files_are_skipped(tmp_path):
+    from agenttrap.scan import MAX_FILE_BYTES, read_repo
+
+    padding = "#" * (MAX_FILE_BYTES + 1000)
+    (tmp_path / "evil.pth").write_text("import os  " + padding)
+    (tmp_path / "huge.py").write_text(padding)
+    files = read_repo(tmp_path)
+    assert "evil.pth" in files and "huge.py" not in files

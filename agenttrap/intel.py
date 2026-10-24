@@ -236,7 +236,7 @@ def lookup_package(
     """Search the web for reports of this exact package version. None when there is no key, no
     name and version to search for, or the name may be private (not a published package, and not
     downloaded from a public link)."""
-    if not key or not (public or (repo / "PKG-INFO").is_file()):
+    if not key or not (public or _published(repo)):
         return None
     identity = package_identity(repo)
     if identity is None:
@@ -245,10 +245,16 @@ def lookup_package(
     return PackageIntel(name, version, search_package_reports(name, version, key, fetch))
 
 
+def _published(repo: Path) -> bool:
+    """An sdist (PKG-INFO) or an unpacked wheel (a *.dist-info folder) came from a package
+    index, so its name is already public."""
+    return (repo / "PKG-INFO").is_file() or any(repo.glob("*.dist-info/METADATA"))
+
+
 def package_identity(repo: Path) -> tuple[str, str] | None:
     """The package's name and version, from the first file that states both: PKG-INFO (in every
     sdist), pyproject.toml, setup.cfg, then plain literals in setup.py. Nothing is run."""
-    for read in (_from_pkg_info, _from_pyproject, _from_setup_cfg, _from_setup_py):
+    for read in (_from_pkg_info, _from_wheel, _from_pyproject, _from_setup_cfg, _from_setup_py):
         try:
             found = read(repo)
         except (OSError, UnicodeDecodeError, ValueError, ConfigError, AttributeError):
@@ -258,14 +264,21 @@ def package_identity(repo: Path) -> tuple[str, str] | None:
     return None
 
 
-def _from_pkg_info(repo: Path) -> tuple[str, str] | None:
+def _from_pkg_info(repo: Path, path: str = "PKG-INFO") -> tuple[str, str] | None:
     fields = {}
-    for line in (repo / "PKG-INFO").read_text(errors="replace").splitlines():
+    for line in (repo / path).read_text(errors="replace").splitlines():
         if not line.strip():
             break  # the headers end at the first blank line
         key, _, value = line.partition(":")
         fields.setdefault(key.strip().lower(), value.strip())
     return (fields["name"], fields["version"]) if "name" in fields and "version" in fields else None
+
+
+def _from_wheel(repo: Path) -> tuple[str, str] | None:
+    """An unpacked wheel states its name and version in *.dist-info/METADATA, in the same
+    format as PKG-INFO."""
+    found = sorted(repo.glob("*.dist-info/METADATA"))
+    return _from_pkg_info(repo, str(found[0].relative_to(repo))) if found else None
 
 
 def _from_pyproject(repo: Path) -> tuple[str, str] | None:

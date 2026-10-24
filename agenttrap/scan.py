@@ -170,8 +170,40 @@ def _with_exit_status(command: str) -> str:
     return f'{run}; tail -n 80 /tmp/step.out; echo "[exit $code]"'
 
 
+# A folder may hold an already-installed package (an unpacked wheel: the package, a `*.dist-info`
+# folder and perhaps a `.pth` file) rather than source code. Malware samples are often kept this
+# way, and some attacks only ever existed in the wheel. It is packed back into a wheel and
+# installed, so its `.pth` file lands in site-packages and runs whenever Python starts, as it did
+# for its victims. A folder with source code (setup.py, pyproject.toml, setup.cfg) is never
+# touched by this step.
+REWHEEL = r"""
+import glob, os, sys, zipfile
+if any(os.path.exists(m) for m in ("setup.py", "pyproject.toml", "setup.cfg")):
+    sys.exit(0)
+infos = glob.glob("*.dist-info")
+if not infos:
+    sys.exit(0)
+info = infos[0]
+name, version = info[: -len(".dist-info")].rsplit("-", 1)
+files = [os.path.relpath(os.path.join(d, f)) for d, _, fs in os.walk(".") for f in fs]
+files = [f for f in files if not f.startswith(".") and f != os.path.join(info, "RECORD")]
+wheel = f"/tmp/{name}-{version}-py3-none-any.whl"
+with zipfile.ZipFile(wheel, "w") as out:
+    for f in files:
+        out.write(f, f)
+    # no hashes: this copy is installed only to see what it does
+    out.writestr(f"{info}/RECORD", "".join(f"{f},,\n" for f in files + [f"{info}/RECORD"]))
+print(wheel)
+"""
+INSTALL_UNPACKED_WHEEL = (
+    f"wheel=$(python -c {shlex.quote(REWHEEL)}) && "
+    '[ -n "$wheel" ] && pip install --no-deps --force-reinstall "$wheel"'
+)
+
 BASELINE = (
-    _with_exit_status("pip install --no-build-isolation --no-deps ."),
+    # one step, so the steps keep their places in saved results: for a source project the
+    # first part prints nothing and does nothing
+    _with_exit_status(f"{INSTALL_UNPACKED_WHEEL}; pip install --no-build-isolation --no-deps ."),
     _with_exit_status("pip install --no-build-isolation --no-deps -e ."),
     _with_exit_status("python setup.py install"),
     _with_exit_status(f"python -c {shlex.quote(IMPORT_ALL)}"),

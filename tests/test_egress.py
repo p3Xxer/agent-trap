@@ -238,3 +238,39 @@ def test_runs_starting_together_create_the_interception_ca_only_once(monkeypatch
     for run in runs:
         run.join()
     assert len(made) == 1
+
+
+def _tar_gz(name, data):
+    import io
+    import tarfile
+
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as archive:
+        info = tarfile.TarInfo(name)
+        info.size = len(data)
+        archive.addfile(info, io.BytesIO(data))
+    return buf.getvalue()
+
+
+def test_a_key_packed_into_a_tar_gz_before_it_is_sent_is_found():
+    import base64
+
+    key = "AKIAXYZ1234567890ABC"
+    packed = _tar_gz("p/.aws/credentials", f"aws_access_key_id = {key}\n".encode())
+    event = {"kind": "http", "method": "POST", "host": "a.example", "path": "/", "body": "�"}
+    event["body_b64"] = base64.b64encode(packed).decode()
+    observed = parse_events(lines(event))
+    assert find_leaks(observed.requests, {"~/.aws/credentials": key})
+
+
+def test_a_plain_body_is_kept_exactly_as_before():
+    event = {"kind": "http", "method": "POST", "host": "a.example", "path": "/", "body": "hello"}
+    for extra in ({}, {"body_b64": None}):
+        [request] = parse_events(lines({**event, **extra})).requests
+        assert request.body == "hello"
+
+
+def test_a_broken_packed_body_is_ignored():
+    event = {"kind": "http", "method": "POST", "host": "a", "path": "/", "body": "x"}
+    [request] = parse_events(lines({**event, "body_b64": "not base64!"})).requests
+    assert request.body.startswith("x")

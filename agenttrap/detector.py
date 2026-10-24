@@ -9,9 +9,14 @@ No LLM decides the verdict.
 from __future__ import annotations
 
 import base64
+import bz2
 import hashlib
+import io
+import lzma
 import re
 import urllib.parse
+import zipfile
+import zlib
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -41,6 +46,63 @@ class Request:
     def text(self) -> str:
         head = "\n".join(f"{k}: {v}" for k, v in self.headers.items())
         return f"{self.method} {self.url}\n{head}\n\n{self.body}"
+
+
+UNPACK_LIMIT = 10 * 1024 * 1024  # bytes of unpacked data searched per request, at most
+_UNPACK_DEPTH = 3  # a .tar.gz inside a zip is three layers
+
+
+def unpacked_text(raw: bytes, limit: int = UNPACK_LIMIT, depth: int = _UNPACK_DEPTH) -> str:
+    """The readable text inside a compressed request body (gzip, zlib, bzip2, xz or zip),
+    unpacked layer by layer, so a key packed into an archive before it is sent is still found.
+
+    Stealers often compress what they send (a `.tar.gz` of `~/.aws` and `~/.ssh`). A tar archive
+    itself is not compressed, so once the gzip layer is off the files inside are plain bytes.
+    At most `limit` bytes are unpacked in total, so a tiny "zip bomb" cannot exhaust memory, and
+    anything that is not a known format, or is broken, simply gives no text."""
+    out: list[bytes] = []
+    budget = [limit]
+
+    def take(data: bytes) -> bytes:
+        data = data[: budget[0]]
+        budget[0] -= len(data)
+        return data
+
+    def stream(decompressor, data: bytes) -> bytes:
+        # decompress at most what is left of the budget, never the whole bomb
+        return take(decompressor.decompress(data, max_length=budget[0]))
+
+    def unpack(data: bytes, level: int) -> None:
+        if level == 0 or budget[0] <= 0 or len(data) < 4:
+            return
+        try:
+            if data[:2] == b"\x1f\x8b":
+                inner = stream(zlib.decompressobj(zlib.MAX_WBITS | 16), data)
+            elif data[:3] == b"BZh":
+                inner = stream(bz2.BZ2Decompressor(), data)
+            elif data[:6] == b"\xfd7zXZ\x00":
+                inner = stream(lzma.LZMADecompressor(), data)
+            elif data[0] == 0x78 and data[1] in (0x01, 0x5E, 0x9C, 0xDA):
+                inner = stream(zlib.decompressobj(), data)
+            elif data[:4] == b"PK\x03\x04":
+                with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                    for info in archive.infolist():
+                        if budget[0] <= 0:
+                            break
+                        with archive.open(info) as member:
+                            part = take(member.read(budget[0]))
+                        out.append(part)
+                        unpack(part, level - 1)
+                return
+            else:
+                return
+        except (OSError, EOFError, ValueError, zlib.error, lzma.LZMAError, zipfile.BadZipFile):
+            return
+        out.append(inner)
+        unpack(inner, level - 1)
+
+    unpack(raw, depth)
+    return b"\n".join(out).decode("latin-1")
 
 
 @dataclass(frozen=True)

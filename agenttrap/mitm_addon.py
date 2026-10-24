@@ -9,12 +9,25 @@ Environment: SINKHOLE_SERVED (JSON: full URL -> response body for runtime-fetch 
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 
 from mitmproxy import http
 
 SERVED: dict[str, str] = json.loads(os.environ.get("SINKHOLE_SERVED", "{}"))
+RAW_LIMIT = 5 * 1024 * 1024  # bytes of a binary body passed on for unpacking, at most
+
+
+def _raw_body(request: http.Request) -> str | None:
+    """A body that is not text (an archive, compressed data) is passed on as base64 so the host
+    can unpack it and search inside: as text it would be garbled."""
+    raw = request.get_content(strict=False) or b""
+    try:
+        raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return base64.b64encode(raw[:RAW_LIMIT]).decode()
+    return None
 
 
 class Recorder:
@@ -33,6 +46,7 @@ class Recorder:
                     "path": request.path,
                     "headers": dict(request.headers),
                     "body": request.get_text(strict=False) or "",
+                    "body_b64": _raw_body(request),
                 }
             ),
             flush=True,

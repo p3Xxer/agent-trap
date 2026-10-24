@@ -121,3 +121,39 @@ def test_ordinary_host_names_are_not_leaks():
     c = _canary()
     names = ["pypi.org", "files.pythonhosted.org", "api.github.com", "localhost"]
     assert find_leaks([], c.values, names) == []
+
+
+# ---- keys packed into an archive before they are sent -------------------------------------------
+
+
+def test_keys_inside_each_kind_of_compressed_body_are_readable():
+    import bz2
+    import io
+    import lzma
+    import zipfile
+    import zlib
+
+    from agenttrap.detector import unpacked_text
+
+    key = b"sk-canary-0123456789"
+    zipped = io.BytesIO()
+    with zipfile.ZipFile(zipped, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr(".env", b"OPENAI_API_KEY=" + key)
+    for packed in (zlib.compress(key), bz2.compress(key), lzma.compress(key), zipped.getvalue()):
+        assert key.decode() in unpacked_text(packed)
+
+
+def test_unpacking_stops_at_the_limit_so_a_zip_bomb_cannot_exhaust_memory():
+    import gzip
+
+    from agenttrap.detector import unpacked_text
+
+    bomb = gzip.compress(b"\0" * 50_000_000)
+    assert len(unpacked_text(bomb, limit=1_000_000)) <= 1_000_000
+
+
+def test_plain_or_broken_data_unpacks_to_nothing():
+    from agenttrap.detector import unpacked_text
+
+    assert unpacked_text(b"just some text") == ""
+    assert unpacked_text(b"\x1f\x8b broken gzip") == ""

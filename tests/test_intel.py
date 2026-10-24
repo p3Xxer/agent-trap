@@ -303,3 +303,14 @@ def test_the_scan_page_is_told_what_the_package_search_found():
     assert "no public reports of x 1.0" in _package_message(PackageIntel("x", "1.0", ()))
     assert "1 public page(s)" in _package_message(PackageIntel("x", "1.0", (report,)))
     assert "could not search" in _package_message(PackageIntel("x", "1.0", None))
+
+
+def test_an_unpacked_wheel_is_a_published_package_and_names_itself(tmp_path):
+    (tmp_path / "elementary_data-0.23.3.dist-info").mkdir()
+    (tmp_path / "elementary_data-0.23.3.dist-info" / "METADATA").write_text(
+        "Metadata-Version: 2.1\nName: elementary-data\nVersion: 0.23.3\n"
+    )
+    assert package_identity(tmp_path) == ("elementary-data", "0.23.3")
+    web = FakeWeb(results=[])
+    info = lookup_package(tmp_path, key="k", public=False, fetch=web)
+    assert info == PackageIntel("elementary-data", "0.23.3", ())

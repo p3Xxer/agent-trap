@@ -9,6 +9,8 @@ TLS handshake is visible. The proxy answers every request itself and never conta
 
 from __future__ import annotations
 
+import base64
+import contextlib
 import json
 import queue
 import threading
@@ -21,7 +23,7 @@ from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import urlparse
 
-from agenttrap.detector import Flag, Request
+from agenttrap.detector import Flag, Request, unpacked_text
 from agenttrap.llm import STATE_DIR
 from agenttrap.sandbox import IMAGE, Network, _docker
 
@@ -213,6 +215,17 @@ class EgressPool:
             raise
 
 
+def _body(event: dict) -> str:
+    """The request body as text, plus whatever is readable inside it once unpacked, when the
+    proxy passed on a compressed or binary body."""
+    body = event.get("body") or ""
+    packed = event.get("body_b64")
+    if packed:
+        with contextlib.suppress(ValueError, TypeError):  # a broken field is just not unpacked
+            body += "\n" + unpacked_text(base64.b64decode(packed))
+    return body
+
+
 def parse_events(lines: list[str]) -> Observed:
     requests: list[Request] = []
     hosts: dict[str, None] = {}  # ordered, de-duplicated
@@ -234,7 +247,7 @@ def parse_events(lines: list[str]) -> Observed:
                         method=event.get("method", ""),
                         url=f"{event.get('scheme', 'http')}://{host}{event.get('path', '')}",
                         headers=event.get("headers", {}),
-                        body=event.get("body", ""),
+                        body=_body(event),
                     )
                 )
     hosts.pop("", None)

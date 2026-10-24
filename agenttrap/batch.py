@@ -33,7 +33,11 @@ class BatchItem:
 
 
 def _is_project(directory: Path) -> bool:
-    return any((directory / marker).is_file() for marker in MARKERS)
+    """Source code (setup.py, pyproject.toml, setup.cfg), or an already-installed package: an
+    unpacked wheel, with its `*.dist-info` folder. Malware samples are often kept that way."""
+    if any((directory / marker).is_file() for marker in MARKERS):
+        return True
+    return any(p.is_dir() and p.name.endswith(".dist-info") for p in directory.iterdir())
 
 
 def _subdirectories(directory: Path) -> list[Path]:

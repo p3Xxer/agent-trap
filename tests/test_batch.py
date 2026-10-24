@@ -163,3 +163,14 @@ def test_long_archive_paths_are_left_out_of_a_project_name(tmp_path):
     deep = tmp_path / "pkg-1" / "var" / "folders" / "T" / "tmpab" / "pkg-1"
     assert _short_name(deep, tmp_path) == "pkg-1/pkg-1"
     assert _short_name(tmp_path / "a" / "b", tmp_path) == "a/b"
+
+
+def test_an_unpacked_wheel_counts_as_a_project_and_source_projects_are_unchanged(tmp_path):
+    wheel = tmp_path / "samples" / "elementary-data"
+    (wheel / "elementary_data-0.23.3.dist-info").mkdir(parents=True)
+    (wheel / "elementary.pth").write_text("import os\n")
+    source = tmp_path / "samples" / "lib"
+    (source / "lib").mkdir(parents=True)
+    (source / "setup.py").write_text("")
+    (tmp_path / "samples" / "notes").mkdir()
+    assert find_projects(tmp_path / "samples") == [wheel, source, tmp_path / "samples" / "notes"]

@@ -199,7 +199,7 @@ card(
     "red",
     "MALICIOUS = proof",
     "• a fake key or the fake machine name was caught leaving: in a request or a DNS name, "
-    "plain, base64, hex or hashed (the request is shown)\n"
+    "plain, base64, hex, hashed or packed in a compressed archive (the request is shown)\n"
     "• a destructive command really ran (rm -rf, curl | sh)",
 )
 card(
@@ -224,8 +224,8 @@ card(
     140,
     "teal",
     "Tavily: who is behind it?",
-    "A Tavily web search finds public reports on every server contacted, next to the domain's age "
-    "(RDAP). Example: Unit 42's report of hackers abusing webhook.site.",
+    "Tavily web searches: public reports on every server contacted, next to the domain's age "
+    "(RDAP), and whether this package version has already been reported as compromised.",
 )
 
 # ---- 4 pinpoint + 5 output -----------------------------------------------------------------------
@@ -282,9 +282,9 @@ text(
     72,
     903,
     "On our 11 attacks, Agent Trap flagged 11 and a plain code scanner 2: a sentence aimed at the "
-    "AI, or code disguised as telemetry, can't be seen by reading. On 11 real malicious PyPI packages "
-    "it caught 4 stealing (one sent the fake API keys to webhook.site) and flagged 6 as suspicious; "
-    "on 20 popular open-source projects it raised no false alarms.",
+    "AI, or code disguised as telemetry, can't be seen by reading. On real PyPI malware it caught 5 "
+    "stealing, including the hijacked elementary-data library sending all 7 fake secrets in a "
+    ".tar.gz; on 20 popular open-source projects it raised no false alarms.",
     15,
     986,
 )

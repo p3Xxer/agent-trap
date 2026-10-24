@@ -98,14 +98,23 @@ def split_culprits(
     key = [
         c
         for c in culprits
-        if any(m.lower() in c.text.lower() for m in markers)
-        or sends_over_network(c.text)
-        or reads_a_value(c.text)
+        if not _is_package_label(c.file)
+        and (
+            any(m.lower() in c.text.lower() for m in markers)
+            or sends_over_network(c.text)
+            or reads_a_value(c.text)
+        )
     ]
-    if not key:
-        return culprits, []
+    if not key:  # disguised code matches none of the patterns: show every line but the labels
+        key = [c for c in culprits if not _is_package_label(c.file)] or culprits
     support = [c for c in culprits if c not in key and not _SCAFFOLDING.fullmatch(c.text.strip())]
     return key, support
+
+
+def _is_package_label(path: str) -> bool:
+    """A package's own label files (`*.dist-info/METADATA`, `WHEEL`, ...) are needed to install
+    it, so removing them stops any install-time leak, but they never steal anything."""
+    return any(part.endswith((".dist-info", ".egg-info")) for part in path.split("/")[:-1])
 
 
 Phase = Literal["install", "agent", "both"]

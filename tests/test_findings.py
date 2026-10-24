@@ -194,3 +194,17 @@ def test_a_group_without_lines_keeps_the_reason():
     result = leaking_result(culprits={}, unlocalized={CANARY: "the agent's own commands"})
     [group] = leak_groups(result)
     assert group.lines == () and group.why_not == ("the agent's own commands",)
+
+
+def test_package_label_files_are_never_shown_as_stealing_lines():
+    from agenttrap.findings import split_culprits
+    from agenttrap.localizer import Culprit
+
+    culprits = [
+        Culprit("elementary.pth", 1, "import os, subprocess; exec(payload)", "runtime-fetch"),
+        Culprit("elementary_data-0.23.3.dist-info/METADATA", 2, "Name: elementary-data", ""),
+        Culprit("elementary_data-0.23.3.dist-info/WHEEL", 1, "Wheel-Version: 1.0", ""),
+    ]
+    key, support = split_culprits(culprits, "$HOSTNAME", "https://collector.example/")
+    assert [c.file for c in key] == ["elementary.pth"]
+    assert all(c.file.split("/")[0].endswith(".dist-info") for c in support)

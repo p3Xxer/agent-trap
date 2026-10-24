@@ -686,10 +686,13 @@ function verdictCard(doc, groups, findings) {
   body.append(h("h2", { class: "v-title" }, TITLES[doc.status] || doc.headline || "Result"));
 
   const source = String(doc.source || "");
+  const fixture = fixtureLink(doc.name);
   body.append(h("div", { class: "v-repo" },
     /^https:\/\//i.test(source)
       ? h("a", { class: "source", href: source, target: "_blank", rel: "noopener noreferrer" }, doc.name)
-      : h("span", { class: "repo-name" }, friendlyName(doc.name)),
+      : fixture
+        ? h("a", { class: "source", href: fixture, target: "_blank", rel: "noopener noreferrer", title: "This test repository's code on GitHub" }, friendlyName(doc.name))
+        : h("span", { class: "repo-name" }, friendlyName(doc.name)),
     h("span", { class: `badge ${doc.status}` }, LABEL(doc.status))));
   const record = malwareRecord(doc.name);
   if (record) body.append(h("p", { class: "small" },
@@ -884,6 +887,14 @@ function renderStatic() {
 }
 
 // What each of our test repositories does, in words a visitor understands.
+// Our test repositories live in this project's fixtures/ folder; link a result to its code there.
+const PROJECT = "https://github.com/p3Xxer/agent-trap";
+function fixtureLink(name) {
+  const n = String(name || "");
+  const id = Object.keys(DEMO_LABELS).find((k) => k === n || k.endsWith(`/${n}`));
+  return id ? `${PROJECT}/tree/main/fixtures/${id}` : null;
+}
+
 const DEMO_LABELS = {
   "attacks/install_time_exfil": "Steals the AWS key when installed",
   "attacks/install_time_exfil_https": "Steals the AWS key when installed (over HTTPS)",

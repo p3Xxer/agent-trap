@@ -516,6 +516,29 @@ const cleanPath = (path) => String(path)
 // "batch/s3transfer-sl-0.12.5/s3transfer_sl-0.12.5" -> "s3transfer_sl-0.12.5"
 const displayName = (name) => String(name || "").replace(/^batch\//, "").split("/").slice(-1)[0] || String(name || "");
 // Our own test repositories are saved as "attacks/x" or just "x": show what they do instead.
+// Public records of the real PyPI malware in our evaluation (docs/real-malware.md), so anyone can
+// check that a package is genuine malware: OSV where it has an entry, else Datadog's dataset.
+const DATASET = "https://github.com/DataDog/malicious-software-packages-dataset/tree/main/samples/pypi/malicious_intent/";
+const MALWARE_RECORDS = {
+  "s3transfer_sl": "https://osv.dev/vulnerability/MAL-2025-191861",
+  "keystackutilities": "https://osv.dev/vulnerability/MAL-2026-2833",
+  "cloudx-base": "https://osv.dev/vulnerability/MAL-2025-6480",
+  "tiketoken": "https://osv.dev/vulnerability/MAL-2024-10421",
+  "tls-bypass": "https://osv.dev/vulnerability/MAL-2024-6154",
+  "exo-steal": "https://osv.dev/vulnerability/MAL-2024-5124",
+  "env-loader-cli": "https://osv.dev/vulnerability/MAL-2026-4272",
+  "oauth20-api": "https://osv.dev/vulnerability/MAL-2024-5425",
+  "discord-hook": `${DATASET}discord-hook/1.0`,
+  "kubespy": `${DATASET}kubespy/1.0.0`,
+  "pycryptoenv": `${DATASET}pycryptoenv/1.0.7`,
+};
+function malwareRecord(name) {
+  if (!String(name || "").startsWith("batch/")) return null;  // only the packages we scanned in a batch
+  const n = displayName(name).toLowerCase();
+  const key = Object.keys(MALWARE_RECORDS).find((k) => n === k || n.startsWith(`${k}-`));
+  return key ? MALWARE_RECORDS[key] : null;
+}
+
 const friendlyName = (name) => {
   const n = String(name || "");
   const id = Object.keys(DEMO_LABELS).find((k) => k === n || k.endsWith(`/${n}`));
@@ -668,6 +691,10 @@ function verdictCard(doc, groups, findings) {
       ? h("a", { class: "source", href: source, target: "_blank", rel: "noopener noreferrer" }, doc.name)
       : h("span", { class: "repo-name" }, friendlyName(doc.name)),
     h("span", { class: `badge ${doc.status}` }, LABEL(doc.status))));
+  const record = malwareRecord(doc.name);
+  if (record) body.append(h("p", { class: "small" },
+    "Known malware, removed from PyPI: ",
+    h("a", { class: "source", href: record, target: "_blank", rel: "noopener noreferrer" }, "public malware record ↗")));
 
   if (groups.length) {
     for (const g of groups) {

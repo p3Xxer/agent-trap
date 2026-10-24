@@ -534,8 +534,9 @@ const MALWARE_RECORDS = {
 };
 function malwareRecord(name) {
   if (!String(name || "").startsWith("batch/")) return null;  // only the packages we scanned in a batch
-  const n = displayName(name).toLowerCase();
-  const key = Object.keys(MALWARE_RECORDS).find((k) => n === k || n.startsWith(`${k}-`));
+  const norm = (x) => x.toLowerCase().replace(/[-_.]+/g, "-");  // PyPI treats - _ . alike
+  const n = norm(displayName(name));
+  const key = Object.keys(MALWARE_RECORDS).find((k) => n === norm(k) || n.startsWith(`${norm(k)}-`));
   return key ? MALWARE_RECORDS[key] : null;
 }
 
@@ -687,17 +688,19 @@ function verdictCard(doc, groups, findings) {
 
   const source = String(doc.source || "");
   const fixture = fixtureLink(doc.name);
+  const record = malwareRecord(doc.name);
   body.append(h("div", { class: "v-repo" },
     /^https:\/\//i.test(source)
       ? h("a", { class: "source", href: source, target: "_blank", rel: "noopener noreferrer" }, doc.name)
+      : record
+        ? h("a", { class: "source", href: record, target: "_blank", rel: "noopener noreferrer", title: "Its public malware record" }, friendlyName(doc.name))
       : fixture
         ? h("a", { class: "source", href: fixture, target: "_blank", rel: "noopener noreferrer", title: "This test repository's code on GitHub" }, friendlyName(doc.name))
         : h("span", { class: "repo-name" }, friendlyName(doc.name)),
     h("span", { class: `badge ${doc.status}` }, LABEL(doc.status))));
-  const record = malwareRecord(doc.name);
   if (record) body.append(h("p", { class: "small" },
-    "Known malware, removed from PyPI: ",
-    h("a", { class: "source", href: record, target: "_blank", rel: "noopener noreferrer" }, "public malware record ↗")));
+    "Real malware, published on PyPI and since removed. Security researchers have confirmed it: ",
+    h("a", { class: "source", href: record, target: "_blank", rel: "noopener noreferrer" }, "see its public record ↗")));
 
   if (groups.length) {
     for (const g of groups) {

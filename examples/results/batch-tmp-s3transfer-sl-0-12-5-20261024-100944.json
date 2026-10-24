@@ -1,0 +1,1145 @@
+{
+  "format": 1,
+  "name": "batch/tmp/s3transfer_sl-0.12.5",
+  "source": null,
+  "created": "2026-10-24T10:09:44+00:00",
+  "status": "HIJACKED",
+  "headline": "MALICIOUS: a planted secret was seen leaving the sandbox.",
+  "leaks": [
+    "$ANTHROPIC_API_KEY",
+    "$HOSTNAME",
+    "$OPENAI_API_KEY",
+    "$USER"
+  ],
+  "flags": [
+    {
+      "kind": "contacted-host",
+      "detail": "sandbox contacted webhook.site",
+      "hard": false
+    },
+    {
+      "kind": "suspicious-code",
+      "detail": "setup.py:15: The setup.py file contains code that sends data from the user's machine to external webhook servers.",
+      "hard": false
+    }
+  ],
+  "findings": [
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While the project was installed and tested (no AI involved), the fake Anthropic key was sent to https://webhook.site/20b5c609-d65a-4570-b808-42bae28e888e/s3transfer3. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 25,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 31,
+          "text": ""
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 16,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 17,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 19,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 21,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 22,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 29,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 30,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 32,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 38,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 47,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 74,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 79,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While the project was installed and tested (no AI involved), the sandbox's fake machine name was sent to https://webhook.site/20b5c609-d65a-4570-b808-42bae28e888e/s3transfer3. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 25,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 31,
+          "text": ""
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 16,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 17,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 19,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 21,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 22,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 29,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 30,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 32,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 38,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 47,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 74,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 79,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While the project was installed and tested (no AI involved), the fake OpenAI key was sent to https://webhook.site/20b5c609-d65a-4570-b808-42bae28e888e/s3transfer3. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 25,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 31,
+          "text": ""
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 16,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 17,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 19,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 21,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 22,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 29,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 30,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 32,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 38,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 47,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 74,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 79,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/secret-leak",
+      "level": "error",
+      "title": "Secret leaves the sandbox",
+      "message": "While the project was installed and tested (no AI involved), the sandbox's fake user name was sent to https://webhook.site/20b5c609-d65a-4570-b808-42bae28e888e/s3transfer3. These lines make that happen.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 24,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 25,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 31,
+          "text": ""
+        }
+      ],
+      "related": [
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 16,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 17,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 19,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 21,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 22,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 29,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 30,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 32,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 38,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 47,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 74,
+          "text": ""
+        },
+        {
+          "file": "setup.py",
+          "line": 79,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "agent-trap/suspicious-code",
+      "level": "warning",
+      "title": "Code the AI agent found suspicious",
+      "message": "The AI agent flagged this code as suspicious: The setup.py file contains code that sends data from the user's machine to external webhook servers. It collects environment variables and sends them to specific URLs, which could potentially expose sensitive information like AWS credentials and Azure client ID.",
+      "locations": [
+        {
+          "file": "setup.py",
+          "line": 15,
+          "text": ""
+        }
+      ],
+      "related": []
+    },
+    {
+      "rule": "agent-trap/unexpected-host",
+      "level": "note",
+      "title": "Unexpected network contact",
+      "message": "The sandbox contacted webhook.site, which is not on the allow-list. The domain was registered 2016-03-20. Public pages mention it alongside malware or phishing: https://medium.com/@excybex/this-blog-explores-the-potential-misuse-of-webhook-site-89baecd7704b",
+      "locations": [],
+      "related": []
+    }
+  ],
+  "leak_groups": [
+    {
+      "destination_host": "webhook.site",
+      "destination": "https://webhook.site/20b5c609-d65a-4570-b808-42bae28e888e/s3transfer3",
+      "method": "POST",
+      "secrets": [
+        "the fake Anthropic key",
+        "the sandbox's fake machine name",
+        "the fake OpenAI key",
+        "the sandbox's fake user name"
+      ],
+      "canaries": [
+        "$ANTHROPIC_API_KEY",
+        "$HOSTNAME",
+        "$OPENAI_API_KEY",
+        "$USER"
+      ],
+      "phase": "install",
+      "tasks": [],
+      "tricked": false,
+      "lines": [
+        {
+          "file": "setup.py",
+          "line": 24
+        },
+        {
+          "file": "setup.py",
+          "line": 25
+        },
+        {
+          "file": "setup.py",
+          "line": 31
+        }
+      ],
+      "unconfirmed": false,
+      "why_not": []
+    }
+  ],
+  "culprits": {
+    "$OPENAI_API_KEY": [
+      {
+        "file": "setup.py",
+        "line": 10,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 11,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 16,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 17,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 19,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 22,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 24,
+        "text": "",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 25,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 29,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 30,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 31,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 32,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 33,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 35,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 38,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 45,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 46,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 47,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 74,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 76,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 79,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 92,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 93,
+        "text": "",
+        "tag": "plaintext"
+      }
+    ],
+    "$ANTHROPIC_API_KEY": [
+      {
+        "file": "setup.py",
+        "line": 10,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 11,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 16,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 17,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 19,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 22,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 24,
+        "text": "",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 25,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 29,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 30,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 31,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 32,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 33,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 35,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 38,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 45,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 46,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 47,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 74,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 76,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 79,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 92,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 93,
+        "text": "",
+        "tag": "plaintext"
+      }
+    ],
+    "$HOSTNAME": [
+      {
+        "file": "setup.py",
+        "line": 10,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 11,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 16,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 17,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 19,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 22,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 24,
+        "text": "",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 25,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 29,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 30,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 31,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 32,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 33,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 35,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 38,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 45,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 46,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 47,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 74,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 76,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 79,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 92,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 93,
+        "text": "",
+        "tag": "plaintext"
+      }
+    ],
+    "$USER": [
+      {
+        "file": "setup.py",
+        "line": 10,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 11,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 12,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 15,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 16,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 17,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 19,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 21,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 22,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 24,
+        "text": "",
+        "tag": "runtime-fetch"
+      },
+      {
+        "file": "setup.py",
+        "line": 25,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 29,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 30,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 31,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 32,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 33,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 35,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 38,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 45,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 46,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 47,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 74,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 76,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 79,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 92,
+        "text": "",
+        "tag": "plaintext"
+      },
+      {
+        "file": "setup.py",
+        "line": 93,
+        "text": "",
+        "tag": "plaintext"
+      }
+    ]
+  },
+  "unlocalized": {},
+  "culprits_pending": false,
+  "files": {},
+  "injections": [],
+  "concerns": [
+    {
+      "where": "setup.py:15",
+      "quote": "",
+      "behavior": "The setup.py file contains code that sends data from the user's machine to external webhook servers. It collects environment variables and sends them to specific URLs, which could potentially expose sensitive information like AWS credentials and Azure client ID."
+    }
+  ],
+  "contacted_hosts": [
+    "webhook.site"
+  ],
+  "host_intel": {
+    "webhook.site": {
+      "registered": "2016-03-20",
+      "age_days": 3870,
+      "reports": [
+        {
+          "title": "Medium",
+          "url": "https://medium.com/@excybex/this-blog-explores-the-potential-misuse-of-webhook-site-89baecd7704b",
+          "snippet": "Attack Vector: Command Injection \u2014 Webhook.site can be exploited for command injection, enabling attackers to execute arbitrary commands on the victim\u2019s machine. By carefully manipulating the input p\u2026"
+        }
+      ]
+    }
+  },
+  "package_intel": {
+    "name": "s3transfer-sl",
+    "version": "0.12.5",
+    "reports": []
+  },
+  "cleaned": null,
+  "static_scan": {
+    "count": 0,
+    "flagged": []
+  },
+  "baseline": {
+    "installed": true,
+    "tests": "29 errors",
+    "exits": [
+      0,
+      0,
+      1,
+      0,
+      2
+    ],
+    "errors": [
+      [],
+      [],
+      [],
+      [],
+      [
+        "ImportError"
+      ]
+    ]
+  },
+  "runs": 7,
+  "cost_usd": 0.03419,
+  "seconds": 310.0,
+  "code_saved": false,
+  "warnings": [],
+  "id": "batch-tmp-s3transfer-sl-0-12-5-20261024-100944"
+}

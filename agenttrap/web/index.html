@@ -520,6 +520,7 @@ const displayName = (name) => String(name || "").replace(/^batch\//, "").split("
 // check that a package is genuine malware: OSV where it has an entry, else Datadog's dataset.
 const DATASET = "https://github.com/DataDog/malicious-software-packages-dataset/tree/main/samples/pypi/malicious_intent/";
 const MALWARE_RECORDS = {
+  "elementary-data": "https://osv.dev/vulnerability/MAL-2026-3083",
   "s3transfer_sl": "https://osv.dev/vulnerability/MAL-2025-191861",
   "keystackutilities": "https://osv.dev/vulnerability/MAL-2026-2833",
   "cloudx-base": "https://osv.dev/vulnerability/MAL-2025-6480",

@@ -48,7 +48,7 @@ agent at the keyboard, and watch what tries to leave.**
 | **Scan a repo yourself** | Docker + Python 3.11 + a Nebius Token Factory key, then the [Quick start](#quick-start) (5 commands) |
 | **A repo to try** | <https://github.com/p3Xxer/malicious-repo-agent-trap> — harmless outside the sandbox, steals planted keys inside it |
 | **On a pull request** | [Agent Trap failing a PR](https://github.com/p3Xxer/agent-trap/pull/1) that adds "build telemetry" |
-| **Results in numbers** | [Real PyPI malware: 4 caught stealing, 6 flagged as suspicious](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
+| **Results in numbers** | [Real PyPI malware: 5 caught stealing, including the hijacked elementary-data library](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
 
 **Contents:** [Why this matters](#why-this-matters) · [Safety](#safety) ·
 [Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
@@ -285,6 +285,7 @@ Add your Nebius key as a repository secret named `NEBIUS_API_KEY`, then add this
 | Test | What we ran | Result |
 | --- | --- | --- |
 | [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (MALICIOUS)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. 6 flagged as suspicious; 1 came back SAFE |
+| [A hijacked popular library](docs/real-malware.md#a-hijacked-popular-library-elementary-data-0233) | `elementary-data` 0.23.3, over a million downloads a month, taken over in April 2026 | **Caught (MALICIOUS)** sending all 7 planted secrets, packed in a `.tar.gz`, the moment it was installed; the culprit `elementary.pth` line proven |
 | [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **2/11** for a tool that only reads the code. All 5 code attacks proven with the exact file and line |
 | [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
 | [Our clean test repos](docs/evaluation.md) | 8 harmless repos written to look risky | **0/8 called MALICIOUS**; 1 flagged SUSPICIOUS — a harmless library that downloads exchange rates from its own website. Agent Trap warns about any unknown server, even when nothing is stolen |
@@ -301,6 +302,7 @@ in that time are shown as *likely*; `--prove` proves them all, but slowly.
 | Our 19 test repositories (11 attacks, 8 clean) | `python eval/run_eval.py` → [docs/evaluation.md](docs/evaluation.md) |
 | 20 popular open-source projects | `python eval/run_real.py` → [docs/false-alarms.md](docs/false-alarms.md) |
 | Real malware from PyPI | `scripts/fetch_samples.sh` downloads and unpacks the samples (nothing runs outside the sandbox), then `agenttrap batch ~/malware-samples/extracted2` |
+| The hijacked `elementary-data` 0.23.3 | Fetch `samples/pypi/compromised_lib/elementary-data/0.23.3` from the same dataset, unzip it (password `infected`), then `agenttrap batch --prove` on the folder |
 
 Our attack repositories are our own: they steal fake keys and send them to names that cannot exist,
 and the instruction attacks use published AgentDojo text. The AI agent does not behave the same way

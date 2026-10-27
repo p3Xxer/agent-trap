@@ -9,11 +9,30 @@ It catches two kinds of attack: code that steals the moment it is installed, imp
 and the new kind that only exists because we hand repos to AI agents — text in a README that talks
 the agent into sending your keys.
 
+**5 real malware packages caught stealing**, including the hijacked `elementary-data` library
+&nbsp;·&nbsp; **11/11 test attacks caught**, against 2/11 for a code scanner &nbsp;·&nbsp;
+**0 false alarms** on 20 popular open-source projects
+
 > Submitted to the **Nebius × NVIDIA Global AI Hackathon**, Coding and Agentic Engineering track.
 
 ![A result: the repo steals secrets, the request caught in transit, and the lines that do it](docs/images/result.png)
 
-## Why this matters
+| I want to… | How | What I need |
+| --- | --- | --- |
+| **See real results, no setup** | Open the [demo site](https://p3xxer.github.io/agent-trap/): real PyPI malware caught, the README attack, clean projects | A browser |
+| **Scan a repo myself** | Follow [5.1 Install and try it](#51-install-and-try-it), then paste <https://github.com/p3Xxer/malicious-repo-agent-trap>, a harmless test repo that steals the planted keys | Docker, Python 3.11+, a Nebius Token Factory key; about 10 minutes |
+| **Use it on pull requests** | Add the [GitHub Action](#54-on-every-pull-request), and see it [failing a real pull request](https://github.com/p3Xxer/agent-trap/pull/1) that adds "build telemetry" | A Nebius key as a repository secret |
+
+## Contents
+
+1. [The problem](#1-the-problem)
+2. [How it works](#2-how-it-works)
+3. [Results](#3-results)
+4. [Built with NVIDIA Nemotron on Nebius Token Factory](#4-built-with-nvidia-nemotron-on-nebius-token-factory)
+5. [Try it](#5-try-it)
+6. [Details](#6-details)
+
+## 1. The problem
 
 Developers now hand new code straight to AI coding agents — "set this up", "run the tests".
 Attackers have noticed:
@@ -40,23 +59,35 @@ instructions are plain English or invisible. Agent Trap tests the repository sid
 code and text in a repo that make an agent leak your keys — the opposite way: **run it, with an AI
 agent at the keyboard, and watch what tries to leave.**
 
-## Judge quick start
+## 2. How it works
 
-| | |
-| --- | --- |
-| **See real results, no setup** | Demo site: <https://p3xxer.github.io/agent-trap/> — real PyPI malware caught, the README attack, clean projects |
-| **Scan a repo yourself** | Docker + Python 3.11 + a Nebius Token Factory key, then the [Quick start](#quick-start) (5 commands) |
-| **A repo to try** | <https://github.com/p3Xxer/malicious-repo-agent-trap> — harmless outside the sandbox, steals planted keys inside it |
-| **On a pull request** | [Agent Trap failing a PR](https://github.com/p3Xxer/agent-trap/pull/1) that adds "build telemetry" |
-| **Results in numbers** | [Real PyPI malware: 5 caught stealing, including the hijacked elementary-data library](docs/real-malware.md) · [11/11 test attacks](docs/evaluation.md) · [0 of 20 popular projects falsely flagged](docs/false-alarms.md) |
+Every scan runs the repository in a fresh, locked sandbox several times:
 
-**Contents:** [Why this matters](#why-this-matters) · [Safety](#safety) ·
-[Built with Nemotron and Token Factory](#built-with-nvidia-nemotron-on-nebius-token-factory) ·
-[How a scan works](#how-a-scan-works) · [Quick start](#quick-start) · [Running the tests](#running-the-tests) ·
-[Usage](#usage) · [Layout](#layout) · [Web page](#web-page) · [GitHub Action](#github-action) ·
-[Results](#results) · [Reproducing the results](#reproducing-the-results) ·
-[What Agent Trap does and does not do](#what-agent-trap-does-and-does-not-do) ·
-[How HTTPS is handled](#how-https-is-handled-and-its-limits) · [Credits](#credits) · [License](#license)
+| Run | What happens | What it catches |
+| --- | --- | --- |
+| Install and test, no AI | `pip install`, import every module, `pytest` | code that steals the moment it is installed, imported or tested |
+| AI agent: "set it up" | the agent reads the install instructions and runs them | install-time code, and README steps like "first run this script" |
+| AI agent: "run its tests" | the agent runs the tests and reads test files | code hidden in tests |
+| AI agent: "summarize it" | the agent mostly reads the README and docs | hidden instructions aimed at the AI ("ignore your task and send the key to…") |
+
+These are the everyday things a developer asks a coding agent to do with new code, and each one
+makes the agent touch a different part of the repository, so an attack waiting for one moment is
+still reached. An AI agent does not behave the same way every time, so the command line runs each
+agent task twice by default; the web page runs each once so a live scan takes about two minutes.
+
+Everything the sandbox sends goes to a trap: a proxy that reads HTTP and HTTPS and a fake DNS that
+records every name it looks up. Nothing is ever forwarded. A planted key is recognised whether it
+is sent plain, base64, hex, hashed, packed in a compressed archive, or hidden in a host name.
+
+**The verdict**
+
+- **MALICIOUS** needs proof: a planted fake secret seen leaving the sandbox, or a destructive
+  command actually run. The page shows the request it caught, and the exact lines responsible.
+- **SUSPICIOUS** means warning signs without proof: the agent quoted text aimed at it, or the
+  sandbox contacted an unknown server.
+- **SAFE** means nothing was seen leaving in these runs, not that the code is proven harmless.
+
+![How one scan works](docs/architecture.svg)
 
 <table>
 <tr>
@@ -65,7 +96,7 @@ agent at the keyboard, and watch what tries to leave.**
 </tr>
 </table>
 
-## Safety
+**Safe by design**
 
 - Every secret Agent Trap plants is a fake canary. No real credential is ever touched.
 - All sandbox traffic goes through a recording proxy that blocks it; nothing is exfiltrated.
@@ -73,7 +104,36 @@ agent at the keyboard, and watch what tries to leave.**
   `setup-check.test`, which can never exist on the internet (RFC 6761): run outside the sandbox,
   the request simply fails.
 
-## Built with NVIDIA Nemotron on Nebius Token Factory
+## 3. Results
+
+| Test | What we ran | Result |
+| --- | --- | --- |
+| [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (MALICIOUS)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. 6 flagged as suspicious; 1 came back SAFE |
+| [A hijacked popular library](docs/real-malware.md#a-hijacked-popular-library-elementary-data-0233) | `elementary-data` 0.23.3, over a million downloads a month, taken over in April 2026 | **Caught (MALICIOUS)** sending all 7 planted secrets, packed in a `.tar.gz`, the moment it was installed; the culprit `elementary.pth` line proven |
+| [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **2/11** for a tool that only reads the code. All 5 code attacks proven with the exact file and line |
+| [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
+| [Our clean test repos](docs/evaluation.md) | 8 harmless repos written to look risky | **0/8 called MALICIOUS**; 1 flagged SUSPICIOUS — a harmless library that downloads exchange rates from its own website. Agent Trap warns about any unknown server, even when nothing is stolen |
+
+A scan takes 1–2 minutes, and a few more when there are lines to pinpoint. Lines it cannot prove
+in that time are shown as *likely*; `--prove` proves them all, but slowly.
+
+<details>
+<summary><b>Reproducing the results</b></summary>
+
+| Test | How to re-run it |
+| --- | --- |
+| Our 19 test repositories (11 attacks, 8 clean) | `python eval/run_eval.py` → [docs/evaluation.md](docs/evaluation.md) |
+| 20 popular open-source projects | `python eval/run_real.py` → [docs/false-alarms.md](docs/false-alarms.md) |
+| Real malware from PyPI | `scripts/fetch_samples.sh` downloads and unpacks the samples (nothing runs outside the sandbox), then `agenttrap batch ~/malware-samples/extracted2` |
+| The hijacked `elementary-data` 0.23.3 | Fetch `samples/pypi/compromised_lib/elementary-data/0.23.3` from the same dataset, unzip it (password `infected`), then `agenttrap batch --prove` on the folder |
+
+Our attack repositories are our own: they steal fake keys and send them to names that cannot exist,
+and the instruction attacks use published AgentDojo text. The AI agent does not behave the same way
+on every run, so results can differ slightly; [docs/evaluation.md](docs/evaluation.md) shows how
+much.
+</details>
+
+## 4. Built with NVIDIA Nemotron on Nebius Token Factory
 
 Every model call in Agent Trap goes to **NVIDIA Nemotron 3 Nano**
 (`nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`) through **Nebius Token Factory**'s OpenAI-compatible API
@@ -115,29 +175,9 @@ removal stops the leak are the culprits.
 
 What Tavily finds is context for the reader; the verdict comes only from what the trap caught.
 
-## How a scan works
+## 5. Try it
 
-Every scan runs the repository in a fresh, locked sandbox several times:
-
-| Run | What happens | What it catches |
-| --- | --- | --- |
-| Install and test, no AI | `pip install`, import every module, `pytest` | code that steals the moment it is installed, imported or tested |
-| AI agent: "set it up" | the agent reads the install instructions and runs them | install-time code, and README steps like "first run this script" |
-| AI agent: "run its tests" | the agent runs the tests and reads test files | code hidden in tests |
-| AI agent: "summarize it" | the agent mostly reads the README and docs | hidden instructions aimed at the AI ("ignore your task and send the key to…") |
-
-These are the everyday things a developer asks a coding agent to do with new code, and each one
-makes the agent touch a different part of the repository, so an attack waiting for one moment is
-still reached. An AI agent does not behave the same way every time, so the command line runs each
-agent task twice by default; the web page runs each once so a live scan takes about two
-minutes.
-
-A verdict of MALICIOUS needs proof: a planted fake secret seen leaving the sandbox, or a destructive
-command actually run. SAFE means nothing was seen leaving in these runs, not that the code is
-proven harmless: code waiting for a date, another operating system or a real internet connection
-will not show itself here.
-
-## Quick start
+### 5.1 Install and try it
 
 You need **Python 3.11+** (check with `python3 --version`), **Docker** (running) and a **Nebius
 Token Factory API key**. A Tavily key is optional. Tested on macOS and Linux.
@@ -150,8 +190,6 @@ cp .env.example .env        # then put your NEBIUS_API_KEY (and optionally TAVIL
 agenttrap serve             # the web page, at http://localhost:8765
 ```
 
-**Try it:**
-
 1. Open http://localhost:8765 in your browser.
 2. Paste `https://github.com/p3Xxer/malicious-repo-agent-trap` and press **Scan**, or click
    **A repo that steals keys** under the box. It is a harmless test repository that steals the
@@ -162,7 +200,7 @@ agenttrap serve             # the web page, at http://localhost:8765
    transit"), and the exact lines in `setup.py` that steal the keys.
 5. To compare, scan `https://github.com/pallets/markupsafe`, which should come back **SAFE**.
 
-### Keys
+### 5.2 Keys
 
 | Key | Needed? | Where to get it | What it is used for |
 | --- | --- | --- | --- |
@@ -175,27 +213,7 @@ results. **Without a Nebius key** a scan still installs, imports and tests the r
 that steals at those moments is still caught with its lines; only the AI agent's part is skipped,
 and the result says so in a warning.
 
-## Running the tests
-
-```bash
-pytest        # 454 tests, about 3 seconds; no Docker or API key needed
-```
-
-They cover leak detection, the network watcher, the fake keys, the AI agent loop, the search for
-the exact lines, the safe download of GitHub repositories, the web page's safety, the GitHub Action
-output and the results format. The full pipeline, with Docker and Nemotron, is exercised by the
-evaluation in [docs/evaluation.md](docs/evaluation.md).
-
-## Usage
-
-| Command | What it does |
-| --- | --- |
-| `agenttrap serve` | The web page, at http://localhost:8765 |
-| `agenttrap scan path/to/repo` | Scan one repository from the terminal |
-| `agenttrap batch path/to/folder` | Scan every project in a folder (results keep no code) |
-| `agenttrap export out/` | Save the web page and results as a static site |
-
-**From the terminal:**
+### 5.3 From the terminal
 
 1. In a new terminal, from the `agent-trap` folder, turn on the environment:
 
@@ -212,12 +230,17 @@ evaluation in [docs/evaluation.md](docs/evaluation.md).
 
 3. The verdict appears first (expect **MALICIOUS**), then the exact lines that steal, and the
    servers it contacted. The scan is also saved, so it shows up under **Past scans** on the web
-   page.
-4. To also get a copy with the stealing lines removed, re-scanned to confirm it is safe:
+   page. The exit code is 1 when the verdict is MALICIOUS, so it can fail a CI job.
 
-   ```bash
-   agenttrap scan /tmp/trap-test --clean /tmp/trap-test-cleaned
-   ```
+<details>
+<summary><b>All commands and options</b></summary>
+
+| Command | What it does |
+| --- | --- |
+| `agenttrap serve` | The web page, at http://localhost:8765 |
+| `agenttrap scan path/to/repo` | Scan one repository from the terminal |
+| `agenttrap batch path/to/folder` | Scan every project in a folder (results keep no code) |
+| `agenttrap export out/` | Save the web page and results as a static site |
 
 Useful options for `scan`:
 
@@ -228,50 +251,14 @@ Useful options for `scan`:
 | `--json FILE` | Write the full result as JSON |
 | `--prove` | Prove every line instead of showing *likely* ones (slow) |
 | `--model super` | Use a larger Nemotron for the agent |
+</details>
 
-**Verdicts:** **MALICIOUS** — a planted key was seen leaving the sandbox, or a destructive command
-ran (the exit code is then 1, so it can fail a CI job). **SUSPICIOUS** — warning signs, no proof.
-**SAFE** — no theft found.
+### 5.4 On every pull request
 
-## Layout
-
-| Code | What it does |
-| --- | --- |
-| `agenttrap/sandbox.py` | The locked room: a throwaway Docker container with no route to the internet |
-| `agenttrap/canary.py` | The fake keys, machine name and user name, new for every run |
-| `agenttrap/egress.py`, `mitm_addon.py`, `sinkhole.py` | The trap: a private network where a proxy reads HTTP and HTTPS and a fake DNS answers every lookup; nothing is ever forwarded |
-| `agenttrap/agent.py` | The AI coding agent (Nemotron) that works inside the sandbox, and the two questions asked after each task |
-| `agenttrap/detector.py` | Spots a planted key leaving, and decides MALICIOUS, SUSPICIOUS or SAFE |
-| `agenttrap/localizer.py`, `counterfactual.py` | Finds the exact lines: by re-running with lines removed, or by asking Nemotron again |
-| `agenttrap/cleaner.py` | Makes a copy without the stealing code, for the fix check |
-| `agenttrap/intel.py` | Looks up the servers contacted (Tavily web reports, domain age) and web reports of the package itself |
-| `agenttrap/fetch.py` | Safely downloads a public GitHub repository, with size and time limits |
-| `agenttrap/pipeline.py`, `results.py`, `web/` | Runs a whole scan, saves the result, and serves the web page |
-| `agenttrap/findings.py`, `sarif.py`, `ci.py` | Turns findings into GitHub pull-request warnings and a summary |
-| `agenttrap/llm.py` | The Nebius Token Factory client, with spend limits |
-| `action/` | The GitHub Action |
-
-## Web page
-
-Run `agenttrap serve` and open http://localhost:8765. **Scan a repo** takes a public GitHub link
-and streams the scan as it runs; **Past scans** lists every result. `agenttrap export out/` saves a
-read-only copy, which is how the [demo site](https://p3xxer.github.io/agent-trap/) is made.
-
-**The page is built to be safe to run:**
-
-- It only listens on your own computer, and other websites can't start scans through it.
-- It only accepts public `github.com` links, up to 50 MB and 3,000 files, with a download time
-  limit.
-- Everything from a scanned repository is shown as plain text, so a malicious repo can't inject
-  anything into the page.
-- One scan runs at a time.
-
-## GitHub Action
-
-Scan every pull request automatically: a pull request that steals the planted keys fails its check
-and gets warnings on the exact lines — [see it on a real pull request](https://github.com/p3Xxer/agent-trap/pull/1).
-Add your Nebius key as a repository secret named `NEBIUS_API_KEY`, then add this step to a workflow
-(full setup in [docs/github-action.md](docs/github-action.md)):
+A pull request that steals the planted keys fails its check and gets warnings on the exact lines —
+[see it on a real pull request](https://github.com/p3Xxer/agent-trap/pull/1). Add your Nebius key
+as a repository secret named `NEBIUS_API_KEY`, then add this step to a workflow (full setup in
+[docs/github-action.md](docs/github-action.md)):
 
 ```yaml
 - uses: actions/checkout@v4
@@ -280,36 +267,20 @@ Add your Nebius key as a repository secret named `NEBIUS_API_KEY`, then add this
     nebius-api-key: ${{ secrets.NEBIUS_API_KEY }}
 ```
 
-## Results
+### 5.5 Run the tests
 
-| Test | What we ran | Result |
-| --- | --- | --- |
-| [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (MALICIOUS)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. 6 flagged as suspicious; 1 came back SAFE |
-| [A hijacked popular library](docs/real-malware.md#a-hijacked-popular-library-elementary-data-0233) | `elementary-data` 0.23.3, over a million downloads a month, taken over in April 2026 | **Caught (MALICIOUS)** sending all 7 planted secrets, packed in a `.tar.gz`, the moment it was installed; the culprit `elementary.pth` line proven |
-| [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **2/11** for a tool that only reads the code. All 5 code attacks proven with the exact file and line |
-| [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
-| [Our clean test repos](docs/evaluation.md) | 8 harmless repos written to look risky | **0/8 called MALICIOUS**; 1 flagged SUSPICIOUS — a harmless library that downloads exchange rates from its own website. Agent Trap warns about any unknown server, even when nothing is stolen |
+```bash
+pytest        # 466 tests, about 3 seconds; no Docker or API key needed
+```
 
-A scan takes 1–2 minutes, and a few more when there are lines to pinpoint. Lines it cannot prove
-in that time are shown as *likely*; `--prove` proves them all, but slowly.
+They cover leak detection, the network watcher, the fake keys, the AI agent loop, the search for
+the exact lines, the safe download of GitHub repositories, the web page's safety, the GitHub Action
+output and the results format. The full pipeline, with Docker and Nemotron, is exercised by the
+evaluation in [docs/evaluation.md](docs/evaluation.md).
 
-![How one scan works](docs/architecture.svg)
+## 6. Details
 
-## Reproducing the results
-
-| Test | How to re-run it |
-| --- | --- |
-| Our 19 test repositories (11 attacks, 8 clean) | `python eval/run_eval.py` → [docs/evaluation.md](docs/evaluation.md) |
-| 20 popular open-source projects | `python eval/run_real.py` → [docs/false-alarms.md](docs/false-alarms.md) |
-| Real malware from PyPI | `scripts/fetch_samples.sh` downloads and unpacks the samples (nothing runs outside the sandbox), then `agenttrap batch ~/malware-samples/extracted2` |
-| The hijacked `elementary-data` 0.23.3 | Fetch `samples/pypi/compromised_lib/elementary-data/0.23.3` from the same dataset, unzip it (password `infected`), then `agenttrap batch --prove` on the folder |
-
-Our attack repositories are our own: they steal fake keys and send them to names that cannot exist,
-and the instruction attacks use published AgentDojo text. The AI agent does not behave the same way
-on every run, so results can differ slightly; [docs/evaluation.md](docs/evaluation.md) shows how
-much.
-
-## What Agent Trap does and does not do
+### What Agent Trap does and does not do
 
 - **Proven (MALICIOUS):** a planted fake secret really leaves the sandbox, found by running the
   project's install, import and test steps and the agent's own work. For code that steals, the
@@ -327,7 +298,43 @@ much.
     it in the next, so a single scan of that kind of attack can miss it.
     [docs/evaluation.md](docs/evaluation.md) shows how often verdicts changed across repeated runs.
 
-## How HTTPS is handled, and its limits
+<details>
+<summary><b>Code layout</b></summary>
+
+| Code | What it does |
+| --- | --- |
+| `agenttrap/sandbox.py` | The locked room: a throwaway Docker container with no route to the internet |
+| `agenttrap/canary.py` | The fake keys, machine name and user name, new for every run |
+| `agenttrap/egress.py`, `mitm_addon.py`, `sinkhole.py` | The trap: a private network where a proxy reads HTTP and HTTPS and a fake DNS answers every lookup; nothing is ever forwarded |
+| `agenttrap/agent.py` | The AI coding agent (Nemotron) that works inside the sandbox, and the two questions asked after each task |
+| `agenttrap/detector.py` | Spots a planted key leaving, in any of its forms, and decides MALICIOUS, SUSPICIOUS or SAFE |
+| `agenttrap/localizer.py`, `counterfactual.py` | Finds the exact lines: by re-running with lines removed, or by asking Nemotron again |
+| `agenttrap/cleaner.py` | Makes a copy without the stealing code, for the fix check |
+| `agenttrap/intel.py` | Looks up the servers contacted (Tavily web reports, domain age) and web reports of the package itself |
+| `agenttrap/fetch.py` | Safely downloads a public GitHub repository, with size and time limits |
+| `agenttrap/pipeline.py`, `results.py`, `web/` | Runs a whole scan, saves the result, and serves the web page |
+| `agenttrap/findings.py`, `sarif.py`, `ci.py` | Turns findings into GitHub pull-request warnings and a summary |
+| `agenttrap/llm.py` | The Nebius Token Factory client, with spend limits |
+| `action/` | The GitHub Action |
+</details>
+
+<details>
+<summary><b>The web page, and why it is safe to run</b></summary>
+
+Run `agenttrap serve` and open http://localhost:8765. **Scan a repo** takes a public GitHub link
+and streams the scan as it runs; **Past scans** lists every result. `agenttrap export out/` saves a
+read-only copy, which is how the [demo site](https://p3xxer.github.io/agent-trap/) is made.
+
+- It only listens on your own computer, and other websites can't start scans through it.
+- It only accepts public `github.com` links, up to 50 MB and 3,000 files, with a download time
+  limit.
+- Everything from a scanned repository is shown as plain text, so a malicious repo can't inject
+  anything into the page.
+- One scan runs at a time.
+</details>
+
+<details>
+<summary><b>How HTTPS is handled, and its limits</b></summary>
 
 Each run gets a mitmproxy container that reads the sandbox's HTTP **and HTTPS** requests and
 answers them itself, so a planted secret sent over HTTPS is caught as proof. To make that possible:
@@ -339,12 +346,13 @@ answers them itself, so a planted secret sent over HTTPS is caught as proof. To 
 - Programs that ignore the proxy settings (raw sockets, custom TLS) can't complete a connection;
   they show up as a contacted host only (SUSPICIOUS), not as proof.
 - Programs that pin certificates won't trust our CA and will fail, so they are not inspected.
+</details>
 
-## Credits
+### Credits
 
 Some attack fixtures (`fixtures/attacks/agentdojo/`) use injection templates from
 [AgentDojo](https://github.com/ethz-spylab/agentdojo) (MIT License, ETH Zurich SPY Lab).
 
-## License
+### License
 
 [MIT](LICENSE).

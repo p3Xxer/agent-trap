@@ -19,6 +19,7 @@ the agent into sending your keys.
 
 | I want to… | How | What I need |
 | --- | --- | --- |
+| **Watch the demo (2:58)** | [The demo video on YouTube](https://youtu.be/i00XDq8kY_Q) | A browser |
 | **See real results, no setup** | Open the [demo site](https://p3xxer.github.io/agent-trap/): real PyPI malware caught, the README attack, clean projects | A browser |
 | **Scan a repo myself** | Follow [5.1 Install and try it](#51-install-and-try-it), then paste <https://github.com/p3Xxer/malicious-repo-agent-trap>, a harmless test repo that steals the planted keys | Docker, Python 3.11+, a Nebius Token Factory key; about 10 minutes |
 | **Use it on pull requests** | Add the [GitHub Action](#54-on-every-pull-request), and see it [failing a real pull request](https://github.com/p3Xxer/agent-trap/pull/1) that adds "build telemetry" | A Nebius key as a repository secret |

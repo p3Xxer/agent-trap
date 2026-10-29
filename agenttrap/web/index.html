@@ -775,6 +775,8 @@ function whereCard(doc, groups, findings) {
       [...numbers].sort((a, b) => a - b).map((n) => lineLink(file, n))));
   if (lineGroups.some((g) => g.unconfirmed))
     card.append(h("p", { class: "muted small" }, "Likely lines: found by reading the code."));
+  if (doc.code_saved === false && !files.length)
+    card.append(h("p", { class: "muted small" }, "These are line numbers only. This is real malware, so Agent Trap does not keep or show its code."));
   if (doc.culprits_pending)
     card.append(h("div", { class: "pending small" }, h("span", { class: "spin", "aria-hidden": "true" }), "Finding the exact lines…"));
   // Red is proof: the lines of a leak. The AI agent's opinions are not coloured when a leak was

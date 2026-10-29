@@ -82,7 +82,9 @@ is sent plain, base64, hex, hashed, packed in a compressed archive, or hidden in
 **The verdict**
 
 - **MALICIOUS** needs proof: a planted fake secret seen leaving the sandbox, or a destructive
-  command actually run. The page shows the request it caught, and the exact lines responsible.
+  command the agent actually ran (a recursive delete of `/`, `~` or the project folder, a download
+  piped into a shell, or an edit of the agent's own settings). The page shows the request it
+  caught, and the exact lines responsible.
 - **SUSPICIOUS** means warning signs without proof: the agent quoted text aimed at it, or the
   sandbox contacted an unknown server.
 - **SAFE** means nothing was seen leaving in these runs, not that the code is proven harmless.
@@ -293,6 +295,10 @@ evaluation in [docs/evaluation.md](docs/evaluation.md).
   - **Some malware stays hidden.** Code that waits for a real internet connection, only runs on
     another operating system, or notices it is in a sandbox won't do anything here. So SAFE means
     no theft was seen during the scan, not that the code is proven harmless.
+  - **The sandbox is a container, not a virtual machine.** It drops all capabilities, sets
+    `no-new-privileges`, limits CPU, memory and processes, and has no route out, but a container
+    shares the host's kernel. For real malware, run Agent Trap on a throwaway VM; gVisor or a
+    microVM would be stronger isolation, and we have not added one.
   - **Python only,** for now.
   - **AI agents aren't predictable.** An agent may obey a hidden instruction in one run and ignore
     it in the next, so a single scan of that kind of attack can miss it.

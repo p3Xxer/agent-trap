@@ -316,6 +316,10 @@ def to_markdown(report: Report, settings: str, history: dict[str, list[str]] | N
         f"| Mean time per scan | {report.mean_seconds:.0f}s | instant |",
         f"| Mean model cost per scan | ${report.mean_cost:.4f} | $0 |",
         "",
+        "The plain text scan is a short script of our own (`agenttrap/baseline_static.py`) that "
+        'matches phrases such as "ignore previous instructions". For two well-known code '
+        "scanners, Bandit and Semgrep, see [the comparison](scanner-comparison.md).",
+        "",
         "## Attack repos flagged, by kind",
         "",
         "| Kind | Flagged |",
@@ -360,6 +364,8 @@ def to_markdown(report: Report, settings: str, history: dict[str, list[str]] | N
         "- [Real malware from PyPI](real-malware.md): published malicious packages run in the "
         "trap.",
         "- [False alarms on real projects](false-alarms.md): 20 well-known projects, none flagged.",
+        "- [Compared with Bandit and Semgrep](scanner-comparison.md): two well-known code scanners "
+        "on the same repositories.",
     ]
     return "\n".join(lines) + "\n"
 

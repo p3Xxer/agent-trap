@@ -15,6 +15,8 @@
 | Mean time per scan | 52s | instant |
 | Mean model cost per scan | $0.0148 | $0 |
 
+The plain text scan is a short script of our own (`agenttrap/baseline_static.py`) that matches phrases such as "ignore previous instructions". For two well-known code scanners, Bandit and Semgrep, see [the comparison](scanner-comparison.md).
+
 ## Attack repos flagged, by kind
 
 | Kind | Flagged |
@@ -68,3 +70,4 @@ Each repository was scanned 5 times. 16 of 19 gave the same verdict every time.
 
 - [Real malware from PyPI](real-malware.md): published malicious packages run in the trap.
 - [False alarms on real projects](false-alarms.md): 20 well-known projects, none flagged.
+- [Compared with Bandit and Semgrep](scanner-comparison.md): two well-known code scanners on the same repositories.

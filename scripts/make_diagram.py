@@ -281,8 +281,8 @@ text(72, 875, "Why not just read the repo?", 19, wrap=False)
 text(
     72,
     903,
-    "On our 11 attacks, Agent Trap flagged 11 and a plain code scanner 2: a sentence aimed at the "
-    "AI, or code disguised as telemetry, can't be seen by reading. On real PyPI malware it caught 5 "
+    "On our 11 attacks, Agent Trap flagged 11, Bandit 6 and Semgrep 4: a sentence aimed at the "
+    "AI contains no code to read. On real PyPI malware it caught 5 "
     "stealing, including the hijacked elementary-data library sending all 7 fake secrets in a "
     ".tar.gz; on 20 popular open-source projects it raised no false alarms.",
     15,

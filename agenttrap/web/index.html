@@ -733,7 +733,7 @@ function verdictCard(doc, groups, findings) {
   for (const w of doc.warnings || []) body.append(h("p", { class: "warn-note" }, "⚠ ", w));
   const chips = [];
   if (doc.status === "HIJACKED" && doc.static_scan && !doc.static_scan.count)
-    chips.push(h("span", { class: "tag", title: "A scanner that only reads the code found nothing here" }, "Code scanners would miss this"));
+    chips.push(h("span", { class: "tag", title: "A simple scan of the repository's text found nothing here; only running it shows the theft" }, "A text scan finds nothing here"));
   if (chips.length) body.append(h("div", { class: "chips" }, chips));
 
   return h("div", { class: `card verdict v-${doc.status}` },
@@ -834,9 +834,9 @@ function detailsBlock(doc) {
 
   const flagged = doc.static_scan?.count ?? 0;
   if (doc.static_scan && flagged) {
-    body.append(h("h3", {}, "Code scanners"),
-      h("p", {}, flagged ? `A scanner that only reads the code flagged ${flagged} line${flagged === 1 ? "" : "s"}:`
-                          : "A scanner that only reads the code found nothing."),
+    body.append(h("h3", {}, "Text scan"),
+      h("p", {}, flagged ? `A simple text scan flagged ${flagged} line${flagged === 1 ? "" : "s"}:`
+                          : "A simple text scan found nothing."),
       (doc.static_scan.flagged || []).slice(0, 8).map((s) => h("div", {}, chip(s), h("span", { class: "small" }, ` ${s.text}`))));
   }
 

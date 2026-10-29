@@ -10,7 +10,7 @@ and the new kind that only exists because we hand repos to AI agents — text in
 the agent into sending your keys.
 
 **5 real malware packages caught stealing**, including the hijacked `elementary-data` library
-&nbsp;·&nbsp; **11/11 test attacks caught**, against 2/11 for a code scanner &nbsp;·&nbsp;
+&nbsp;·&nbsp; **11/11 test attacks caught**, against 6/11 for Bandit and 4/11 for Semgrep &nbsp;·&nbsp;
 **0 false alarms** on 20 popular open-source projects
 
 > Submitted to the **Nebius × NVIDIA Global AI Hackathon**, Coding and Agentic Engineering track.
@@ -110,7 +110,7 @@ is sent plain, base64, hex, hashed, packed in a compressed archive, or hidden in
 | --- | --- | --- |
 | [Real malware from PyPI](docs/real-malware.md) | 11 published malicious packages that look like credential stealers | **4 caught in the act (MALICIOUS)**, one stealing the fake OpenAI and Anthropic keys; the culprit `setup.py` lines named. 6 flagged as suspicious; 1 came back SAFE |
 | [A hijacked popular library](docs/real-malware.md#a-hijacked-popular-library-elementary-data-0233) | `elementary-data` 0.23.3, over a million downloads a month, taken over in April 2026 | **Caught (MALICIOUS)** sending all 7 planted secrets, packed in a `.tar.gz`, the moment it was installed; the culprit `elementary.pth` line proven |
-| [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **2/11** for a tool that only reads the code. All 5 code attacks proven with the exact file and line |
+| [Our attack repos](docs/evaluation.md) | 11 attacks (stealing code at install, import and test time; published AgentDojo prompt injections) | **11/11 flagged**, against **6/11** for Bandit and **4/11** for Semgrep with their standard rules ([compared here](docs/scanner-comparison.md)); neither sees the 5 README attacks, which contain no code. All 5 code attacks proven with the exact file and line |
 | [False alarms on real projects](docs/false-alarms.md) | 20 well-known open-source projects (click, attrs, tqdm, bottle, …) | **0/20 flagged**, 0 wrongly called MALICIOUS |
 | [Our clean test repos](docs/evaluation.md) | 8 harmless repos written to look risky | **0/8 called MALICIOUS**; 1 flagged SUSPICIOUS — a harmless library that downloads exchange rates from its own website. Agent Trap warns about any unknown server, even when nothing is stolen |
 

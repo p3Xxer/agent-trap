@@ -140,9 +140,9 @@
 <line x1="1472" y1="640" x2="1528" y2="700" stroke="#1e1e1e" stroke-width="2" marker-end="url(#a)"/>
 <rect x="60" y="865" width="1010" height="110" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="2"/>
 <text x="72" y="893.0" font-size="19" xml:space="preserve" fill="#1e1e1e">Why not just read the repo?</text>
-<text x="72" y="917.2" font-size="15" xml:space="preserve" fill="#1e1e1e">On our 11 attacks, Agent Trap flagged 11 and a plain code scanner 2: a sentence aimed at the AI, or code disguised as</text>
-<text x="72" y="936.0" font-size="15" xml:space="preserve" fill="#1e1e1e">telemetry, can't be seen by reading. On real PyPI malware it caught 5 stealing, including the hijacked elementary-data</text>
-<text x="72" y="954.8" font-size="15" xml:space="preserve" fill="#1e1e1e">library sending all 7 fake secrets in a .tar.gz; on 20 popular open-source projects it raised no false alarms.</text>
+<text x="72" y="917.2" font-size="15" xml:space="preserve" fill="#1e1e1e">On our 11 attacks, Agent Trap flagged 11, Bandit 6 and Semgrep 4: a sentence aimed at the AI contains no code to read. On</text>
+<text x="72" y="936.0" font-size="15" xml:space="preserve" fill="#1e1e1e">real PyPI malware it caught 5 stealing, including the hijacked elementary-data library sending all 7 fake secrets in a</text>
+<text x="72" y="954.8" font-size="15" xml:space="preserve" fill="#1e1e1e">.tar.gz; on 20 popular open-source projects it raised no false alarms.</text>
 <text x="1130" y="881.1" font-size="17" xml:space="preserve" fill="#1e1e1e">Legend</text>
 <text x="1130" y="906.3" font-size="14" xml:space="preserve" fill="#1e1e1e">red = proof   yellow = warning   green = safe, or results</text>
 <text x="1130" y="923.8" font-size="14" xml:space="preserve" fill="#1e1e1e">purple = uses the AI model   dashed outline = the locked room</text>
